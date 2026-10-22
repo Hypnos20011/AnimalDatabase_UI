@@ -94,7 +94,7 @@
               [class.active]="isClassActive(cls)"
               (click)="toggleClass(cls)"
             >
-              {{ cls }}
+              {{ cls | titlecase }}
             </button>
           }
         </div>
@@ -108,7 +108,7 @@
               [class.active]="isStatusActive(status)"
               (click)="toggleStatus(status)"
             >
-              {{ status }}
+              {{ status | titlecase }}
             </button>
           }
         </div>
