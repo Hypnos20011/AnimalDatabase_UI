@@ -1,7 +1,7 @@
 <h2>{{ editing() ? 'Edit animal' : 'Add animal' }}</h2>
 
 @if (loadingAnimal()) {
-  <p>Loading...</p>
+  <p class="hint">Loading...</p>
 }
 
 <div class="wiki-import">
@@ -17,6 +17,7 @@
   </label>
   <button
     type="button"
+    class="btn btn-primary"
     [disabled]="importing() || !wikiUrl().trim()"
     (click)="importFromWikipedia()"
   >
@@ -151,7 +152,9 @@
   }
 
   <div class="actions">
-    <button type="submit" [disabled]="saving()">{{ saving() ? 'Saving...' : 'Save' }}</button>
-    <a [routerLink]="editing() ? ['/animals', id()] : '/'">Cancel</a>
+    <button type="submit" class="btn btn-primary" [disabled]="saving()">
+      {{ saving() ? 'Saving...' : 'Save' }}
+    </button>
+    <a class="btn btn-secondary" [routerLink]="editing() ? ['/animals', id()] : '/'">Cancel</a>
   </div>
 </form>
