@@ -1,7 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { AnimalDetail } from '../animal-detail/animal-detail';
+import { Router, RouterLink } from '@angular/router';
 import { AnimalService } from '../animal.service';
 import { Animal } from '../animal-model/animal.model';
 
@@ -9,12 +8,13 @@ type FilterType = 'all' | 'wild';
 
 @Component({
   selector: 'app-animals-list',
-  imports: [CommonModule, AnimalDetail, RouterLink],
+  imports: [CommonModule, RouterLink],
   templateUrl: './animals-list.html',
   styleUrl: './animals-list.css',
 })
 export class AnimalsList {
   private animalService = inject(AnimalService);
+  private router = inject(Router);
 
   animals = signal<Animal[]>([]);
   loading = signal(true);
@@ -24,8 +24,6 @@ export class AnimalsList {
   selectedClasses = signal<Set<string>>(new Set());
   selectedStatuses = signal<Set<string>>(new Set());
   filterType = signal<FilterType>('all');
-
-  selectedAnimal = signal<Animal | null>(null);
 
   suggestions = computed(() => {
     const q = this.query().trim().toLowerCase();
@@ -132,10 +130,6 @@ export class AnimalsList {
   }
 
   selectAnimal(animal: Animal): void {
-    this.selectedAnimal.set(animal);
-  }
-
-  closeDetail(): void {
-    this.selectedAnimal.set(null);
+    this.router.navigate(['/animals', animal.id]);
   }
 }

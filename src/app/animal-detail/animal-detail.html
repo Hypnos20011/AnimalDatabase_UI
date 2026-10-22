@@ -98,5 +98,10 @@
     <button type="button" class="back" (click)="onClose()">Back to list</button>
   </article>
 } @else {
-  <p>No animal selected.</p>
+  @if (loading()) {
+    <p>Loading...</p>
+  } @else {
+    <p>Animal not found.</p>
+    <button type="button" class="back" (click)="onClose()">Back to list</button>
+  }
 }

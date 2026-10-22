@@ -85,26 +85,22 @@
   <p style="color: red">{{ error() }}</p>
 }
 
-@if (selectedAnimal()) {
-  <app-animal-detail [animal]="selectedAnimal()" (close)="closeDetail()" />
-} @else {
-  @if (!loading() && filteredAnimals().length === 0) {
-    <p>No animals match your filters.</p>
-  }
+@if (!loading() && filteredAnimals().length === 0) {
+  <p>No animals match your filters.</p>
+}
 
-  @if (filteredAnimals().length > 0) {
-    <ul>
-      @for (animal of filteredAnimals(); track animal.id) {
-        <li tabindex="0" (click)="selectAnimal(animal)" (keydown.enter)="selectAnimal(animal)">
-          <strong>{{ animal.commonName }}</strong>
-          @if (animal.scientificName) {
-            <em> ({{ animal.scientificName }})</em>
-          }
-          @if (animal.iucnStatus) {
-            — {{ animal.iucnStatus }}
-          }
-        </li>
-      }
-    </ul>
-  }
+@if (filteredAnimals().length > 0) {
+  <ul>
+    @for (animal of filteredAnimals(); track animal.id) {
+      <li tabindex="0" (click)="selectAnimal(animal)" (keydown.enter)="selectAnimal(animal)">
+        <strong>{{ animal.commonName }}</strong>
+        @if (animal.scientificName) {
+          <em> ({{ animal.scientificName }})</em>
+        }
+        @if (animal.iucnStatus) {
+          — {{ animal.iucnStatus }}
+        }
+      </li>
+    }
+  </ul>
 }
