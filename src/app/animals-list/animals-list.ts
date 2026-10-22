@@ -11,6 +11,9 @@ type FilterType = 'all' | 'wild';
   imports: [CommonModule, RouterLink],
   templateUrl: './animals-list.html',
   styleUrl: './animals-list.css',
+  host: {
+    '(document:keydown.escape)': 'filtersOpen.set(false)',
+  },
 })
 export class AnimalsList {
   private animalService = inject(AnimalService);
@@ -28,6 +31,16 @@ export class AnimalsList {
   lengthTo = signal<number | null>(null);
   weightFrom = signal<number | null>(null);
   weightTo = signal<number | null>(null);
+  filtersOpen = signal(false);
+
+  activeFilterCount = computed(
+    () =>
+      this.selectedClasses().size +
+      this.selectedStatuses().size +
+      (this.filterType() === 'wild' ? 1 : 0) +
+      (this.lengthFrom() !== null || this.lengthTo() !== null ? 1 : 0) +
+      (this.weightFrom() !== null || this.weightTo() !== null ? 1 : 0),
+  );
 
   suggestions = computed(() => {
     const q = this.query().trim().toLowerCase();
@@ -146,16 +159,10 @@ export class AnimalsList {
     return Number.isNaN(parsed) ? null : parsed;
   }
 
-  hasRangeFilter(): boolean {
-    return (
-      this.lengthFrom() !== null ||
-      this.lengthTo() !== null ||
-      this.weightFrom() !== null ||
-      this.weightTo() !== null
-    );
-  }
-
-  clearRanges(): void {
+  clearAll(): void {
+    this.selectedClasses.set(new Set());
+    this.selectedStatuses.set(new Set());
+    this.filterType.set('all');
     this.lengthFrom.set(null);
     this.lengthTo.set(null);
     this.weightFrom.set(null);

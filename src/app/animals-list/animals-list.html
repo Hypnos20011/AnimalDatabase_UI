@@ -35,88 +35,121 @@
   }
 </div>
 
-<div class="filters">
-  <div class="filter-chips">
-    <span class="chip-label">Class:</span>
-    @for (cls of availableClasses(); track cls) {
-      <button
-        type="button"
-        class="chip"
-        [class.active]="isClassActive(cls)"
-        (click)="toggleClass(cls)"
-      >
-        {{ cls }}
-      </button>
+<div class="filter-bar">
+  <button type="button" class="filter-toggle" (click)="filtersOpen.set(true)">
+    Filters
+    @if (activeFilterCount() > 0) {
+      <span class="badge">{{ activeFilterCount() }}</span>
     }
-  </div>
-
-  <div class="filter-chips">
-    <span class="chip-label">Status:</span>
-    @for (status of availableStatuses(); track status) {
-      <button
-        type="button"
-        class="chip"
-        [class.active]="isStatusActive(status)"
-        (click)="toggleStatus(status)"
-      >
-        {{ status }}
-      </button>
-    }
-  </div>
-
-  <div class="filter-chips">
-    <span class="chip-label">Type:</span>
-    <button
-      type="button"
-      class="chip"
-      [class.active]="filterType() === 'wild'"
-      (click)="toggleType()"
-    >
-      Wild only
-    </button>
-  </div>
-
-  <div class="filter-ranges">
-    <span class="chip-label">Length (cm):</span>
-    <input
-      type="number"
-      min="0"
-      placeholder="from"
-      [value]="lengthFrom() ?? ''"
-      (input)="lengthFrom.set(toNumber($any($event.target).value))"
-    />
-    <input
-      type="number"
-      min="0"
-      placeholder="to"
-      [value]="lengthTo() ?? ''"
-      (input)="lengthTo.set(toNumber($any($event.target).value))"
-    />
-  </div>
-
-  <div class="filter-ranges">
-    <span class="chip-label">Weight (kg):</span>
-    <input
-      type="number"
-      min="0"
-      step="0.1"
-      placeholder="from"
-      [value]="weightFrom() ?? ''"
-      (input)="weightFrom.set(toNumber($any($event.target).value))"
-    />
-    <input
-      type="number"
-      min="0"
-      step="0.1"
-      placeholder="to"
-      [value]="weightTo() ?? ''"
-      (input)="weightTo.set(toNumber($any($event.target).value))"
-    />
-    @if (hasRangeFilter()) {
-      <button type="button" class="chip" (click)="clearRanges()">Clear</button>
-    }
-  </div>
+  </button>
+  @if (activeFilterCount() > 0) {
+    <button type="button" class="chip" (click)="clearAll()">Clear all</button>
+  }
 </div>
+
+@if (filtersOpen()) {
+  <div class="modal-backdrop" (click)="filtersOpen.set(false)">
+    <div
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="filters-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="modal-header">
+        <h3 id="filters-title">Filters</h3>
+        <button type="button" class="close" aria-label="Close" (click)="filtersOpen.set(false)">
+          &times;
+        </button>
+      </div>
+      <div class="filters">
+        <div class="filter-chips">
+          <span class="chip-label">Class:</span>
+          @for (cls of availableClasses(); track cls) {
+            <button
+              type="button"
+              class="chip"
+              [class.active]="isClassActive(cls)"
+              (click)="toggleClass(cls)"
+            >
+              {{ cls }}
+            </button>
+          }
+        </div>
+
+        <div class="filter-chips">
+          <span class="chip-label">Status:</span>
+          @for (status of availableStatuses(); track status) {
+            <button
+              type="button"
+              class="chip"
+              [class.active]="isStatusActive(status)"
+              (click)="toggleStatus(status)"
+            >
+              {{ status }}
+            </button>
+          }
+        </div>
+
+        <div class="filter-chips">
+          <span class="chip-label">Type:</span>
+          <button
+            type="button"
+            class="chip"
+            [class.active]="filterType() === 'wild'"
+            (click)="toggleType()"
+          >
+            Wild only
+          </button>
+        </div>
+
+        <div class="filter-ranges">
+          <span class="chip-label">Length (cm):</span>
+          <input
+            type="number"
+            min="0"
+            placeholder="from"
+            [value]="lengthFrom() ?? ''"
+            (input)="lengthFrom.set(toNumber($any($event.target).value))"
+          />
+          <input
+            type="number"
+            min="0"
+            placeholder="to"
+            [value]="lengthTo() ?? ''"
+            (input)="lengthTo.set(toNumber($any($event.target).value))"
+          />
+        </div>
+
+        <div class="filter-ranges">
+          <span class="chip-label">Weight (kg):</span>
+          <input
+            type="number"
+            min="0"
+            step="0.1"
+            placeholder="from"
+            [value]="weightFrom() ?? ''"
+            (input)="weightFrom.set(toNumber($any($event.target).value))"
+          />
+          <input
+            type="number"
+            min="0"
+            step="0.1"
+            placeholder="to"
+            [value]="weightTo() ?? ''"
+            (input)="weightTo.set(toNumber($any($event.target).value))"
+          />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="chip" (click)="clearAll()">Clear all</button>
+        <button type="button" class="apply" (click)="filtersOpen.set(false)">
+          Show {{ filteredAnimals().length }} animals
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 @if (loading()) {
   <p>Loading...</p>
