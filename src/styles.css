@@ -1,30 +1,34 @@
 :root {
-  --color-primary: #2f6b4f;
-  --color-primary-hover: #24563f;
-  --color-primary-soft: #e4efe8;
-  --color-accent: #b8641c;
-  --color-accent-soft: #fbeedd;
-  --color-bg: #f5f4ef;
-  --color-surface: #ffffff;
-  --color-surface-muted: #f0efe9;
-  --color-border: #d9d6cc;
-  --color-border-strong: #b9b5a8;
-  --color-text: #1f2a24;
-  --color-muted: #5a645d;
+  --color-primary: #1c3d66;
+  --color-primary-hover: #132c4b;
+  --color-primary-soft: #e8eef5;
+  --color-accent: #0b7a78;
+  --color-accent-hover: #08615f;
+  --color-accent-soft: #e3f2f1;
+  --color-accent-border: #a8d5d2;
+  --color-bg: #f1f4f8;
+  --color-surface: #fcfdfe;
+  --color-surface-muted: #edf1f6;
+  --color-border: #d3dbe5;
+  --color-border-strong: #7d8ca1;
+  --color-text: #16243a;
+  --color-muted: #4d5d72;
+  --color-placeholder: #728196;
   --color-danger: #b3261e;
   --color-danger-hover: #8f1e18;
   --color-danger-soft: #fbe9e7;
-  --focus-ring: 0 0 0 3px rgba(47, 107, 79, 0.3);
-  --radius: 12px;
-  --radius-sm: 8px;
-  --radius-pill: 999px;
-  --shadow-sm: 0 1px 2px rgba(31, 42, 36, 0.06), 0 1px 3px rgba(31, 42, 36, 0.08);
-  --shadow: 0 4px 12px rgba(31, 42, 36, 0.08), 0 2px 4px rgba(31, 42, 36, 0.05);
-  --shadow-lg: 0 18px 40px rgba(31, 42, 36, 0.18);
+  --color-danger-border: #f1c2bd;
+  --color-warning-soft: #faf3df;
+  --color-warning-border: #dcc27a;
+  --color-warning-text: #5a4410;
+  --focus-ring: 0 0 0 3px rgba(11, 122, 120, 0.3);
+  --radius: 6px;
+  --radius-sm: 4px;
+  --shadow-overlay: 0 6px 20px rgba(22, 36, 58, 0.14);
   --font-sans:
     system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif,
     'Apple Color Emoji', 'Segoe UI Emoji';
-  --transition: 150ms ease;
+  --transition: 120ms ease;
   color-scheme: light;
 }
 
@@ -58,9 +62,9 @@ h4 {
 }
 
 h2 {
-  font-size: 1.75rem;
+  font-size: 1.6rem;
+  font-weight: 650;
   margin: 0 0 1rem;
-  letter-spacing: -0.01em;
 }
 
 h3 {
@@ -78,7 +82,7 @@ a {
 }
 
 a:hover {
-  color: var(--color-primary-hover);
+  color: var(--color-accent-hover);
 }
 
 img {
@@ -86,7 +90,7 @@ img {
 }
 
 :focus-visible {
-  outline: 3px solid var(--color-primary);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
@@ -126,7 +130,7 @@ textarea {
 
 input::placeholder,
 textarea::placeholder {
-  color: #8a918b;
+  color: var(--color-placeholder);
 }
 
 input:hover,
@@ -139,7 +143,7 @@ input:focus,
 select:focus,
 textarea:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: var(--color-accent);
   box-shadow: var(--focus-ring);
 }
 
@@ -147,7 +151,7 @@ select {
   appearance: none;
   padding-right: 2.25rem;
   cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%235a645d' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='none' stroke='%234d5d72' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
 }
@@ -156,7 +160,7 @@ input[type='checkbox'] {
   width: 1.1rem;
   height: 1.1rem;
   margin: 0;
-  accent-color: var(--color-primary);
+  accent-color: var(--color-accent);
   cursor: pointer;
 }
 
@@ -191,8 +195,7 @@ fieldset {
   transition:
     background-color var(--transition),
     border-color var(--transition),
-    color var(--transition),
-    box-shadow var(--transition);
+    color var(--transition);
 }
 
 .btn:disabled {
@@ -244,9 +247,9 @@ fieldset {
   align-items: center;
   gap: 0.35rem;
   min-height: 2rem;
-  padding: 0.25rem 0.8rem;
+  padding: 0.25rem 0.7rem;
   border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   background: var(--color-surface);
   color: var(--color-text);
   font-size: 0.875rem;
@@ -259,14 +262,18 @@ fieldset {
 }
 
 .chip:hover {
-  border-color: var(--color-primary);
-  background: var(--color-primary-soft);
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
 }
 
 .chip.active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+  background: var(--color-accent);
+  border-color: var(--color-accent);
   color: #fff;
+}
+
+.chip.active:hover {
+  background: var(--color-accent-hover);
 }
 
 .sci {
@@ -288,7 +295,7 @@ fieldset {
 
 .error-message {
   padding: 0.75rem 1rem;
-  border: 1px solid #f1c2bd;
+  border: 1px solid var(--color-danger-border);
   border-radius: var(--radius-sm);
   background: var(--color-danger-soft);
 }
@@ -296,55 +303,55 @@ fieldset {
 .status {
   display: inline-flex;
   align-items: center;
-  padding: 0.15rem 0.6rem;
-  border-radius: var(--radius-pill);
+  padding: 0.05rem 0.45rem;
+  border-radius: 3px;
   font-size: 0.75rem;
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.5;
   text-transform: capitalize;
-  background: #eceff1;
-  color: #3f4a54;
+  background: #e8ecf1;
+  color: #435163;
   white-space: nowrap;
 }
 
 .status[data-status='least concern' i] {
-  background: #e1f1e4;
-  color: #1c5e2f;
+  background: #e2efe7;
+  color: #2b5840;
 }
 
 .status[data-status='near threatened' i] {
-  background: #edf2d6;
-  color: #4b5e0c;
+  background: #eaeedb;
+  color: #4c5722;
 }
 
 .status[data-status='vulnerable' i] {
-  background: #fcefcf;
-  color: #7a4f00;
+  background: #f3ecd7;
+  color: #694f0f;
 }
 
 .status[data-status='endangered' i] {
-  background: #fde2cf;
-  color: #9a3a0b;
+  background: #f5e4d8;
+  color: #7a3b16;
 }
 
 .status[data-status='critically endangered' i] {
-  background: #fad9d7;
-  color: #96161a;
+  background: #f4dddd;
+  color: #882424;
 }
 
 .status[data-status='extinct in the wild' i] {
-  background: #ebe2f4;
-  color: #553582;
+  background: #e7e4ef;
+  color: #4a3e6a;
 }
 
 .status[data-status='extinct' i] {
-  background: #2f3330;
+  background: #2b3646;
   color: #fff;
 }
 
 .status[data-status='data deficient' i] {
-  background: #eceff1;
-  color: #3f4a54;
+  background: #e8ecf1;
+  color: #435163;
 }
 
 .page-head {
@@ -368,8 +375,8 @@ fieldset {
 
 .animal-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 1rem;
 }
 
 .animal-card {
@@ -379,29 +386,33 @@ fieldset {
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition:
-    transform var(--transition),
-    box-shadow var(--transition),
-    border-color var(--transition);
+  transition: border-color var(--transition);
 }
 
 .animal-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
-  border-color: var(--color-border-strong);
+  border-color: var(--color-accent);
 }
 
 .card-media {
+  display: grid;
   aspect-ratio: 4 / 3;
-  background: var(--color-primary-soft)
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24'%3E%3Cg fill='%2394b8a3'%3E%3Cellipse cx='12' cy='17' rx='5' ry='3.8'/%3E%3Ccircle cx='5.5' cy='10' r='2'/%3E%3Ccircle cx='9.5' cy='6.5' r='2.2'/%3E%3Ccircle cx='14.5' cy='6.5' r='2.2'/%3E%3Ccircle cx='18.5' cy='10' r='2'/%3E%3C/g%3E%3C/svg%3E")
-    no-repeat center;
+  background: var(--color-surface-muted);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.card-media::before {
+  content: 'No picture';
+  grid-area: 1 / 1;
+  place-self: center;
+  font-size: 0.8rem;
+  color: var(--color-muted);
 }
 
 .card-media img {
+  grid-area: 1 / 1;
   display: block;
+  min-height: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -411,12 +422,13 @@ fieldset {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.2rem;
-  padding: 0.85rem 1rem 1rem;
+  gap: 0.15rem;
+  padding: 0.7rem 0.85rem 0.8rem;
 }
 
 .card-title {
-  font-size: 1.05rem;
+  font-size: 1rem;
+  font-weight: 650;
 }
 
 .card-body .sci {
@@ -424,7 +436,7 @@ fieldset {
 }
 
 .card-body .status {
-  margin-top: 0.4rem;
+  margin-top: 0.35rem;
 }
 
 @media (max-width: 600px) {

@@ -8,11 +8,10 @@ form {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem 1.25rem;
-  padding: 1.75rem;
+  padding: 1.5rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
 }
 
 label {
@@ -96,7 +95,6 @@ form > .field-error {
   object-fit: cover;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-sm);
 }
 
 .actions {
@@ -114,7 +112,7 @@ form > .field-error {
   gap: 0.75rem;
   margin-bottom: 1.25rem;
   padding: 1rem 1.25rem;
-  border: 1px solid #ecd3b1;
+  border: 1px solid var(--color-accent-border);
   border-radius: var(--radius);
   background: var(--color-accent-soft);
 }
@@ -131,18 +129,18 @@ form > .field-error {
 .duplicate-warning {
   margin-top: -0.5rem;
   padding: 0.75rem 1rem;
-  border: 1px solid #e5c860;
-  border-left-width: 4px;
+  border: 1px solid var(--color-warning-border);
+  border-left-width: 3px;
   border-radius: var(--radius-sm);
-  background: #fff8db;
-  color: #5c4600;
+  background: var(--color-warning-soft);
+  color: var(--color-warning-text);
   font-size: 0.9rem;
 }
 
 .duplicate-warning a {
   margin-left: 0.4rem;
   font-weight: 600;
-  color: #5c4600;
+  color: var(--color-warning-text);
 }
 
 .duplicate-warning .scientific {
