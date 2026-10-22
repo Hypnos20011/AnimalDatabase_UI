@@ -72,6 +72,7 @@ git @a -C D:\AnimalDatabase.Api status
 2. **API:** open `D:\AnimalDatabase.Api` in **Rider** and run the `http` launch profile. It
    listens on `http://localhost:5190` (the `https` profile adds `https://localhost:7106`).
    Command-line alternative: `dotnet run --launch-profile http` in that folder.
+   In Development, the Swagger page is at `http://localhost:5190/swagger`.
 3. **Frontend:** open `D:\AnimalDatabaseProject` in **WebStorm** (or a terminal) and run
    `npm start` (`ng serve`). Open `http://localhost:4200`.
 
@@ -450,8 +451,6 @@ Known issues:
 
 - Wikipedia lookup: length and lifespan often empty; some animals have no IUCN status on
   Wikidata; fun-fact choice is heuristic; English Wikipedia only for name searches.
-- Swashbuckle is referenced and the launch profiles open `/swagger`, but `Program.cs` doesn't call
-  `AddSwaggerGen` / `UseSwagger`, so the Swagger page isn't served (the API itself works).
 - CORS only allows `http://localhost:4200`, and both environment files point at
   `http://localhost:5190/api`; deploying anywhere else needs both changed.
 - List state (filters, sort, query) resets on a full page reload; it isn't in the URL.
@@ -464,7 +463,6 @@ Ideas (not started; ask Leo before building):
 - Put filters/sort in the URL query string so they survive reloads and can be shared.
 - Search habitat and range too ("characteristics" search from the original vision).
 - Height and lifespan range filters, like length and weight.
-- Wire up Swagger in `Program.cs` for development.
 - A recent-searches time window for Top searches (for example last 30 days, using `searched_at`).
 
 ---
