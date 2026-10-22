@@ -114,10 +114,17 @@
       </dl>
     }
 
-    @if (animal()!.profile) {
+    @if (funFact()) {
+      <aside class="fun-fact">
+        <span class="fun-fact-label">Fun fact</span>
+        <p>{{ funFact() }}</p>
+      </aside>
+    }
+
+    @if (profileText()) {
       <section class="profile">
         <h3>Profile</h3>
-        <p>{{ animal()!.profile }}</p>
+        <p>{{ profileText() }}</p>
       </section>
     }
 

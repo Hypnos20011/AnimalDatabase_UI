@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { Animal } from '../animal-model/animal.model';
@@ -20,6 +20,18 @@ export class AnimalDetail {
   animal = signal<Animal | null>(null);
   loading = signal(true);
   images = signal<AnimalImage[]>([]);
+
+  private profileParts = computed(() => {
+    const profile = this.animal()?.profile ?? '';
+    const match = profile.match(/\s*Fun fact:\s*/i);
+    if (!match || match.index === undefined) return { text: profile.trim(), funFact: '' };
+    return {
+      text: profile.slice(0, match.index).trim(),
+      funFact: profile.slice(match.index + match[0].length).trim(),
+    };
+  });
+  profileText = computed(() => this.profileParts().text);
+  funFact = computed(() => this.profileParts().funFact);
   imagesLoading = signal(true);
   showDetails = signal(false);
   deleting = signal(false);

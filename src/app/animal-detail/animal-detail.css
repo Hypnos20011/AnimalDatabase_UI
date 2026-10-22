@@ -114,6 +114,7 @@
   max-width: 70ch;
   margin: 0;
   line-height: 1.65;
+  white-space: pre-line;
 }
 
 .actions {
@@ -146,4 +147,26 @@
   .facts {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+.fun-fact {
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid var(--color-accent);
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-soft);
+}
+
+.fun-fact-label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.fun-fact p {
+  margin: 0;
+  line-height: 1.6;
 }
