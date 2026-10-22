@@ -1,15 +1,17 @@
-<h2>Animals</h2>
+<div class="page-head">
+  <h2>Animals</h2>
 
-<div class="top-actions">
-  <a routerLink="/animals/new" class="add-link">+ Add animal</a>
-  <button
-    type="button"
-    class="random-button"
-    [disabled]="animals().length === 0"
-    (click)="openRandomAnimal()"
-  >
-    Random animal
-  </button>
+  <div class="top-actions">
+    <a routerLink="/animals/new" class="add-link btn btn-primary">+ Add animal</a>
+    <button
+      type="button"
+      class="random-button btn btn-secondary"
+      [disabled]="animals().length === 0"
+      (click)="openRandomAnimal()"
+    >
+      Random animal
+    </button>
+  </div>
 </div>
 
 <div class="search-wrap">
@@ -46,7 +48,7 @@
 </div>
 
 <div class="filter-bar">
-  <button type="button" class="filter-toggle" (click)="filtersOpen.set(true)">
+  <button type="button" class="filter-toggle btn btn-secondary" (click)="filtersOpen.set(true)">
     Filters
     @if (activeFilterCount() > 0) {
       <span class="badge">{{ activeFilterCount() }}</span>
@@ -163,7 +165,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="chip" (click)="clearAll()">Clear all</button>
-        <button type="button" class="apply" (click)="filtersOpen.set(false)">
+        <button type="button" class="apply btn btn-primary" (click)="filtersOpen.set(false)">
           Show {{ filteredAnimals().length }} animals
         </button>
       </div>
@@ -193,28 +195,47 @@
   </section>
 }
 @if (loading()) {
-  <p>Loading...</p>
+  <p class="state-message">Loading...</p>
 }
 
 @if (error()) {
-  <p style="color: red">{{ error() }}</p>
+  <p class="error-message">{{ error() }}</p>
 }
 
 @if (!loading() && filteredAnimals().length === 0) {
-  <p>No animals match your filters.</p>
+  <p class="state-message">No animals match your filters.</p>
 }
 
 @if (filteredAnimals().length > 0) {
-  <ul>
+  <ul class="animal-grid">
     @for (animal of sortedAnimals(); track animal.id) {
-      <li tabindex="0" (click)="selectAnimal(animal)" (keydown.enter)="selectAnimal(animal)">
-        <strong>{{ animal.commonName }}</strong>
-        @if (animal.scientificName) {
-          <em> ({{ animal.scientificName }})</em>
-        }
-        @if (animal.iucnStatus) {
-          — {{ animal.iucnStatus }}
-        }
+      <li
+        class="animal-card"
+        tabindex="0"
+        (click)="selectAnimal(animal)"
+        (keydown.enter)="selectAnimal(animal)"
+      >
+        <div class="card-media">
+          @if (getThumbnail(animal); as thumb) {
+            <img
+              [src]="thumb"
+              alt=""
+              loading="lazy"
+              (error)="$any($event.target).style.visibility = 'hidden'"
+            />
+          }
+        </div>
+        <div class="card-body">
+          <strong class="card-title">{{ animal.commonName }}</strong>
+          @if (animal.scientificName) {
+            <em class="sci">{{ animal.scientificName }}</em>
+          }
+          @if (animal.iucnStatus) {
+            <span class="status" [attr.data-status]="animal.iucnStatus">{{
+              animal.iucnStatus
+            }}</span>
+          }
+        </div>
       </li>
     }
   </ul>
