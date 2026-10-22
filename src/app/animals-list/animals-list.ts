@@ -4,6 +4,8 @@ import { Router, RouterLink } from '@angular/router';
 import { AnimalService } from '../animal.service';
 import { Animal } from '../animal-model/animal.model';
 import { AnimalListState } from './animal-list-state';
+import { SearchService } from '../search.service';
+import { TopSearch } from '../animal-model/top-search.model';
 
 @Component({
   selector: 'app-animals-list',
@@ -18,6 +20,7 @@ export class AnimalsList {
   private animalService = inject(AnimalService);
   private router = inject(Router);
   private state = inject(AnimalListState);
+  private searchService = inject(SearchService);
 
   animals = signal<Animal[]>([]);
   loading = signal(true);
@@ -32,6 +35,7 @@ export class AnimalsList {
   weightFrom = this.state.weightFrom;
   weightTo = this.state.weightTo;
   filtersOpen = signal(false);
+  topSearches = signal<TopSearch[]>([]);
 
   activeFilterCount = computed(
     () =>
@@ -112,6 +116,10 @@ export class AnimalsList {
   });
 
   constructor() {
+    this.searchService.getTop().subscribe({
+      next: (data) => this.topSearches.set(data),
+      error: () => this.topSearches.set([]),
+    });
     this.animalService.getAll().subscribe({
       next: (data) => {
         this.animals.set(data);
@@ -189,6 +197,11 @@ export class AnimalsList {
   }
 
   selectAnimal(animal: Animal): void {
+    this.searchService.record(this.query(), animal.id).subscribe({ error: () => {} });
     this.router.navigate(['/animals', animal.id]);
+  }
+
+  openTopSearch(top: TopSearch): void {
+    this.router.navigate(['/animals', top.animalId]);
   }
 }
