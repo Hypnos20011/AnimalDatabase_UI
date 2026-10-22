@@ -1,0 +1,15 @@
+import { Injectable, signal } from '@angular/core';
+
+export type FilterType = 'all' | 'wild';
+
+@Injectable({ providedIn: 'root' })
+export class AnimalListState {
+  query = signal('');
+  selectedClasses = signal<Set<string>>(new Set());
+  selectedStatuses = signal<Set<string>>(new Set());
+  filterType = signal<FilterType>('all');
+  lengthFrom = signal<number | null>(null);
+  lengthTo = signal<number | null>(null);
+  weightFrom = signal<number | null>(null);
+  weightTo = signal<number | null>(null);
+}

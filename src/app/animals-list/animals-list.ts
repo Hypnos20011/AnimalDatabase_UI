@@ -3,8 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AnimalService } from '../animal.service';
 import { Animal } from '../animal-model/animal.model';
-
-type FilterType = 'all' | 'wild';
+import { AnimalListState } from './animal-list-state';
 
 @Component({
   selector: 'app-animals-list',
@@ -18,19 +17,20 @@ type FilterType = 'all' | 'wild';
 export class AnimalsList {
   private animalService = inject(AnimalService);
   private router = inject(Router);
+  private state = inject(AnimalListState);
 
   animals = signal<Animal[]>([]);
   loading = signal(true);
   error = signal('');
 
-  query = signal('');
-  selectedClasses = signal<Set<string>>(new Set());
-  selectedStatuses = signal<Set<string>>(new Set());
-  filterType = signal<FilterType>('all');
-  lengthFrom = signal<number | null>(null);
-  lengthTo = signal<number | null>(null);
-  weightFrom = signal<number | null>(null);
-  weightTo = signal<number | null>(null);
+  query = this.state.query;
+  selectedClasses = this.state.selectedClasses;
+  selectedStatuses = this.state.selectedStatuses;
+  filterType = this.state.filterType;
+  lengthFrom = this.state.lengthFrom;
+  lengthTo = this.state.lengthTo;
+  weightFrom = this.state.weightFrom;
+  weightTo = this.state.weightTo;
   filtersOpen = signal(false);
 
   activeFilterCount = computed(
