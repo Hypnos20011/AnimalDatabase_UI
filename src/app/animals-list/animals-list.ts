@@ -24,6 +24,10 @@ export class AnimalsList {
   selectedClasses = signal<Set<string>>(new Set());
   selectedStatuses = signal<Set<string>>(new Set());
   filterType = signal<FilterType>('all');
+  lengthFrom = signal<number | null>(null);
+  lengthTo = signal<number | null>(null);
+  weightFrom = signal<number | null>(null);
+  weightTo = signal<number | null>(null);
 
   suggestions = computed(() => {
     const q = this.query().trim().toLowerCase();
@@ -61,6 +65,10 @@ export class AnimalsList {
     const classes = this.selectedClasses();
     const statuses = this.selectedStatuses();
     const type = this.filterType();
+    const lengthFrom = this.lengthFrom();
+    const lengthTo = this.lengthTo();
+    const weightFrom = this.weightFrom();
+    const weightTo = this.weightTo();
 
     return this.animals().filter((animal) => {
       if (q) {
@@ -75,6 +83,14 @@ export class AnimalsList {
       }
 
       if (statuses.size > 0 && animal.iucnStatus && !statuses.has(animal.iucnStatus)) {
+        return false;
+      }
+
+      if (!this.inRange(animal.sizeLengthCmMin, animal.sizeLengthCmMax, lengthFrom, lengthTo)) {
+        return false;
+      }
+
+      if (!this.inRange(animal.weightKgMin, animal.weightKgMax, weightFrom, weightTo)) {
         return false;
       }
 
@@ -123,6 +139,42 @@ export class AnimalsList {
 
   toggleType(): void {
     this.filterType.update((current) => (current === 'all' ? 'wild' : 'all'));
+  }
+
+  toNumber(value: string): number | null {
+    const parsed = parseFloat(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  hasRangeFilter(): boolean {
+    return (
+      this.lengthFrom() !== null ||
+      this.lengthTo() !== null ||
+      this.weightFrom() !== null ||
+      this.weightTo() !== null
+    );
+  }
+
+  clearRanges(): void {
+    this.lengthFrom.set(null);
+    this.lengthTo.set(null);
+    this.weightFrom.set(null);
+    this.weightTo.set(null);
+  }
+
+  private inRange(
+    min: number | null,
+    max: number | null,
+    from: number | null,
+    to: number | null,
+  ): boolean {
+    if (from === null && to === null) return true;
+    const low = min ?? max;
+    const high = max ?? min;
+    if (low === null || high === null) return false;
+    if (from !== null && high < from) return false;
+    if (to !== null && low > to) return false;
+    return true;
   }
 
   getThumbnail(animal: Animal): string | null {

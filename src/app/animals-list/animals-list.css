@@ -101,3 +101,18 @@ li {
   display: inline-block;
   margin-bottom: 12px;
 }
+
+.filter-ranges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filter-ranges input {
+  width: 80px;
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+}

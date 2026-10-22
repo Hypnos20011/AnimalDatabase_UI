@@ -75,6 +75,47 @@
       Wild only
     </button>
   </div>
+
+  <div class="filter-ranges">
+    <span class="chip-label">Length (cm):</span>
+    <input
+      type="number"
+      min="0"
+      placeholder="from"
+      [value]="lengthFrom() ?? ''"
+      (input)="lengthFrom.set(toNumber($any($event.target).value))"
+    />
+    <input
+      type="number"
+      min="0"
+      placeholder="to"
+      [value]="lengthTo() ?? ''"
+      (input)="lengthTo.set(toNumber($any($event.target).value))"
+    />
+  </div>
+
+  <div class="filter-ranges">
+    <span class="chip-label">Weight (kg):</span>
+    <input
+      type="number"
+      min="0"
+      step="0.1"
+      placeholder="from"
+      [value]="weightFrom() ?? ''"
+      (input)="weightFrom.set(toNumber($any($event.target).value))"
+    />
+    <input
+      type="number"
+      min="0"
+      step="0.1"
+      placeholder="to"
+      [value]="weightTo() ?? ''"
+      (input)="weightTo.set(toNumber($any($event.target).value))"
+    />
+    @if (hasRangeFilter()) {
+      <button type="button" class="chip" (click)="clearRanges()">Clear</button>
+    }
+  </div>
 </div>
 
 @if (loading()) {
