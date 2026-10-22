@@ -1,11 +1,25 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AnimalService } from '../animal.service';
 import { Animal, NewAnimal, NewAnimalImage } from '../animal-model/animal.model';
 import { WikipediaImport } from '../animal-model/wikipedia-import.model';
+
+const oneDecimal: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+  const value = control.value;
+  if (value === null || value === undefined || value === '') return null;
+  const tenths = Number(value) * 10;
+  return Math.abs(tenths - Math.round(tenths)) < 1e-6 ? null : { oneDecimal: true };
+};
 
 @Component({
   selector: 'app-animal-form',
@@ -55,10 +69,10 @@ export class AnimalForm {
     family: ['', Validators.maxLength(120)],
     taxonomicClass: [''],
     isDomesticated: [false],
-    sizeLengthCmMin: [null as number | null, Validators.min(0)],
-    sizeLengthCmMax: [null as number | null, Validators.min(0)],
-    sizeHeightCmMin: [null as number | null, Validators.min(0)],
-    sizeHeightCmMax: [null as number | null, Validators.min(0)],
+    sizeLengthCmMin: [null as number | null, [Validators.min(0), oneDecimal]],
+    sizeLengthCmMax: [null as number | null, [Validators.min(0), oneDecimal]],
+    sizeHeightCmMin: [null as number | null, [Validators.min(0), oneDecimal]],
+    sizeHeightCmMax: [null as number | null, [Validators.min(0), oneDecimal]],
     weightKgMin: [null as number | null, Validators.min(0)],
     weightKgMax: [null as number | null, Validators.min(0)],
     lifespanYearsMin: [null as number | null, Validators.min(0)],
@@ -151,6 +165,13 @@ export class AnimalForm {
 
   imageUrl(key: string): string {
     return (this.form.get(key)?.value ?? '').trim();
+  }
+
+  rangeInvalid(...keys: string[]): boolean {
+    return keys.some((key) => {
+      const control = this.form.get(key);
+      return !!control && control.touched && control.invalid;
+    });
   }
 
   imageInvalid(key: string): boolean {

@@ -211,10 +211,10 @@ CREATE TABLE animals (
     family             VARCHAR(120)  NULL,
     taxonomic_class    VARCHAR(40)   NULL,
     is_domesticated    TINYINT(1)    NOT NULL DEFAULT 0,
-    size_length_cm_min INT  NULL,
-    size_length_cm_max INT  NULL,
-    size_height_cm_min INT  NULL,
-    size_height_cm_max INT  NULL,
+    size_length_cm_min DECIMAL(7,1) NULL,
+    size_length_cm_max DECIMAL(7,1) NULL,
+    size_height_cm_min DECIMAL(7,1) NULL,
+    size_height_cm_max DECIMAL(7,1) NULL,
     weight_kg_min      DECIMAL(7,2) NULL,
     weight_kg_max      DECIMAL(7,2) NULL,
     lifespan_years_min INT NULL,
@@ -227,6 +227,8 @@ CREATE TABLE animals (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 ```
+
+Length and height columns were changed from `INT` to `DECIMAL(7,1)` on 2026-10-22 so small animals (for example a 0.5 mm tardigrade, 0.05 cm, is stored as 0.1 cm) don't end up as 0 cm. The API uses `decimal?` for them and the form accepts one decimal (step 0.1).
 
 Values used by the app:
 
@@ -358,7 +360,7 @@ notes, not re-checked today:
    - `P141` IUCN status, mapped from known item ids; for newer status items not in the map it
      falls back to the item's English label (for example "endangered species" becomes
      "endangered")
-   - `P2067` mass (converted to kg), `P2043` length (cm), `P2250` lifespan (years); min/max come
+   - `P2067` mass (converted to kg), `P2043` length (cm, rounded to one decimal half away from zero; a real length never becomes 0, the minimum is 0.1 cm), `P2250` lifespan (years); min/max come
      from all values including lower/upper bounds; deprecated values are skipped
    - For these quantities only values with no `P3831` role qualifier, or with role "adult", are
      used, so chick/newborn weights don't end up in the range
