@@ -64,7 +64,7 @@ label.checkbox {
 }
 
 .wiki-import {
-  display: flex;
+  display: inline-flex;
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 8px;
@@ -75,11 +75,16 @@ label.checkbox {
 }
 
 .wiki-import label {
-  flex: 1;
-  min-width: 240px;
+  width: 280px;
+  flex: none;
 }
 
 .wiki-import p {
   flex-basis: 100%;
   margin: 0;
+}
+
+.wiki-import input {
+  width: 100%;
+  box-sizing: border-box;
 }
