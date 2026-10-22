@@ -1,6 +1,6 @@
 @if (animal()) {
   <article class="detail">
-    <header>
+    <header class="detail-header">
       <h2>{{ animal()!.commonName }}</h2>
       @if (animal()!.scientificName) {
         <em class="sci">{{ animal()!.scientificName }}</em>
@@ -8,7 +8,7 @@
     </header>
 
     @if (imagesLoading()) {
-      <p>Loading images...</p>
+      <p class="hint">Loading images...</p>
     }
 
     @if (!imagesLoading() && images().length > 0) {
@@ -33,57 +33,83 @@
       <p class="no-images">No images uploaded yet.</p>
     }
 
-    <dl>
+    <dl class="facts">
       @if (animal()!.iucnStatus) {
-        <dt>IUCN status</dt>
-        <dd>{{ animal()!.iucnStatus }}</dd>
+        <div class="fact">
+          <dt>IUCN status</dt>
+          <dd>
+            <span class="status" [attr.data-status]="animal()!.iucnStatus">{{
+              animal()!.iucnStatus
+            }}</span>
+          </dd>
+        </div>
       }
       @if (animal()!.weightKgMin != null && animal()!.weightKgMax != null) {
-        <dt>Weight</dt>
-        <dd>{{ animal()!.weightKgMin }}–{{ animal()!.weightKgMax }} kg</dd>
+        <div class="fact">
+          <dt>Weight</dt>
+          <dd>{{ animal()!.weightKgMin }}–{{ animal()!.weightKgMax }} kg</dd>
+        </div>
       }
       @if (animal()!.lifespanYearsMin != null && animal()!.lifespanYearsMax != null) {
-        <dt>Lifespan</dt>
-        <dd>{{ animal()!.lifespanYearsMin }}–{{ animal()!.lifespanYearsMax }} years</dd>
+        <div class="fact">
+          <dt>Lifespan</dt>
+          <dd>{{ animal()!.lifespanYearsMin }}–{{ animal()!.lifespanYearsMax }} years</dd>
+        </div>
       }
       @if (animal()!.habitat) {
-        <dt>Habitat</dt>
-        <dd>{{ animal()!.habitat }}</dd>
+        <div class="fact">
+          <dt>Habitat</dt>
+          <dd>{{ animal()!.habitat }}</dd>
+        </div>
       }
       @if (animal()!.rangeRegion) {
-        <dt>Range</dt>
-        <dd>{{ animal()!.rangeRegion }}</dd>
+        <div class="fact">
+          <dt>Range</dt>
+          <dd>{{ animal()!.rangeRegion }}</dd>
+        </div>
       }
     </dl>
 
-    <button type="button" class="more" (click)="toggleDetails()">
+    <button type="button" class="more btn btn-secondary btn-sm" (click)="toggleDetails()">
       {{ showDetails() ? 'Hide details' : 'More details' }}
     </button>
 
     @if (showDetails()) {
-      <dl class="extra">
+      <dl class="facts extra">
         @if (animal()!.family) {
-          <dt>Family</dt>
-          <dd>{{ animal()!.family }}</dd>
+          <div class="fact">
+            <dt>Family</dt>
+            <dd>{{ animal()!.family }}</dd>
+          </div>
         }
         @if (animal()!.taxonomicClass) {
-          <dt>Class</dt>
-          <dd>{{ animal()!.taxonomicClass }}</dd>
+          <div class="fact">
+            <dt>Class</dt>
+            <dd>{{ animal()!.taxonomicClass }}</dd>
+          </div>
         }
         @if (animal()!.isDomesticated) {
-          <dt>Type</dt>
-          <dd>Domesticated</dd>
+          <div class="fact">
+            <dt>Type</dt>
+            <dd>Domesticated</dd>
+          </div>
         } @else {
-          <dt>Type</dt>
-          <dd>Wild</dd>
+          <div class="fact">
+            <dt>Type</dt>
+            <dd>Wild</dd>
+          </div>
         }
         @if (animal()!.sizeLengthCmMin != null && animal()!.sizeLengthCmMax != null) {
-          <dt>Body length</dt>
-          <dd>{{ animal()!.sizeLengthCmMin }}–{{ animal()!.sizeLengthCmMax }} cm</dd>
+          <div class="fact">
+            <dt>Body length</dt>
+            <dd>{{ animal()!.sizeLengthCmMin }}–{{ animal()!.sizeLengthCmMax }} cm</dd>
+          </div>
         }
         @if (animal()!.sizeHeightCmMin != null && animal()!.sizeHeightCmMax != null) {
-          <dt>Shoulder height</dt>
-          <dd>{{ animal()!.sizeHeightCmMin }}–{{ animal()!.sizeHeightCmMax }} cm</dd>
+          <div class="fact">
+            <dt>Shoulder height</dt>
+            <dd>{{ animal()!.sizeHeightCmMin }}–{{ animal()!.sizeHeightCmMax }} cm</dd>
+          </div>
         }
       </dl>
     }
@@ -96,9 +122,14 @@
     }
 
     <div class="actions">
-      <button type="button" class="back" (click)="onClose()">Back to list</button>
-      <a class="edit" [routerLink]="['/animals', animal()!.id, 'edit']">Edit</a>
-      <button type="button" class="delete" [disabled]="deleting()" (click)="onDelete()">
+      <button type="button" class="back btn btn-secondary" (click)="onClose()">Back to list</button>
+      <a class="edit btn btn-primary" [routerLink]="['/animals', animal()!.id, 'edit']">Edit</a>
+      <button
+        type="button"
+        class="delete btn btn-danger"
+        [disabled]="deleting()"
+        (click)="onDelete()"
+      >
         {{ deleting() ? 'Deleting...' : 'Delete' }}
       </button>
     </div>
@@ -108,9 +139,9 @@
   </article>
 } @else {
   @if (loading()) {
-    <p>Loading...</p>
+    <p class="state-message">Loading...</p>
   } @else {
-    <p>Animal not found.</p>
-    <button type="button" class="back" (click)="onClose()">Back to list</button>
+    <p class="state-message">Animal not found.</p>
+    <button type="button" class="back btn btn-secondary" (click)="onClose()">Back to list</button>
   }
 }
