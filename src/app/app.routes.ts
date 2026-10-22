@@ -6,6 +6,7 @@ import { AnimalDetail } from './animal-detail/animal-detail';
 export const routes: Routes = [
   { path: '', component: AnimalsList },
   { path: 'animals/new', component: AnimalForm },
+  { path: 'animals/:id/edit', component: AnimalForm },
   { path: 'animals/:id', component: AnimalDetail },
   { path: '**', redirectTo: '' },
 ];

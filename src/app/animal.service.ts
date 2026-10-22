@@ -2,8 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Animal, NewAnimal } from './animal-model/animal.model';
-import {AnimalImage} from './animal-model/animal-image.model';
-
+import { AnimalImage } from './animal-model/animal-image.model';
 
 @Injectable({ providedIn: 'root' })
 export class AnimalService {
@@ -24,5 +23,13 @@ export class AnimalService {
 
   create(animal: NewAnimal): Observable<Animal> {
     return this.http.post<Animal>(this.apiUrl, animal);
+  }
+
+  update(id: number, animal: NewAnimal): Observable<Animal> {
+    return this.http.put<Animal>(`${this.apiUrl}/${id}`, animal);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

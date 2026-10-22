@@ -1,13 +1,13 @@
 import { Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Animal } from '../animal-model/animal.model';
 import { AnimalService } from '../animal.service';
 import { AnimalImage } from '../animal-model/animal-image.model';
 
 @Component({
   selector: 'app-animal-detail',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './animal-detail.html',
   styleUrl: './animal-detail.css',
 })
@@ -22,6 +22,8 @@ export class AnimalDetail {
   images = signal<AnimalImage[]>([]);
   imagesLoading = signal(true);
   showDetails = signal(false);
+  deleting = signal(false);
+  deleteError = signal('');
 
   constructor() {
     effect(() => {
@@ -63,6 +65,21 @@ export class AnimalDetail {
 
   toggleDetails(): void {
     this.showDetails.update((value) => !value);
+  }
+
+  onDelete(): void {
+    const animal = this.animal();
+    if (!animal) return;
+    if (!confirm(`Delete ${animal.commonName}? This can't be undone.`)) return;
+    this.deleting.set(true);
+    this.deleteError.set('');
+    this.animalService.delete(animal.id).subscribe({
+      next: () => this.router.navigate(['/']),
+      error: () => {
+        this.deleteError.set('Could not delete this animal.');
+        this.deleting.set(false);
+      },
+    });
   }
 
   onClose(): void {

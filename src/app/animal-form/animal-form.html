@@ -1,4 +1,8 @@
-<h2>Add animal</h2>
+<h2>{{ editing() ? 'Edit animal' : 'Add animal' }}</h2>
+
+@if (loadingAnimal()) {
+  <p>Loading...</p>
+}
 
 <form [formGroup]="form" (ngSubmit)="submit()">
   <label>
@@ -85,11 +89,17 @@
 
   <fieldset class="images">
     <legend>Pictures</legend>
-    <p class="hint">On Wikipedia, right-click the photo and choose "Copy image address", then paste it here.</p>
+    <p class="hint">
+      On Wikipedia, right-click the photo and choose "Copy image address", then paste it here.
+    </p>
     @for (field of imageFields; track field.key) {
       <label>
         {{ field.label }}
-        <input type="url" placeholder="https://upload.wikimedia.org/..." [formControlName]="field.key" />
+        <input
+          type="url"
+          placeholder="https://upload.wikimedia.org/..."
+          [formControlName]="field.key"
+        />
       </label>
       @if (imageInvalid(field.key)) {
         <p class="field-error">That doesn't look like an image link.</p>
@@ -106,6 +116,6 @@
 
   <div class="actions">
     <button type="submit" [disabled]="saving()">{{ saving() ? 'Saving...' : 'Save' }}</button>
-    <a routerLink="/">Cancel</a>
+    <a [routerLink]="editing() ? ['/animals', id()] : '/'">Cancel</a>
   </div>
 </form>

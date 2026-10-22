@@ -95,7 +95,16 @@
       </section>
     }
 
-    <button type="button" class="back" (click)="onClose()">Back to list</button>
+    <div class="actions">
+      <button type="button" class="back" (click)="onClose()">Back to list</button>
+      <a class="edit" [routerLink]="['/animals', animal()!.id, 'edit']">Edit</a>
+      <button type="button" class="delete" [disabled]="deleting()" (click)="onDelete()">
+        {{ deleting() ? 'Deleting...' : 'Delete' }}
+      </button>
+    </div>
+    @if (deleteError()) {
+      <p class="delete-error">{{ deleteError() }}</p>
+    }
   </article>
 } @else {
   @if (loading()) {

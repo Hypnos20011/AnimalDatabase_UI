@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { forkJoin } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AnimalService } from '../animal.service';
@@ -11,6 +12,8 @@ import { NewAnimal, NewAnimalImage } from '../animal-model/animal.model';
   styleUrl: './animal-form.css',
 })
 export class AnimalForm {
+  id = input<string>();
+
   private fb = inject(FormBuilder);
   private animalService = inject(AnimalService);
   private router = inject(Router);
@@ -34,7 +37,10 @@ export class AnimalForm {
     { key: 'otherImageUrl', kind: 'unspecified', label: 'Other' },
   ] as const;
 
+  editing = computed(() => !!this.id());
+  loadingAnimal = signal(false);
   saving = signal(false);
+  private originalCaptions = new Map<string, string | null>();
   error = signal('');
 
   form = this.fb.group({
@@ -60,6 +66,15 @@ export class AnimalForm {
     babyImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
     otherImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
   });
+
+  constructor() {
+    effect(() => {
+      const id = this.id();
+      untracked(() => {
+        if (id) this.loadAnimal(Number(id));
+      });
+    });
+  }
 
   submit(): void {
     if (this.form.invalid) {
@@ -109,12 +124,57 @@ export class AnimalForm {
     return !!control && control.touched && control.invalid;
   }
 
+  private loadAnimal(id: number): void {
+    this.loadingAnimal.set(true);
+    this.error.set('');
+    forkJoin({
+      animal: this.animalService.getById(id),
+      images: this.animalService.getImages(id),
+    }).subscribe({
+      next: ({ animal, images }) => {
+        this.form.patchValue({
+          commonName: animal.commonName,
+          scientificName: animal.scientificName ?? '',
+          family: animal.family ?? '',
+          taxonomicClass: animal.taxonomicClass ?? '',
+          isDomesticated: animal.isDomesticated,
+          sizeLengthCmMin: animal.sizeLengthCmMin,
+          sizeLengthCmMax: animal.sizeLengthCmMax,
+          sizeHeightCmMin: animal.sizeHeightCmMin,
+          sizeHeightCmMax: animal.sizeHeightCmMax,
+          weightKgMin: animal.weightKgMin,
+          weightKgMax: animal.weightKgMax,
+          lifespanYearsMin: animal.lifespanYearsMin,
+          lifespanYearsMax: animal.lifespanYearsMax,
+          iucnStatus: animal.iucnStatus ?? '',
+          habitat: animal.habitat ?? '',
+          rangeRegion: animal.rangeRegion ?? '',
+          profile: animal.profile ?? '',
+        });
+        this.originalCaptions.clear();
+        for (const field of this.imageFields) {
+          const image = images.find((i) => i.kind === field.kind);
+          this.form.get(field.key)?.setValue(image?.url ?? '');
+          if (image) this.originalCaptions.set(image.url, image.caption);
+        }
+        this.loadingAnimal.set(false);
+      },
+      error: () => {
+        this.error.set('Could not load this animal.');
+        this.loadingAnimal.set(false);
+      },
+    });
+  }
+
   private collectImages(): NewAnimalImage[] {
     const images: NewAnimalImage[] = [];
     for (const field of this.imageFields) {
       const url = this.imageUrl(field.key);
       if (url) {
-        images.push({ kind: field.kind, url, caption: field.label });
+        const caption = this.originalCaptions.has(url)
+          ? this.originalCaptions.get(url)!
+          : field.label;
+        images.push({ kind: field.kind, url, caption });
       }
     }
     return images;
