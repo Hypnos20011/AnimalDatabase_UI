@@ -55,6 +55,16 @@
   @if (activeFilterCount() > 0) {
     <button type="button" class="chip" (click)="clearAll()">Clear all</button>
   }
+  <label class="sort">
+    Sort by
+    <select (change)="onSortChange($any($event.target).value)">
+      @for (option of sortOptions; track option.value) {
+        <option [value]="option.value" [selected]="option.value === sortBy()">
+          {{ option.label }}
+        </option>
+      }
+    </select>
+  </label>
 </div>
 
 @if (filtersOpen()) {
@@ -196,7 +206,7 @@
 
 @if (filteredAnimals().length > 0) {
   <ul>
-    @for (animal of filteredAnimals(); track animal.id) {
+    @for (animal of sortedAnimals(); track animal.id) {
       <li tabindex="0" (click)="selectAnimal(animal)" (keydown.enter)="selectAnimal(animal)">
         <strong>{{ animal.commonName }}</strong>
         @if (animal.scientificName) {

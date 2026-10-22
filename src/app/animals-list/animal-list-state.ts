@@ -2,6 +2,9 @@ import { Injectable, signal } from '@angular/core';
 
 export type FilterType = 'all' | 'wild';
 
+export type SortOption =
+  'name-asc' | 'name-desc' | 'length-desc' | 'length-asc' | 'weight-desc' | 'weight-asc' | 'newest';
+
 @Injectable({ providedIn: 'root' })
 export class AnimalListState {
   query = signal('');
@@ -12,4 +15,5 @@ export class AnimalListState {
   lengthTo = signal<number | null>(null);
   weightFrom = signal<number | null>(null);
   weightTo = signal<number | null>(null);
+  sortBy = signal<SortOption>('name-asc');
 }

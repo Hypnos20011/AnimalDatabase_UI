@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AnimalService } from '../animal.service';
 import { Animal } from '../animal-model/animal.model';
-import { AnimalListState } from './animal-list-state';
+import { AnimalListState, SortOption } from './animal-list-state';
 import { SearchService } from '../search.service';
 import { TopSearch } from '../animal-model/top-search.model';
 
@@ -34,7 +34,18 @@ export class AnimalsList {
   lengthTo = this.state.lengthTo;
   weightFrom = this.state.weightFrom;
   weightTo = this.state.weightTo;
+  sortBy = this.state.sortBy;
   filtersOpen = signal(false);
+
+  readonly sortOptions: { value: SortOption; label: string }[] = [
+    { value: 'name-asc', label: 'Name (A to Z)' },
+    { value: 'name-desc', label: 'Name (Z to A)' },
+    { value: 'length-desc', label: 'Longest first' },
+    { value: 'length-asc', label: 'Shortest first' },
+    { value: 'weight-desc', label: 'Heaviest first' },
+    { value: 'weight-asc', label: 'Lightest first' },
+    { value: 'newest', label: 'Newest first' },
+  ];
   topSearches = signal<TopSearch[]>([]);
 
   activeFilterCount = computed(
@@ -115,6 +126,44 @@ export class AnimalsList {
     });
   });
 
+  sortedAnimals = computed(() => {
+    const sort = this.sortBy();
+    const list = [...this.filteredAnimals()];
+    const byName = (a: Animal, b: Animal) => a.commonName.localeCompare(b.commonName);
+    const byNumber = (
+      value: (a: Animal) => number | null,
+      descending: boolean,
+    ): ((a: Animal, b: Animal) => number) => {
+      return (a, b) => {
+        const x = value(a);
+        const y = value(b);
+        if (x === null && y === null) return byName(a, b);
+        if (x === null) return 1;
+        if (y === null) return -1;
+        return (descending ? y - x : x - y) || byName(a, b);
+      };
+    };
+    const length = (a: Animal) => a.sizeLengthCmMax ?? a.sizeLengthCmMin;
+    const weight = (a: Animal) => a.weightKgMax ?? a.weightKgMin;
+
+    switch (sort) {
+      case 'name-desc':
+        return list.sort((a, b) => byName(b, a));
+      case 'length-desc':
+        return list.sort(byNumber(length, true));
+      case 'length-asc':
+        return list.sort(byNumber(length, false));
+      case 'weight-desc':
+        return list.sort(byNumber(weight, true));
+      case 'weight-asc':
+        return list.sort(byNumber(weight, false));
+      case 'newest':
+        return list.sort((a, b) => b.id - a.id);
+      default:
+        return list.sort(byName);
+    }
+  });
+
   constructor() {
     this.searchService.getTop().subscribe({
       next: (data) => this.topSearches.set(data),
@@ -175,6 +224,10 @@ export class AnimalsList {
     this.lengthTo.set(null);
     this.weightFrom.set(null);
     this.weightTo.set(null);
+  }
+
+  onSortChange(value: string): void {
+    this.sortBy.set(value as SortOption);
   }
 
   private inRange(

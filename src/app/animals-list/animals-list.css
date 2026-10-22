@@ -262,3 +262,10 @@ li {
 .random-button:hover:not(:disabled) {
   background: #f0f0f0;
 }
+
+.sort {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
