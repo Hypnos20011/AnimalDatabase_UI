@@ -120,7 +120,7 @@ form > .field-error {
 }
 
 .wiki-import label {
-  flex: 1 1 260px;
+  flex: 0 1 320px;
   min-width: 0;
 }
 
