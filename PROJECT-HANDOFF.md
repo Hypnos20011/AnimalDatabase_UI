@@ -1,63 +1,206 @@
-# Animal Database — Project Handoff
+# Animal Database: Project Handoff
 
-Written 2026-10-22 so a different AI (or a fresh Hermes session) can pick this up
-without re-reading a 15-hour conversation.
+Notes so Leo, or another AI assistant, can pick this project up without re-reading old
+conversations. Last updated 2026-10-22 (end of day), checked against the code in both repos.
 
 ---
 
 ## 1. What the project is
 
-Leo's personal side project. A personal collection of **weird / unusual animals**
-(not common ones — Wikipedia already covers tigers in 40 languages). Leo's words:
-"its just gonna be my own collection for a while."
+Leo's personal side project: a personal collection of **weird / unusual animals** (not common
+ones; Wikipedia already covers tigers in 40 languages). Leo's words: "its just gonna be my own
+collection for a while."
 
-Original vision, verbatim from Leo:
+Original vision, from Leo:
+
 - Website with a search function and a filter
 - Search by name **or** by characteristics when he can't remember the name
-- "Top Searches" panel below, showing most-frequently-searched names
-- As you type: suggestions with a name + small matching image
-- Click through → detail view with pictures of the animal (male / female / baby)
-- Detail view: bullet-point profile, scientific name, family
+- "Top Searches" panel showing the most frequently searched animals
+- Suggestions while typing, with a name and a small matching image
+- Click through to a detail view with pictures of the animal (male / female / baby)
+- Detail view with a profile, scientific name and family
+
+All of this is built now (see section 7).
 
 **Decisions Leo made** (these are his, don't relitigate them):
+
 - C# / ASP.NET Core for the backend (not Java, not NestJS)
 - MariaDB for the database
-- **Structured filters**, not free-text search
-- **UI design last** — "we do the ui design last. thats what we always get told."
-- Wikiwand is a trap: use `upload.wikimedia.org` / `thumb.wikimedia.org` direct URLs
+- **Structured filters**, not free-text search only
+- Data and business logic first, UI design last (the UI pass was done on 2026-10-22)
+- No Google services: no Google Fonts or other Google-hosted assets; system fonts only
+- Wikiwand is a trap: use direct `upload.wikimedia.org` / `thumb.wikimedia.org` image URLs
 
 ---
 
-## 2. ⚠️ IMPORTANT — the code lives on the D: drive, which gets unplugged
+## 2. Where everything lives
 
-All three layers of this project live on `D:`:
+| Part                   | Path                                                                                                                                 | Remote (branch `master`)                             |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| Angular frontend       | `D:\AnimalDatabaseProject\`                                                                                                          | https://github.com/Hypnos20011/AnimalDatabase_UI     |
+| ASP.NET Core API       | `D:\AnimalDatabase.Api\`                                                                                                             | https://github.com/Hypnos20011/AnimalDatabase_Server |
+| Database               | MariaDB service on `C:` (data in `C:\Program Files\MariaDB*\data`)                                                                   | none                                                 |
+| Backups of originals   | `D:\AnimalDatabase-backup-2026-10-22\` (one folder per change, for example `before-wikipedia`, `before-ui-polish`, `before-restyle`) | none                                                 |
+| Abandoned Java version | `%USERPROFILE%\Pictures\animal-database-api\`                                                                                        | https://github.com/Hypnos20011/AnimalDatabase        |
 
-| Layer | Path |
-|---|---|
-| Angular frontend | `D:\AnimalDatabaseProject\` |
-| ASP.NET Core API | `D:\AnimalDatabase.Api\` |
-| Abandoned Java version | `C:\Users\jas001\Pictures\animal-database-api\` (not on D:) |
+### D: is an external SSD
 
-**D: is an external drive and it is frequently NOT mounted.** This has already
-happened once: on 2026-10-22 morning `Get-PSDrive` returned only `C:`, `J:`, `W:`
-and `Test-Path 'D:\'` was `False` — the whole project looked gone. Leo plugged the
-drive back in and every file was intact.
+`D:` is an external drive and is sometimes **not plugged in**. Once (2026-10-22 morning)
+`Test-Path 'D:\'` was `False` and the whole project looked gone; Leo plugged the drive back in
+and everything was intact.
 
-**First action for whoever picks this up:** run `Get-PSDrive -PSProvider FileSystem`.
-If `D:` is missing, stop and tell Leo to plug in the external drive. Don't start
-rebuilding anything — just check the drive first.
+**First action for whoever picks this up:** run `Get-PSDrive -PSProvider FileSystem`. If `D:` is
+missing, stop and ask Leo to plug in the drive. Don't rebuild anything.
 
-The MariaDB database is safe regardless: it lives in
-`C:\Program Files\MariaDB*\data` on C:, and the service runs independently of D:.
+The database is not affected: MariaDB keeps its data on `C:` and runs independently of `D:`.
+
+Because `D:` is an external drive with a different owner, git refuses to work there unless you
+mark the repo as safe. Always pass it per command:
+
+```powershell
+$g = @('-c','safe.directory=D:/AnimalDatabaseProject')
+git @g status
+$a = @('-c','safe.directory=D:/AnimalDatabase.Api')
+git @a -C D:\AnimalDatabase.Api status
+```
 
 ---
 
-## 3. Current database state
+## 3. How to run it
 
-MariaDB 11.8.3, service running, `localhost:3306`, user `root`.
-Schema name: **`animaldatabase`**
+1. Make sure `D:` is mounted and the MariaDB service is running (`localhost:3306`).
+2. **API:** open `D:\AnimalDatabase.Api` in **Rider** and run the `http` launch profile. It
+   listens on `http://localhost:5190` (the `https` profile adds `https://localhost:7106`).
+   Command-line alternative: `dotnet run --launch-profile http` in that folder.
+3. **Frontend:** open `D:\AnimalDatabaseProject` in **WebStorm** (or a terminal) and run
+   `npm start` (`ng serve`). Open `http://localhost:4200`.
 
-### Table: `animals` (18 columns, one row per animal)
+**After any API change, the API must be restarted in Rider**; there is no hot reload set up.
+
+The connection string is stored in **dotnet user-secrets** (key `ConnectionStrings:AnimalDatabase`,
+`UserSecretsId` in the `.csproj`), not in `appsettings.json`. Never print it or commit it. To set
+it on a new machine:
+
+```
+dotnet user-secrets set "ConnectionStrings:AnimalDatabase" "Server=localhost;Port=3306;Database=animaldatabase;User=root;Password=<password>"
+```
+
+Checks used after frontend changes (run in `D:\AnimalDatabaseProject`):
+
+```powershell
+npx prettier --write src
+npx ng build --output-path "$env:TEMP\adb-buildcheck"
+npx ng test --watch=false
+```
+
+`ng test` runs Vitest; the 2 tests in `src/app/app.spec.ts` must pass.
+
+---
+
+## 4. Architecture
+
+### Frontend: Angular 22 (`D:\AnimalDatabaseProject`)
+
+Angular 22.2, TypeScript 6, standalone components (no `standalone: true` needed), signals
+(`signal`, `computed`, `toSignal`), the new control flow (`@if`, `@for ... track`), reactive forms
+for the add/edit form, and Prettier (`printWidth` 100, single quotes). Angular 22 file names have
+no `.component` suffix (`app.ts`, `animals-list.ts`, `templateUrl` / `styleUrl`).
+
+```
+src/
+  index.html, main.ts, styles.css
+  environments/
+    environment.ts               apiUrl used by production builds
+    environment.development.ts   swapped in for dev builds via fileReplacements in angular.json
+  app/
+    app.ts / app.html / app.css  header bar ("Animal Database" links home) + <router-outlet>
+    app.config.ts                provideRouter(routes, withComponentInputBinding()), provideHttpClient()
+    app.routes.ts                routes, see below
+    app.spec.ts                  2 tests (app creates, header shows the title)
+    animal.service.ts            /api/animals and /api/wikipedia calls
+    search.service.ts            /api/searches calls
+    animal-model/                animal.model.ts (Animal, NewAnimal, NewAnimalImage),
+                                 animal-image.model.ts, top-search.model.ts, wikipedia-import.model.ts
+    animals-list/                list page + animal-list-state.ts
+    animal-detail/               detail page
+    animal-form/                 add / edit form
+```
+
+Routes (`app.routes.ts`):
+
+| Path               | Component                                                              |
+| ------------------ | ---------------------------------------------------------------------- |
+| `''`               | `AnimalsList`                                                          |
+| `animals/new`      | `AnimalForm` (add)                                                     |
+| `animals/:id/edit` | `AnimalForm` (edit, same component; `id` arrives as a component input) |
+| `animals/:id`      | `AnimalDetail`                                                         |
+| `**`               | redirect to `''`                                                       |
+
+Route parameters reach components as inputs (`id = input<string>()`) because of
+`withComponentInputBinding()`.
+
+API base URL: `src/environments/environment.ts` and `environment.development.ts`, both currently
+`apiUrl: 'http://localhost:5190/api'`. Services build their URLs from `environment.apiUrl`.
+
+### Backend: ASP.NET Core .NET 8 (`D:\AnimalDatabase.Api`)
+
+Controllers-style Web API. NuGet packages: **Dapper**, **MySqlConnector**,
+**Swashbuckle.AspNetCore**. Don't add EF Core; it fights Dapper.
+
+```
+Program.cs                      DI, camelCase JSON, CORS for http://localhost:4200, Dapper underscore mapping
+Controllers/
+  AnimalsController.cs          /api/animals
+  SearchesController.cs         /api/searches
+  WikipediaController.cs        /api/wikipedia/import
+Data/
+  AnimalRepository.cs           animals + animal_images SQL (Dapper)
+  SearchRepository.cs           searches SQL
+Services/
+  WikipediaImporter.cs          Wikipedia + Wikidata lookup (typed HttpClient, 15 s timeout, own User-Agent)
+Models/                         Animal (in Animals.cs), AnimalImage, CreateAnimalRequest,
+                                CreateAnimalImageRequest, CreateSearchRequest, TopSearch, WikipediaImportResult
+Database/searches.sql           CREATE TABLE for searches
+```
+
+Two gotchas that cost real time:
+
+1. `Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true` is what maps `common_name` to
+   `CommonName`. Without it every field comes back null.
+2. The JSON options type is **`Microsoft.AspNetCore.Mvc.JsonOptions`**, not
+   `Microsoft.AspNetCore.Http.Json.JsonOptions` (that one is for minimal APIs; controllers ignore
+   it). No Newtonsoft; System.Text.Json only.
+
+Repositories are singletons that read the connection string from configuration and open a new
+`MySqlConnection` per call. Create and update run inside a transaction.
+
+---
+
+## 5. API endpoints
+
+| Method | Path                          | What it does                                                                                                                                                                                                           |
+| ------ | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/animals`                | All animals ordered by common name, each with `thumbnailUrl` (first image by `sort_order`, `id`)                                                                                                                       |
+| GET    | `/api/animals/{id}`           | One animal (404 if missing)                                                                                                                                                                                            |
+| GET    | `/api/animals/{id}/images`    | Images of an animal ordered by `sort_order`, `id`                                                                                                                                                                      |
+| POST   | `/api/animals`                | Create animal + images (`CreateAnimalRequest`), returns 201 with the animal                                                                                                                                            |
+| PUT    | `/api/animals/{id}`           | Update the animal; **replaces all its images** (deletes then re-inserts); 404 if missing                                                                                                                               |
+| DELETE | `/api/animals/{id}`           | Delete; images go with it (`ON DELETE CASCADE`), searches keep their row with `animal_id` set to NULL; 204 or 404                                                                                                      |
+| POST   | `/api/searches`               | Body `{ queryText, animalId }`; records a search only if the animal exists (else 404); 204                                                                                                                             |
+| GET    | `/api/searches/top?limit=5`   | Most-opened animals: `{ animalId, commonName, thumbnailUrl, searchCount }`, limit clamped to 1-20                                                                                                                      |
+| GET    | `/api/wikipedia/import?q=...` | `q` = animal name or Wikipedia link; returns a `WikipediaImportResult` to pre-fill the form. 400 for empty/over 300 chars or a non-article link, 404 if nothing found, 502 if Wikipedia is unreachable, 504 on timeout |
+
+Validation is on `CreateAnimalRequest` via data annotations (lengths match the columns, numbers
+
+> = 0, image `kind` must be `male|female|baby|unspecified`, image URL max 500 chars).
+
+---
+
+## 6. Database
+
+MariaDB 11.8 on `localhost:3306`, schema **`animaldatabase`**.
+
+### `animals`
 
 ```sql
 CREATE TABLE animals (
@@ -84,7 +227,14 @@ CREATE TABLE animals (
 );
 ```
 
-### Table: `animal_images`
+Values used by the app:
+
+- `taxonomic_class`: `mammal`, `bird`, `reptile`, `amphibian`, `fish`, `invertebrate`
+- `iucn_status` (lowercase): `least concern`, `near threatened`, `vulnerable`, `endangered`,
+  `critically endangered`, `extinct in the wild`, `extinct`, `data deficient`
+- `profile` may end with `Fun fact: ...` (see Wikipedia lookup)
+
+### `animal_images`
 
 ```sql
 CREATE TABLE animal_images (
@@ -100,717 +250,238 @@ CREATE TABLE animal_images (
 CREATE INDEX idx_animal_images_animal ON animal_images(animal_id);
 ```
 
-`kind` values: `'male'`, `'female'`, `'baby'`, `'unspecified'`.
+`kind`: `male`, `female`, `baby`, `unspecified`. The form has one URL field per kind; images are
+saved in that order (male, female, baby, other), so the first filled one becomes the thumbnail.
 
-### Animals in the database
+### `searches` (script: `D:\AnimalDatabase.Api\Database\searches.sql`)
 
-| id | Name | Scientific name | Class | IUCN |
-|---|---|---|---|---|
-| 1 | Tiger | Panthera tigris | mammal | endangered |
-| 2 | Okapi | Okapia johnstoni | mammal | endangered |
-| 3 | Marbled Cat | Pardofelis marmorata | mammal | — |
-| 4 | Axolotl | Ambystoma mexicanum | amphibian | critically endangered |
-| — | Giant huntsman spider | Heteropoda maxima | **invertebrate** | least concern |
-| — | Indian pangolin | Manis crassicaudata | mammal | — |
-
-6 animals. Each has one image row.
-
-**Known data bug to fix when resuming:** the Giant huntsman spider was originally
-inserted with `taxonomic_class = 'arachnids'`, which is not a valid value. Leo
-already ran the fix:
 ```sql
-UPDATE animals SET taxonomic_class = 'invertebrate' WHERE common_name = 'Giant huntsman spider';
+CREATE TABLE IF NOT EXISTS searches (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    query_text VARCHAR(255) NOT NULL DEFAULT '',
+    animal_id INT NULL,
+    searched_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_searches_searched_at (searched_at),
+    INDEX idx_searches_animal (animal_id),
+    CONSTRAINT fk_searches_animal FOREIGN KEY (animal_id) REFERENCES animals (id) ON DELETE SET NULL
+);
 ```
 
-**Known data smell:** the Marbled Cat row has `lifespan_years_min = 0`, which is
-wrong (should be ~10–12). Not yet fixed.
+One row per time an animal was opened from the list or the suggestions; `query_text` is what was
+in the search box at that moment (can be empty).
+
+### Data notes
+
+The animal rows change as Leo adds animals through the form, so they aren't listed here. Older
+notes, not re-checked today:
+
+- The Giant huntsman spider was once saved with `taxonomic_class = 'arachnids'`; Leo fixed it
+  to `invertebrate`.
+- The Marbled Cat had `lifespan_years_min = 0` (should be about 10-12). It may still need fixing;
+  it can be done through the Edit page now.
 
 ---
 
-## 4. C# backend — `AnimalDatabase.Api`
+## 7. Features
 
-ASP.NET Core Web API, .NET 8, controllers style, created with:
-```
-dotnet new webapi -n AnimalDatabase.Api --use-controllers -f net8.0
-```
+### List page (`animals-list/`)
 
-**NuGet packages (only these 3, don't add EF Core — it fights Dapper):**
-- `Dapper`
-- `MySqlConnector`
-- `Swashbuckle.AspNetCore`
+- **Search box**: filters the list by common name, scientific name and profile text (case
+  insensitive). From 2 typed characters a **suggestions dropdown** shows up to 8 animals whose
+  common or scientific name matches, each with its thumbnail.
+- **Animal cards** in a grid: thumbnail (or a "No picture" tile), name, scientific name, IUCN
+  status badge.
+- **Filters popup** (modal), opened with the **Filters** button. The button shows a badge with the
+  number of active filters; **Clear all** appears next to it and in the popup footer. Closes on
+  the X, the "Show N animals" button or a click on the backdrop. Filters in it:
+  - Class chips and IUCN status chips, built from the values present in the data. Animals with no
+    class/status aren't excluded by these chips.
+  - "Wild only" (hides domesticated animals).
+  - **Length (cm)** and **Weight (kg)** ranges (from / to). An animal matches if its min-max range
+    overlaps the filter; animals with no length/weight are excluded while that range is set.
+  - Active count = each selected class + each selected status + wild only + 1 per range in use.
+- **Sort by** dropdown: Name (A to Z), Name (Z to A), Longest first, Shortest first, Heaviest
+  first, Lightest first, Newest first. Length/weight sorting uses the max value (falls back to
+  min); animals without a value go last; ties sort by name. "Newest" sorts by `id` descending.
+- **State kept when navigating back**: query, filters, ranges and sort live in the root-provided
+  `AnimalListState` service (`animals-list/animal-list-state.ts`), not in the component, so they
+  survive going to an animal and back. They reset on a full page reload. The popup open state
+  doesn't persist.
+- **Random animal** button: opens a random animal from the currently filtered list (falls back to
+  all animals if the filters match none). Disabled while there are no animals.
+- **Top searches**: chips with thumbnail, name and count from `GET /api/searches/top`, loaded when
+  the list opens.
+  - Opening an animal from the **list cards or the suggestions** calls `POST /api/searches`
+    (`selectAnimal()`), so it counts.
+  - Clicks on **Top searches** chips and the **Random animal** button navigate directly and do
+    **not** count.
+- **+ Add animal** link goes to `/animals/new`.
 
-**Port:** `5190` → `http://localhost:5190/api/animals`
+### Detail page (`animal-detail/`, route `animals/:id`)
 
-**Config:** connection string is in **user-secrets**, NOT in appsettings.json:
-```
-dotnet user-secrets init
-dotnet user-secrets set "ConnectionStrings:AnimalDatabase" "Server=localhost;Port=3306;Database=animaldatabase;User=root;Password=<...>"
-```
+- Loads the animal and its images. Gallery of all images (shown uncropped) with captions.
+- Facts as tiles: IUCN status (badge), weight, lifespan, habitat, range.
+- **More details / Hide details** toggle shows the "nerd" facts: family, class, wild/domesticated,
+  body length, shoulder height.
+- Profile text. If the profile contains `Fun fact:`, everything after it is shown in its own
+  **Fun fact** box (`profileParts` in `animal-detail.ts`); the stored profile isn't changed.
+- Actions: **Back to list**, **Edit** (`/animals/:id/edit`), **Delete** (browser confirm dialog,
+  then `DELETE /api/animals/{id}` and back to the list; shows an error if it fails).
 
-### `Program.cs` (this exact version works — do not "improve" it)
+### Add / edit form (`animal-form/`, routes `animals/new` and `animals/:id/edit`)
 
-```csharp
-using AnimalDatabase.Api.Data;
-using Dapper;
+- One component for both. With an `id` it loads the animal and its images, fills the form, and
+  **Save sends `PUT /api/animals/{id}`** (an update, not a new row), then returns to the detail
+  page. Without an `id` it sends `POST` and returns to the list.
+- Fields: all animal columns, min/max inputs for length, height, weight and lifespan, class and
+  IUCN dropdowns, a Domesticated checkbox, and 4 picture URL fields (Male, Female, Baby, Other)
+  with previews and an `http(s)://` check. Existing captions are kept on edit; new images get the
+  field label as caption.
+- **Duplicate warning** (yellow box under Common name): lists existing animals whose common name
+  **or** scientific name equals what's typed, ignoring case and extra spaces. The animal being
+  edited is excluded. It's only a warning; saving isn't blocked.
+- **Look up on Wikipedia** box at the top (see below). Filled values overwrite the current form
+  values; the Wikipedia picture goes into the "Other" picture field only if that's empty. A
+  message says how many fields were filled.
 
-var builder = WebApplication.CreateBuilder(args);
+### Wikipedia lookup (`Services/WikipediaImporter.cs`, `GET /api/wikipedia/import?q=`)
 
-builder.Services.AddSingleton<AnimalRepository>();
+1. **Find the article**: if `q` is a `*.wikipedia.org/wiki/...` link it's parsed directly.
+   Otherwise it searches English Wikipedia (`generator=search`, 8 results) and takes the first
+   result that is not a disambiguation page.
+2. **REST summary** (`/api/rest_v1/page/summary/...`): title, intro extract (becomes the profile),
+   article URL and the Wikidata item id. Disambiguation pages return 404.
+3. **Page image** via `prop=pageimages` (500px thumbnail URL).
+4. **Wikidata claims** (`wbgetentities`):
+   - `P225` scientific name
+   - `P141` IUCN status, mapped from known item ids; for newer status items not in the map it
+     falls back to the item's English label (for example "endangered species" becomes
+     "endangered")
+   - `P2067` mass (converted to kg), `P2043` length (cm), `P2250` lifespan (years); min/max come
+     from all values including lower/upper bounds; deprecated values are skipped
+   - For these quantities only values with no `P3831` role qualifier, or with role "adult", are
+     used, so chick/newborn weights don't end up in the range
+5. **One SPARQL query** on `query.wikidata.org` walks the ancestor tree (`P171*`) to get every
+   ancestor's name and rank: the ancestor with rank "family" becomes the family, and the set of
+   ancestor names decides the class: Mammalia = mammal, Aves = bird, Reptilia/Squamata/Testudines/
+   Crocodilia/... = reptile, Amphibia = amphibian, ray-finned/cartilaginous/jawless fish groups =
+   fish, Sarcopterygii without Tetrapoda = fish, Animalia without Vertebrata = invertebrate.
+6. **Fun fact**: reads the full plain-text article, cuts it at "See also"/"References"/etc., and
+   picks the first sentence (50-280 chars, not already in the intro) containing a hint word such
+   as "the only", "unique", "largest", "able to", "regenerat". It's appended to the profile as
+   `\n\nFun fact: ...`.
+7. If the scientific name equals the article title (articles titled by Latin name), the common
+   name becomes the name the user typed.
 
-builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
-{
-    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-});
+Known gaps: length and lifespan are often missing on Wikidata, some animals have no IUCN status
+there, and the fun fact is a heuristic, so it can be dull or missing. Always check the filled
+values before saving.
 
-builder.Services.AddControllers();
+### UI / theme
 
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.WithOrigins("http://localhost:4200")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
-
-Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
-
-var app = builder.Build();
-
-app.UseCors();
-app.MapControllers();
-
-app.Run();
-```
-
-**Two gotchas that cost real time here:**
-1. `Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true` is what makes
-   `common_name` → `CommonName` work. Without it every field comes back null.
-2. The JSON options namespace is **`Microsoft.AspNetCore.Mvc.JsonOptions`**, not
-   `Microsoft.AspNetCore.Http.Json.JsonOptions`. The `Http.Json` one configures
-   minimal APIs and controllers ignore it. Also: **no Newtonsoft** — modern
-   ASP.NET Core uses System.Text.Json and Newtonsoft types won't resolve.
-
-### `Models/Animal.cs`
-
-```csharp
-namespace AnimalDatabase.Api.Models;
-
-public class Animal
-{
-    public int Id { get; set; }
-    public string CommonName { get; set; } = string.Empty;
-    public string? ScientificName { get; set; }
-    public string? Family { get; set; }
-    public string? TaxonomicClass { get; set; }
-    public bool IsDomesticated { get; set; }
-    public int? SizeLengthCmMin { get; set; }
-    public int? SizeLengthCmMax { get; set; }
-    public int? SizeHeightCmMin { get; set; }
-    public int? SizeHeightCmMax { get; set; }
-    public decimal? WeightKgMin { get; set; }
-    public decimal? WeightKgMax { get; set; }
-    public int? LifespanYearsMin { get; set; }
-    public int? LifespanYearsMax { get; set; }
-    public string? IucnStatus { get; set; }
-    public string? Habitat { get; set; }
-    public string? RangeRegion { get; set; }
-    public string? Profile { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-}
-```
-
-### `Models/AnimalImage.cs`
-
-```csharp
-namespace AnimalDatabase.Api.Models;
-
-public class AnimalImage
-{
-    public int Id { get; set; }
-    public int AnimalId { get; set; }
-    public string Kind { get; set; } = string.Empty;
-    public string Url { get; set; } = string.Empty;
-    public string? Caption { get; set; }
-    public int SortOrder { get; set; }
-    public DateTime CreatedAt { get; set; }
-}
-```
-
-### `Data/AnimalRepository.cs`
-
-```csharp
-using AnimalDatabase.Api.Models;
-using Dapper;
-using MySqlConnector;
-
-namespace AnimalDatabase.Api.Data;
-
-public class AnimalRepository
-{
-    private readonly string _connectionString;
-
-    public AnimalRepository(IConfiguration configuration)
-    {
-        _connectionString = configuration.GetConnectionString("AnimalDatabase")
-            ?? throw new InvalidOperationException("Connection string 'AnimalDatabase' not found.");
-    }
-
-    public async Task<IReadOnlyList<Animal>> GetAllAsync()
-    {
-        await using var connection = new MySqlConnection(_connectionString);
-        var rows = await connection.QueryAsync<Animal>("SELECT * FROM animals ORDER BY common_name");
-        return rows.ToList();
-    }
-
-    public async Task<Animal?> GetByIdAsync(int id)
-    {
-        await using var connection = new MySqlConnection(_connectionString);
-        return await connection.QuerySingleOrDefaultAsync<Animal>(
-            "SELECT * FROM animals WHERE id = @Id",
-            new { Id = id });
-    }
-
-    public async Task<IReadOnlyList<AnimalImage>> GetImagesByAnimalIdAsync(int animalId)
-    {
-        await using var connection = new MySqlConnection(_connectionString);
-        var rows = await connection.QueryAsync<AnimalImage>(
-            "SELECT * FROM animal_images WHERE animal_id = @AnimalId ORDER BY sort_order, id",
-            new { AnimalId = animalId });
-        return rows.ToList();
-    }
-}
-```
-
-### `Controllers/AnimalsController.cs`
-
-```csharp
-using AnimalDatabase.Api.Data;
-using AnimalDatabase.Api.Models;
-using Microsoft.AspNetCore.Mvc;
-
-namespace AnimalDatabase.Api.Controllers;
-
-[ApiController]
-[Route("api/animals")]
-public class AnimalsController : ControllerBase
-{
-    private readonly AnimalRepository _repository;
-
-    public AnimalsController(AnimalRepository repository)
-    {
-        _repository = repository;
-    }
-
-    [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<Animal>>> GetAll()
-    {
-        var animals = await _repository.GetAllAsync();
-        return Ok(animals);
-    }
-
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<Animal>> GetById(int id)
-    {
-        var animal = await _repository.GetByIdAsync(id);
-        if (animal is null)
-        {
-            return NotFound();
-        }
-        return Ok(animal);
-    }
-
-    [HttpGet("{id:int}/images")]
-    public async Task<ActionResult<IReadOnlyList<AnimalImage>>> GetImages(int id)
-    {
-        var images = await _repository.GetImagesByAnimalIdAsync(id);
-        return Ok(images);
-    }
-}
-```
-
-**Endpoints that exist and work:**
-- `GET /api/animals`
-- `GET /api/animals/{id}`
-- `GET /api/animals/{id}/images`
+- Flat "deep ocean" theme: navy primary `#1c3d66` (header bar, primary buttons, links) and teal
+  accent `#0b7a78` (focus ring, highlights, active chips, fun-fact box, Wikipedia panel),
+  background `#f1f4f8`, text `#16243a`, danger red `#b3261e`.
+- All colours, radii (4-6px) and the focus ring are CSS custom properties in `:root` of
+  `src/styles.css`. Shared classes live there too: `.btn` / `.btn-primary` / `.btn-secondary` /
+  `.btn-danger` / `.btn-sm`, `.chip`, `.status[data-status=...]` (muted IUCN colour scale),
+  `.page-head`, `.animal-grid` / `.animal-card`, form control styles.
+- System font stack only (no Google Fonts). Flat design: 1px borders, almost no shadows, no hover
+  animations. Two-column form on wide screens, one column on phones; the filter popup becomes a
+  bottom sheet on phones.
+- Keep component CSS under Angular's 4 kB per-component budget (warning at 4 kB, error at 8 kB);
+  shared styles go in `styles.css`.
 
 ---
 
-## 5. Angular frontend — `AnimalDatabaseProject`
+## 8. Working conventions
 
-**Angular 22.2.** This matters a lot — the file-naming conventions changed and
-this is where most time was lost:
+- **No comments in code**, in any language (C#, TS, HTML, CSS). Leo was firm about this.
+- **Commit and push after every major change**, in the repo it belongs to (frontend:
+  AnimalDatabase_UI, API: AnimalDatabase_Server, branch `master`). Use `-c safe.directory=...`
+  (section 2).
+- **Back up originals before changing them**, into `D:\AnimalDatabase-backup-2026-10-22\before-<change>\`
+  (or a new dated folder).
+- Run Prettier, the build and the tests after frontend changes (section 3).
+- **Restart the API in Rider** after API changes.
+- Files are UTF-8 without BOM. Prettier writes LF line endings; git may warn about CRLF on
+  Windows, which is harmless.
+- Don't change the database schema or data without asking Leo.
+- Never put the connection string or other secrets in files, commits or chat.
 
-| Old (≤19) | Angular 22 |
-|---|---|
-| `app.component.ts` | `app.ts` |
-| `animals-list.component.ts` | `animals-list.ts` |
-| `app.component.html` | `app.html` |
-| inline `template:` / `styles:` | `templateUrl:` / `styleUrl:` |
-| `*ngIf` / `*ngFor` | `@if` / `@for ... track` |
-| `standalone: true` required | standalone by default, don't write it |
-| plain properties | signals (`signal()`, `computed()`) |
+### How Leo likes to work when he types the code himself
 
-**Port:** `4200` → `http://localhost:4200`
-**Editor:** WebStorm
-
-### File tree as it stood
-
-```
-src/app/
-  animal.model.ts
-  animal-image.model.ts
-  animal.service.ts
-  animals-list/
-    animals-list.ts
-    animals-list.html
-    animals-list.css
-  animal-detail/
-    animal-detail.ts
-    animal-detail.html
-    animal-detail.css
-  app.ts
-  app.html
-  app.css
-  app.config.ts
-  app.routes.ts
-  app.spec.ts
-  index.html
-  main.ts
-  styles.css
-```
-
-Note: `animals-list/` and `animal-detail/` are **folders** with three files each,
-not flat files. Imports are relative across them: `'../animal-detail/animal-detail'`.
-
-### `animal.model.ts`
-
-```typescript
-export interface Animal {
-  id: number;
-  commonName: string;
-  scientificName: string | null;
-  family: string | null;
-  taxonomicClass: string | null;
-  isDomesticated: boolean;
-  sizeLengthCmMin: number | null;
-  sizeLengthCmMax: number | null;
-  sizeHeightCmMin: number | null;
-  sizeHeightCmMax: number | null;
-  weightKgMin: number | null;
-  weightKgMax: number | null;
-  lifespanYearsMin: number | null;
-  lifespanYearsMax: number | null;
-  iucnStatus: string | null;
-  habitat: string | null;
-  rangeRegion: string | null;
-  profile: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-```
-
-### `animal-image.model.ts`
-
-```typescript
-export interface AnimalImage {
-  id: number;
-  animalId: number;
-  kind: string;
-  url: string;
-  caption: string | null;
-  sortOrder: number;
-  createdAt: string;
-}
-```
-
-### `animal.service.ts`
-
-```typescript
-import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { Animal } from './animal.model';
-import { AnimalImage } from './animal-image.model';
-
-@Injectable({ providedIn: 'root' })
-export class AnimalService {
-  private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5190/api/animals';
-
-  getAll(): Observable<Animal[]> {
-    return this.http.get<Animal[]>(this.apiUrl);
-  }
-
-  getById(id: number): Observable<Animal> {
-    return this.http.get<Animal>(`${this.apiUrl}/${id}`);
-  }
-
-  getImages(animalId: number): Observable<AnimalImage[]> {
-    return this.http.get<AnimalImage[]>(`${this.apiUrl}/${animalId}/images`);
-  }
-}
-```
-
-### `app.config.ts`
-
-```typescript
-import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
-import { routes } from './app.routes';
-
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideRouter(routes),
-    provideHttpClient()
-  ]
-};
-```
-
-`provideHttpClient()` is mandatory — without it the `HttpClient` in
-`animal.service.ts` doesn't inject.
-
-### `app.ts` / `app.html`
-
-```typescript
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { AnimalsList } from './animals-list/animals-list';
-
-@Component({
-  selector: 'app-root',
-  imports: [RouterOutlet, AnimalsList],
-  templateUrl: './app.html',
-  styleUrl: './app.css'
-})
-export class App {
-  protected readonly title = signal('Animal Database');
-}
-```
-
-```html
-<h1>{{ title() }}</h1>
-<app-animals-list></app-animals-list>
-```
-
-No `<router-outlet />` currently — `app.routes.ts` is empty.
-
-### `animals-list.ts` (last known good state)
-
-```typescript
-import { Component, computed, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { AnimalDetail } from '../animal-detail/animal-detail';
-import { AnimalService } from '../animal.service';
-import { Animal } from '../animal-model/animal.model';
-
-type FilterType = 'all' | 'wild';
-
-@Component({
-  selector: 'app-animals-list',
-  imports: [CommonModule, AnimalDetail],
-  templateUrl: './animals-list.html',
-  styleUrl: './animals-list.css',
-})
-export class AnimalsList {
-  private animalService = inject(AnimalService);
-
-  animals = signal<Animal[]>([]);
-  loading = signal(true);
-  error = signal('');
-
-  query = signal('');
-  selectedClasses = signal<Set<string>>(new Set());
-  selectedStatuses = signal<Set<string>>(new Set());
-  filterType = signal<FilterType>('all');
-
-  selectedAnimal = signal<Animal | null>(null);
-
-  suggestions = computed(() => {
-    const q = this.query().trim().toLowerCase();
-    if (q.length < 2) return [];
-
-    return this.animals()
-      .filter((animal) => {
-        const name = animal.commonName.toLowerCase();
-        const sci = (animal.scientificName ?? '').toLowerCase();
-        return name.includes(q) || sci.includes(q);
-      })
-      .slice(0, 8);
-  });
-
-  availableClasses = computed(() => {
-    const set = new Set<string>();
-    for (const a of this.animals()) {
-      if (a.taxonomicClass) set.add(a.taxonomicClass);
-    }
-    return Array.from(set).sort();
-  });
-
-  availableStatuses = computed(() => {
-    const set = new Set<string>();
-    for (const a of this.animals()) {
-      if (a.iucnStatus) set.add(a.iucnStatus);
-    }
-    return Array.from(set).sort();
-  });
-
-  showDomesticated = computed(() => this.filterType() === 'all');
-
-  filteredAnimals = computed(() => {
-    const q = this.query().trim().toLowerCase();
-    const classes = this.selectedClasses();
-    const statuses = this.selectedStatuses();
-    const type = this.filterType();
-
-    return this.animals().filter((animal) => {
-      if (q) {
-        const haystack = [animal.commonName, animal.scientificName ?? '', animal.profile ?? '']
-          .join(' ')
-          .toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
-
-      if (classes.size > 0 && animal.taxonomicClass && !classes.has(animal.taxonomicClass)) {
-        return false;
-      }
-
-      if (statuses.size > 0 && animal.iucnStatus && !statuses.has(animal.iucnStatus)) {
-        return false;
-      }
-
-      return !(type === 'wild' && animal.isDomesticated);
-    });
-  });
-
-  constructor() {
-    this.animalService.getAll().subscribe({
-      next: (data) => {
-        this.animals.set(data);
-        this.loading.set(false);
-      },
-      error: (err) => {
-        this.error.set(err.message ?? 'Could not load animals');
-        this.loading.set(false);
-      },
-    });
-  }
-
-  onQueryChange(value: string): void {
-    this.query.set(value);
-  }
-
-  isClassActive(cls: string): boolean {
-    return this.selectedClasses().has(cls);
-  }
-
-  toggleClass(cls: string): void {
-    const next = new Set(this.selectedClasses());
-    if (next.has(cls)) next.delete(cls);
-    else next.add(cls);
-    this.selectedClasses.set(next);
-  }
-
-  isStatusActive(status: string): boolean {
-    return this.selectedStatuses().has(status);
-  }
-
-  toggleStatus(status: string): void {
-    const next = new Set(this.selectedStatuses());
-    if (next.has(status)) next.delete(status);
-    else next.add(status);
-    this.selectedStatuses.set(next);
-  }
-
-  toggleType(): void {
-    this.filterType.update((current) => (current === 'all' ? 'wild' : 'all'));
-  }
-
-  getThumbnail(animal: Animal): string | null {
-    void animal;
-    return null;
-  }
-
-  selectAnimal(animal: Animal): void {
-    this.selectedAnimal.set(animal);
-  }
-
-  closeDetail(): void {
-    this.selectedAnimal.set(null);
-  }
-}
-```
-
-**Open question left dangling:** the filter chips (`.filter-chips`, `.chip`,
-`.chip.active` CSS exists in `animals-list.css`) are **no longer in the HTML**.
-The signals `selectedClasses` / `selectedStatuses` / `filterType` are still there
-and working, just not rendered. Leo was asked whether that's intentional and never
-answered. Decide with him before touching it.
-
-### `animal-detail.ts`
-
-```typescript
-import { Component, EventEmitter, Output, inject, input, signal, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Animal } from '../animal-model/animal.model';
-import { AnimalImage } from '../animal-image.model';
-import { AnimalService } from '../animal.service';
-
-@Component({
-  selector: 'app-animal-detail',
-  imports: [CommonModule],
-  templateUrl: './animal-detail.html',
-  styleUrl: './animal-detail.css'
-})
-export class AnimalDetail implements OnInit {
-  animal = input<Animal | null>(null);
-  @Output() close = new EventEmitter<void>();
-
-  private animalService = inject(AnimalService);
-
-  images = signal<AnimalImage[]>([]);
-  imagesLoading = signal(true);
-
-  ngOnInit(): void {
-    const current = this.animal();
-    if (current) {
-      this.loadImages(current.id);
-    }
-  }
-
-  loadImages(animalId: number): void {
-    this.animalService.getImages(animalId).subscribe({
-      next: (data) => {
-        this.images.set(data);
-        this.imagesLoading.set(false);
-      },
-      error: () => {
-        this.images.set([]);
-        this.imagesLoading.set(false);
-      }
-    });
-  }
-
-  onClose(): void {
-    this.close.emit();
-  }
-}
-```
+- **One step at a time.** In his words: "you tell me what i am doing and i do it and ask if i have
+  questions and just like a manual only one step at time".
+- **One file at a time**, clearly labelled ("this is the new file" vs "this is the line to add").
+  Long multi-file dumps don't work for him.
+- **Let him write SQL himself, then review it.** Reminders he finds useful:
+  text `'value',`, numbers `123,`, unknown `NULL,`, no trailing comma on the last value.
 
 ---
 
-## 6. What's done, what's not
+## 9. Working with Wikimedia image URLs
 
-### ✅ Working end to end
+Picture fields need direct image URLs.
 
-- MariaDB schema clean, 6 animals inserted, images attached
-- API returning real JSON at `http://localhost:5190`
-- Angular at `http://localhost:4200` rendering the list from the DB
-- Detail view opening on click, showing image + `<dl>` metadata + profile
-- Structured filter chips working (class, IUCN status, wild/domesticated)
-- Search box filtering the list
-- Search suggestion dropdown appearing at 2+ chars
+**Wrong** (all break `<img src>`):
 
-### ❌ Not built yet
+- `img.wikiwand.com/...` (mirror, can block hotlinking)
+- `www.wikiwand.com/en/Tiger#/media/File:...` (an HTML page, not an image)
+- `en.wikipedia.org/wiki/File:...` (the file description page, not the file)
+- Anything with `?utm_source=...` appended (strip it)
 
-1. **Thumbnails in the suggestion dropdown** — `getThumbnail()` returns `null` by
-   design. Needs the API to return images nested inside each animal (a join), or
-   a parallel per-animal image fetch. Leo decided to skip for now.
-2. **Top Searches panel** — the schema was designed but never created:
-   ```sql
-   CREATE TABLE searches (
-       id INT PRIMARY KEY AUTO_INCREMENT,
-       query_text VARCHAR(255) NOT NULL,
-       animal_id INT NULL,
-       searched_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-       INDEX idx_searches_searched_at (searched_at)
-   );
-   ```
-   plus a `POST /api/searches` endpoint and an 800ms debounce in Angular.
-3. **Add Animal UI** — Leo asked for this explicitly as feature #2. He never picked
-   the shape (inline form / separate route `/animals/new` / modal). **Ask him.**
-4. **Persistent detail URL** — detail view is overlay state, no route. No back-button.
-5. **UI polish** — Leo explicitly deferred this. Don't do it unprompted.
+**Right** (direct CDN URLs, both hosts work):
+
+```
+https://upload.wikimedia.org/wikipedia/commons/thumb/<a>/<ab>/<File>.jpg/800px-<File>.jpg
+https://thumb.wikimedia.org/wikipedia/commons/thumb/<a>/<ab>/<File>.jpg/800px-<File>.jpg
+```
+
+How to get one: right-click the image on Wikipedia and choose "Copy image address" (not "Copy
+image"). Pasted into a new tab it should show only the photo. The form shows this hint too, and
+the Wikipedia lookup fills a correct URL automatically.
 
 ---
 
-## 7. How Leo wants to work
+## 10. Known issues and ideas
 
-This part matters as much as the code.
+Known issues:
 
-- **One step at a time.** Verbatim: *"you tell me what i am doing and i do it and
-  ask if i have questions and just like a manual only one step at time"*
-- **No comments in code he pastes.** Verbatim: *"remember to not do any comments in
-  the code i pase"*
-- **One file at a time.** The 100-line multi-file dumps broke him. Give each file
-  individually and label it clearly: "this is the new file" vs "this is the line
-  to add."
-- **Let him write the SQL, then review it.** He asked for this explicitly after
-  being offered a paste-the-block shortcut. The mechanics he needs reminded of:
-  - text → `column 'value',`
-  - numbers → `column 123,`
-  - unknown → `column NULL,`
-  - last row → no trailing comma, then `');`
-- **Data + business logic first, UI last.**
-- **Code = pseudocode unless he asks for actual Java/C#** — that's for school. This
-  project is real code, real languages.
+- Wikipedia lookup: length and lifespan often empty; some animals have no IUCN status on
+  Wikidata; fun-fact choice is heuristic; English Wikipedia only for name searches.
+- Swashbuckle is referenced and the launch profiles open `/swagger`, but `Program.cs` doesn't call
+  `AddSwaggerGen` / `UseSwagger`, so the Swagger page isn't served (the API itself works).
+- CORS only allows `http://localhost:4200`, and both environment files point at
+  `http://localhost:5190/api`; deploying anywhere else needs both changed.
+- List state (filters, sort, query) resets on a full page reload; it isn't in the URL.
+- Search only matches name, scientific name and profile text, not habitat or range.
+- PUT replaces all images of an animal, so image ids change on every save.
+- Delete uses the browser's `confirm()` dialog.
 
----
+Ideas (not started; ask Leo before building):
 
-## 8. Working with Wikimedia image URLs
-
-Took three attempts before Leo got URLs that worked. Recording it so nobody
-repeats the fight.
-
-**Wrong — these all break `<img src>`:**
-- `img.wikiwand.com/...` — Wikiwand mirror, can block hotlinking
-- `www.wikiwand.com/en/Tiger#/media/File:...` — that's an HTML page with a hash
-  fragment, not an image. The browser fetches HTML and shows a broken icon.
-- `en.wikipedia.org/wiki/File:...` — file *description* page, not the file
-- Any URL with `?utm_source=...&utm_campaign=...` appended — strip it
-
-**Right — direct CDN URLs, both hosts work:**
-```
-https://upload.wikimedia.org/wikipedia/commons/thumb/<md5>/<File>.jpg/800px-<File>.jpg
-https://thumb.wikimedia.org/wikipedia/commons/thumb/<md5>/<File>.jpg/800px-<File>.jpg
-```
-
-**How Leo got them:** right-click the image on Wikipedia → "Copy image address"
-(NOT "Copy image" — that puts pixel data on the clipboard). Test by pasting into a
-new tab: if you see only a photo, you have the right URL.
-
-**The 6 URLs currently in the database:**
-```
-Tiger (female):  https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b0/Bengal_tiger_(Panthera_tigris_tigris)_female_3_crop.jpg/500px-Bengal_tiger_(Panthera_tigris_tigris)_female_3_crop.jpg
-Okapi:           https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9f/Okapia_johnstoni_17zz.jpg/250px-Okapia_johnstoni_17zz.jpg
-Marbled cat:     https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3f/Marbled_cat_borneo.jpg/250px-Marbled_cat_borneo.jpg
-Axolotl:         https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0b/Axolotl_BU.jpg/330px-Axolotl_BU.jpg
-Pangolin:        https://thumb.wikimedia.org/wikipedia/commons/thumb/6/69/Different_pangolins_Featured_image.jpg/500px-Different_pangolins_Featured_image.jpg
-```
+- Put filters/sort in the URL query string so they survive reloads and can be shared.
+- Search habitat and range too ("characteristics" search from the original vision).
+- Height and lifespan range filters, like length and weight.
+- Wire up Swagger in `Program.cs` for development.
+- A recent-searches time window for Top searches (for example last 30 days, using `searched_at`).
 
 ---
 
-## 9. Unrelated but adjacent
+## 11. Abandoned Java version
 
-An abandoned **Java/Spring Boot** version of the same project exists at
-`C:\Users\jas001\Pictures\animal-database-api\`. Gradle, Flyway migrations,
-remote = `https://github.com/Hypnos20011/AnimalDatabase.git`, one commit
-("Initial commit: entities, repositories, Flyway migrations"). Leo dumped this and
-started fresh with C# + Angular. Don't touch it unless he asks.
+A Java / Spring Boot version (Gradle, Flyway migrations, one commit) exists at
+`%USERPROFILE%\Pictures\animal-database-api\`, remote https://github.com/Hypnos20011/AnimalDatabase.
+Leo dropped it and started fresh with C# + Angular. Don't touch it unless he asks.
 
 ---
 
-## 10. Resuming — suggested first moves
+## 12. Resuming: first moves
 
-1. Check `Get-PSDrive -PSProvider FileSystem`. If `D:` is there, open both projects
-   in Rider and WebStorm, hit play on both servers, open `http://localhost:4200`.
-   That's a 2-minute verification and everything works. (Verified working state
-   on 2026-10-22: all 8 Angular source files and all 4 C# source files present and
-   byte-identical to the code in §4/§5.)
-2. Before writing any new feature, ask Leo the two open questions:
-   - Are the filter chips coming back or are they dead code?
-   - What shape should Add Animal UI be?
+1. `Get-PSDrive -PSProvider FileSystem`: check that `D:` is there.
+2. Run the API in Rider and `npm start` in the frontend, open `http://localhost:4200`, check that
+   the list loads.
+3. `git log --oneline` in both repos to see the latest work (frontend commits and API commits are
+   separate).
+4. Ask Leo what he wants next; see the ideas list above.
