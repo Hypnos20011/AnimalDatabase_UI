@@ -62,3 +62,24 @@ label.checkbox {
   object-fit: cover;
   border-radius: 4px;
 }
+
+.wiki-import {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px dashed #ccc;
+  border-radius: 6px;
+}
+
+.wiki-import label {
+  flex: 1;
+  min-width: 240px;
+}
+
+.wiki-import p {
+  flex-basis: 100%;
+  margin: 0;
+}

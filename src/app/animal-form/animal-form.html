@@ -4,6 +4,31 @@
   <p>Loading...</p>
 }
 
+<div class="wiki-import">
+  <label>
+    Fill from Wikipedia
+    <input
+      type="url"
+      placeholder="https://en.wikipedia.org/wiki/Axolotl"
+      [value]="wikiUrl()"
+      (input)="wikiUrl.set($any($event.target).value)"
+      (keydown.enter)="importFromWikipedia()"
+    />
+  </label>
+  <button
+    type="button"
+    [disabled]="importing() || !wikiUrl().trim()"
+    (click)="importFromWikipedia()"
+  >
+    {{ importing() ? 'Loading...' : 'Fill in' }}
+  </button>
+  @if (importMessage()) {
+    <p class="hint">{{ importMessage() }}</p>
+  }
+  @if (importError()) {
+    <p class="field-error">{{ importError() }}</p>
+  }
+</div>
 <form [formGroup]="form" (ngSubmit)="submit()">
   <label>
     Common name *

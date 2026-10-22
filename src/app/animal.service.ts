@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Animal, NewAnimal } from './animal-model/animal.model';
 import { AnimalImage } from './animal-model/animal-image.model';
+import { WikipediaImport } from './animal-model/wikipedia-import.model';
 
 @Injectable({ providedIn: 'root' })
 export class AnimalService {
@@ -31,5 +32,11 @@ export class AnimalService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  importFromWikipedia(url: string): Observable<WikipediaImport> {
+    return this.http.get<WikipediaImport>('http://localhost:5190/api/wikipedia/import', {
+      params: { url },
+    });
   }
 }

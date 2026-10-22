@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AnimalService } from '../animal.service';
 import { NewAnimal, NewAnimalImage } from '../animal-model/animal.model';
+import { WikipediaImport } from '../animal-model/wikipedia-import.model';
 
 @Component({
   selector: 'app-animal-form',
@@ -40,6 +41,10 @@ export class AnimalForm {
   editing = computed(() => !!this.id());
   loadingAnimal = signal(false);
   saving = signal(false);
+  wikiUrl = signal('');
+  importing = signal(false);
+  importMessage = signal('');
+  importError = signal('');
   private originalCaptions = new Map<string, string | null>();
   error = signal('');
 
@@ -122,6 +127,64 @@ export class AnimalForm {
   imageInvalid(key: string): boolean {
     const control = this.form.get(key);
     return !!control && control.touched && control.invalid;
+  }
+
+  importFromWikipedia(): void {
+    const url = this.wikiUrl().trim();
+    if (!url) return;
+    this.importing.set(true);
+    this.importMessage.set('');
+    this.importError.set('');
+    this.animalService.importFromWikipedia(url).subscribe({
+      next: (data) => {
+        const filled = this.applyImport(data);
+        this.importMessage.set(
+          filled > 0
+            ? `Filled in ${filled} fields from Wikipedia. Check them before saving.`
+            : 'Wikipedia had nothing to fill in for this animal.',
+        );
+        this.importing.set(false);
+      },
+      error: (err) => {
+        this.importError.set(
+          typeof err.error === 'string' && err.error
+            ? err.error
+            : 'Could not load that Wikipedia page.',
+        );
+        this.importing.set(false);
+      },
+    });
+  }
+
+  private applyImport(data: WikipediaImport): number {
+    const keys = [
+      'commonName',
+      'scientificName',
+      'family',
+      'taxonomicClass',
+      'sizeLengthCmMin',
+      'sizeLengthCmMax',
+      'weightKgMin',
+      'weightKgMax',
+      'lifespanYearsMin',
+      'lifespanYearsMax',
+      'iucnStatus',
+      'profile',
+    ] as const;
+    let filled = 0;
+    for (const key of keys) {
+      const value = data[key];
+      if (value !== null && value !== undefined && value !== '') {
+        this.form.get(key)?.setValue(value as never);
+        filled++;
+      }
+    }
+    const imageControl = this.form.controls.otherImageUrl;
+    if (data.imageUrl && !imageControl.value) {
+      imageControl.setValue(data.imageUrl);
+      filled++;
+    }
+    return filled;
   }
 
   private loadAnimal(id: number): void {
