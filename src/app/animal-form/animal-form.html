@@ -37,6 +37,17 @@
   @if (form.controls.commonName.touched && form.controls.commonName.invalid) {
     <p class="field-error">Common name is required.</p>
   }
+  @if (duplicates().length > 0) {
+    <div class="duplicate-warning">
+      Already in the database:
+      @for (animal of duplicates(); track animal.id) {
+        <a [routerLink]="['/animals', animal.id]">{{ animal.commonName }}</a>
+        @if (animal.scientificName) {
+          <span class="scientific">({{ animal.scientificName }})</span>
+        }
+      }
+    </div>
+  }
 
   <label>
     Scientific name

@@ -1,9 +1,10 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AnimalService } from '../animal.service';
-import { NewAnimal, NewAnimalImage } from '../animal-model/animal.model';
+import { Animal, NewAnimal, NewAnimalImage } from '../animal-model/animal.model';
 import { WikipediaImport } from '../animal-model/wikipedia-import.model';
 
 @Component({
@@ -72,7 +73,31 @@ export class AnimalForm {
     otherImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
   });
 
+  private existingAnimals = signal<Animal[]>([]);
+  private commonNameValue = toSignal(this.form.controls.commonName.valueChanges, {
+    initialValue: '',
+  });
+  private scientificNameValue = toSignal(this.form.controls.scientificName.valueChanges, {
+    initialValue: '',
+  });
+
+  duplicates = computed(() => {
+    const common = this.normalize(this.commonNameValue());
+    const scientific = this.normalize(this.scientificNameValue());
+    if (!common && !scientific) return [];
+    const currentId = Number(this.id());
+    return this.existingAnimals().filter(
+      (a) =>
+        a.id !== currentId &&
+        ((!!common && this.normalize(a.commonName) === common) ||
+          (!!scientific && this.normalize(a.scientificName) === scientific)),
+    );
+  });
+
   constructor() {
+    this.animalService.getAll().subscribe({
+      next: (animals) => this.existingAnimals.set(animals),
+    });
     effect(() => {
       const id = this.id();
       untracked(() => {
@@ -111,8 +136,12 @@ export class AnimalForm {
 
     this.saving.set(true);
     this.error.set('');
-    this.animalService.create(animal).subscribe({
-      next: () => this.router.navigate(['/']),
+    const id = this.id();
+    const request = id
+      ? this.animalService.update(Number(id), animal)
+      : this.animalService.create(animal);
+    request.subscribe({
+      next: () => this.router.navigate(id ? ['/animals', id] : ['/']),
       error: (err) => {
         this.error.set(err.message ?? 'Could not save animal');
         this.saving.set(false);
@@ -241,6 +270,10 @@ export class AnimalForm {
       }
     }
     return images;
+  }
+
+  private normalize(value: string | null | undefined): string {
+    return (value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
   }
 
   private text(value: string | null | undefined): string | null {
