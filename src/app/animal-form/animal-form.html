@@ -6,10 +6,10 @@
 
 <div class="wiki-import">
   <label>
-    Fill from Wikipedia
+    Look up on Wikipedia
     <input
-      type="url"
-      placeholder="https://en.wikipedia.org/wiki/Axolotl"
+      type="text"
+      placeholder="Animal name, e.g. Shoebill"
       [value]="wikiUrl()"
       (input)="wikiUrl.set($any($event.target).value)"
       (keydown.enter)="importFromWikipedia()"

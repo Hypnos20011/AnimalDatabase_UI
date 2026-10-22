@@ -34,9 +34,9 @@ export class AnimalService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  importFromWikipedia(url: string): Observable<WikipediaImport> {
+  importFromWikipedia(query: string): Observable<WikipediaImport> {
     return this.http.get<WikipediaImport>('http://localhost:5190/api/wikipedia/import', {
-      params: { url },
+      params: { q: query },
     });
   }
 }
