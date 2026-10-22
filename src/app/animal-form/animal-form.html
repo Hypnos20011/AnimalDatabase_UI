@@ -1,0 +1,111 @@
+<h2>Add animal</h2>
+
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <label>
+    Common name *
+    <input type="text" formControlName="commonName" />
+  </label>
+  @if (form.controls.commonName.touched && form.controls.commonName.invalid) {
+    <p class="field-error">Common name is required.</p>
+  }
+
+  <label>
+    Scientific name
+    <input type="text" formControlName="scientificName" />
+  </label>
+
+  <label>
+    Family
+    <input type="text" formControlName="family" />
+  </label>
+
+  <label>
+    Class
+    <select formControlName="taxonomicClass">
+      <option value="">Unknown</option>
+      @for (cls of classes; track cls) {
+        <option [value]="cls">{{ cls }}</option>
+      }
+    </select>
+  </label>
+
+  <label class="checkbox">
+    <input type="checkbox" formControlName="isDomesticated" />
+    Domesticated
+  </label>
+
+  <div class="range">
+    <span>Length (cm)</span>
+    <input type="number" min="0" step="1" placeholder="min" formControlName="sizeLengthCmMin" />
+    <input type="number" min="0" step="1" placeholder="max" formControlName="sizeLengthCmMax" />
+  </div>
+
+  <div class="range">
+    <span>Height (cm)</span>
+    <input type="number" min="0" step="1" placeholder="min" formControlName="sizeHeightCmMin" />
+    <input type="number" min="0" step="1" placeholder="max" formControlName="sizeHeightCmMax" />
+  </div>
+
+  <div class="range">
+    <span>Weight (kg)</span>
+    <input type="number" min="0" step="0.01" placeholder="min" formControlName="weightKgMin" />
+    <input type="number" min="0" step="0.01" placeholder="max" formControlName="weightKgMax" />
+  </div>
+
+  <div class="range">
+    <span>Lifespan (years)</span>
+    <input type="number" min="0" step="1" placeholder="min" formControlName="lifespanYearsMin" />
+    <input type="number" min="0" step="1" placeholder="max" formControlName="lifespanYearsMax" />
+  </div>
+
+  <label>
+    IUCN status
+    <select formControlName="iucnStatus">
+      <option value="">Unknown</option>
+      @for (status of statuses; track status) {
+        <option [value]="status">{{ status }}</option>
+      }
+    </select>
+  </label>
+
+  <label>
+    Habitat
+    <input type="text" formControlName="habitat" />
+  </label>
+
+  <label>
+    Range / region
+    <input type="text" formControlName="rangeRegion" />
+  </label>
+
+  <label>
+    Profile
+    <textarea rows="5" formControlName="profile"></textarea>
+  </label>
+
+  <fieldset class="images">
+    <legend>Pictures</legend>
+    <p class="hint">On Wikipedia, right-click the photo and choose "Copy image address", then paste it here.</p>
+    @for (field of imageFields; track field.key) {
+      <label>
+        {{ field.label }}
+        <input type="url" placeholder="https://upload.wikimedia.org/..." [formControlName]="field.key" />
+      </label>
+      @if (imageInvalid(field.key)) {
+        <p class="field-error">That doesn't look like an image link.</p>
+      }
+      @if (imageUrl(field.key) && !imageInvalid(field.key)) {
+        <img class="preview" [src]="imageUrl(field.key)" [alt]="field.label" />
+      }
+    }
+  </fieldset>
+
+  @if (error()) {
+    <p class="field-error">{{ error() }}</p>
+  }
+
+  <div class="actions">
+    <button type="submit" [disabled]="saving()">{{ saving() ? 'Saving...' : 'Save' }}</button>
+    <a routerLink="/">Cancel</a>
+  </div>
+</form>

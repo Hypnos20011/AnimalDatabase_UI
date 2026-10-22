@@ -1,0 +1,110 @@
+<h2>Animals</h2>
+
+<a routerLink="/animals/new" class="add-link">+ Add animal</a>
+
+<div class="search-wrap">
+  <input
+    type="text"
+    class="search"
+    placeholder="Search name or description..."
+    [value]="query()"
+    (input)="onQueryChange($any($event.target).value)"
+  />
+
+  @if (query().trim().length >= 2 && suggestions().length > 0) {
+    <ul class="suggestions">
+      @for (animal of suggestions(); track animal.id) {
+        <li tabindex="0" (click)="selectAnimal(animal)" (keydown.enter)="selectAnimal(animal)">
+          @if (getThumbnail(animal); as thumb) {
+            <img
+              class="thumb"
+              [src]="thumb"
+              [alt]="animal.commonName"
+              (error)="$any($event.target).style.visibility = 'hidden'"
+            />
+          }
+          <div class="suggestion-text">
+            <strong>{{ animal.commonName }}</strong>
+            @if (animal.scientificName) {
+              <em class="sci"> · {{ animal.scientificName }}</em>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>
+
+<div class="filters">
+  <div class="filter-chips">
+    <span class="chip-label">Class:</span>
+    @for (cls of availableClasses(); track cls) {
+      <button
+        type="button"
+        class="chip"
+        [class.active]="isClassActive(cls)"
+        (click)="toggleClass(cls)"
+      >
+        {{ cls }}
+      </button>
+    }
+  </div>
+
+  <div class="filter-chips">
+    <span class="chip-label">Status:</span>
+    @for (status of availableStatuses(); track status) {
+      <button
+        type="button"
+        class="chip"
+        [class.active]="isStatusActive(status)"
+        (click)="toggleStatus(status)"
+      >
+        {{ status }}
+      </button>
+    }
+  </div>
+
+  <div class="filter-chips">
+    <span class="chip-label">Type:</span>
+    <button
+      type="button"
+      class="chip"
+      [class.active]="filterType() === 'wild'"
+      (click)="toggleType()"
+    >
+      Wild only
+    </button>
+  </div>
+</div>
+
+@if (loading()) {
+  <p>Loading...</p>
+}
+
+@if (error()) {
+  <p style="color: red">{{ error() }}</p>
+}
+
+@if (selectedAnimal()) {
+  <app-animal-detail [animal]="selectedAnimal()" (close)="closeDetail()" />
+} @else {
+  @if (!loading() && filteredAnimals().length === 0) {
+    <p>No animals match your filters.</p>
+  }
+
+  @if (filteredAnimals().length > 0) {
+    <ul>
+      @for (animal of filteredAnimals(); track animal.id) {
+        <li tabindex="0" (click)="selectAnimal(animal)" (keydown.enter)="selectAnimal(animal)">
+          <strong>{{ animal.commonName }}</strong>
+          @if (animal.scientificName) {
+            <em> ({{ animal.scientificName }})</em>
+          }
+          @if (animal.iucnStatus) {
+            — {{ animal.iucnStatus }}
+          }
+        </li>
+      }
+    </ul>
+  }
+}

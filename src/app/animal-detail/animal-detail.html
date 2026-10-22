@@ -1,0 +1,102 @@
+@if (animal()) {
+  <article class="detail">
+    <header>
+      <h2>{{ animal()!.commonName }}</h2>
+      @if (animal()!.scientificName) {
+        <em class="sci">{{ animal()!.scientificName }}</em>
+      }
+    </header>
+
+    @if (imagesLoading()) {
+      <p>Loading images...</p>
+    }
+
+    @if (!imagesLoading() && images().length > 0) {
+      <section class="gallery">
+        @for (img of images(); track img.id) {
+          <figure>
+            <img
+              [src]="img.url"
+              [alt]="img.caption ?? animal()!.commonName"
+              loading="lazy"
+              (error)="img.url = ''"
+            />
+            @if (img.caption) {
+              <figcaption>{{ img.caption }}</figcaption>
+            }
+          </figure>
+        }
+      </section>
+    }
+
+    @if (!imagesLoading() && images().length === 0) {
+      <p class="no-images">No images uploaded yet.</p>
+    }
+
+    <dl>
+      @if (animal()!.iucnStatus) {
+        <dt>IUCN status</dt>
+        <dd>{{ animal()!.iucnStatus }}</dd>
+      }
+      @if (animal()!.weightKgMin != null && animal()!.weightKgMax != null) {
+        <dt>Weight</dt>
+        <dd>{{ animal()!.weightKgMin }}–{{ animal()!.weightKgMax }} kg</dd>
+      }
+      @if (animal()!.lifespanYearsMin != null && animal()!.lifespanYearsMax != null) {
+        <dt>Lifespan</dt>
+        <dd>{{ animal()!.lifespanYearsMin }}–{{ animal()!.lifespanYearsMax }} years</dd>
+      }
+      @if (animal()!.habitat) {
+        <dt>Habitat</dt>
+        <dd>{{ animal()!.habitat }}</dd>
+      }
+      @if (animal()!.rangeRegion) {
+        <dt>Range</dt>
+        <dd>{{ animal()!.rangeRegion }}</dd>
+      }
+    </dl>
+
+    <button type="button" class="more" (click)="toggleDetails()">
+      {{ showDetails() ? 'Hide details' : 'More details' }}
+    </button>
+
+    @if (showDetails()) {
+      <dl class="extra">
+        @if (animal()!.family) {
+          <dt>Family</dt>
+          <dd>{{ animal()!.family }}</dd>
+        }
+        @if (animal()!.taxonomicClass) {
+          <dt>Class</dt>
+          <dd>{{ animal()!.taxonomicClass }}</dd>
+        }
+        @if (animal()!.isDomesticated) {
+          <dt>Type</dt>
+          <dd>Domesticated</dd>
+        } @else {
+          <dt>Type</dt>
+          <dd>Wild</dd>
+        }
+        @if (animal()!.sizeLengthCmMin != null && animal()!.sizeLengthCmMax != null) {
+          <dt>Body length</dt>
+          <dd>{{ animal()!.sizeLengthCmMin }}–{{ animal()!.sizeLengthCmMax }} cm</dd>
+        }
+        @if (animal()!.sizeHeightCmMin != null && animal()!.sizeHeightCmMax != null) {
+          <dt>Shoulder height</dt>
+          <dd>{{ animal()!.sizeHeightCmMin }}–{{ animal()!.sizeHeightCmMax }} cm</dd>
+        }
+      </dl>
+    }
+
+    @if (animal()!.profile) {
+      <section class="profile">
+        <h3>Profile</h3>
+        <p>{{ animal()!.profile }}</p>
+      </section>
+    }
+
+    <button type="button" class="back" (click)="onClose()">Back to list</button>
+  </article>
+} @else {
+  <p>No animal selected.</p>
+}
