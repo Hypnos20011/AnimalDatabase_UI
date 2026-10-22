@@ -201,6 +201,13 @@ export class AnimalsList {
     this.router.navigate(['/animals', animal.id]);
   }
 
+  openRandomAnimal(): void {
+    const pool = this.filteredAnimals().length > 0 ? this.filteredAnimals() : this.animals();
+    if (pool.length === 0) return;
+    const animal = pool[Math.floor(Math.random() * pool.length)];
+    this.router.navigate(['/animals', animal.id]);
+  }
+
   openTopSearch(top: TopSearch): void {
     this.router.navigate(['/animals', top.animalId]);
   }

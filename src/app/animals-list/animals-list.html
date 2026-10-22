@@ -1,6 +1,16 @@
 <h2>Animals</h2>
 
-<a routerLink="/animals/new" class="add-link">+ Add animal</a>
+<div class="top-actions">
+  <a routerLink="/animals/new" class="add-link">+ Add animal</a>
+  <button
+    type="button"
+    class="random-button"
+    [disabled]="animals().length === 0"
+    (click)="openRandomAnimal()"
+  >
+    Random animal
+  </button>
+</div>
 
 <div class="search-wrap">
   <input
