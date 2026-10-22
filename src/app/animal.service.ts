@@ -4,11 +4,12 @@ import { Observable } from 'rxjs';
 import { Animal, NewAnimal } from './animal-model/animal.model';
 import { AnimalImage } from './animal-model/animal-image.model';
 import { WikipediaImport } from './animal-model/wikipedia-import.model';
+import { environment } from '../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AnimalService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:5190/api/animals';
+  private apiUrl = `${environment.apiUrl}/animals`;
 
   getAll(): Observable<Animal[]> {
     return this.http.get<Animal[]>(this.apiUrl);
@@ -35,7 +36,7 @@ export class AnimalService {
   }
 
   importFromWikipedia(query: string): Observable<WikipediaImport> {
-    return this.http.get<WikipediaImport>('http://localhost:5190/api/wikipedia/import', {
+    return this.http.get<WikipediaImport>(`${environment.apiUrl}/wikipedia/import`, {
       params: { q: query },
     });
   }
