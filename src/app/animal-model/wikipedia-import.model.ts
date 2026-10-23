@@ -10,6 +10,8 @@ export interface WikipediaImport {
   lifespanYearsMin: number | null;
   lifespanYearsMax: number | null;
   iucnStatus: string | null;
+  habitat: string | null;
+  rangeRegion: string | null;
   profile: string | null;
   imageUrl: string | null;
   sourceUrl: string | null;

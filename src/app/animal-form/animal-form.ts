@@ -230,6 +230,8 @@ export class AnimalForm {
       'lifespanYearsMin',
       'lifespanYearsMax',
       'iucnStatus',
+      'habitat',
+      'rangeRegion',
       'profile',
     ] as const;
     let filled = 0;
