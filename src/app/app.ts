@@ -12,7 +12,7 @@ import { AdminKeyService } from './admin/admin-key.service';
 export class App {
   private random = inject(RandomAnimalService);
   protected admin = inject(AdminKeyService);
-  protected readonly title = signal('Animal Database');
+  protected readonly title = signal('Unusual Animals');
 
   openRandom(): void {
     this.random.open();

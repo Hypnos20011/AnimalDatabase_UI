@@ -42,7 +42,7 @@ describe('App', () => {
 
   it('should render title', async () => {
     const { element } = await render();
-    expect(element.querySelector('h1')?.textContent).toContain('Animal Database');
+    expect(element.querySelector('h1')?.textContent).toContain('Unusual Animals');
   });
 
   it('shows only Random animal in the top bar while locked', async () => {
