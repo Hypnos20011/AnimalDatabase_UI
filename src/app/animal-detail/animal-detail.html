@@ -121,6 +121,12 @@
                   <dd>{{ shoulderHeight }}</dd>
                 </div>
               }
+              @if (animal()!.updatedAt > animal()!.createdAt) {
+                <div class="fact">
+                  <dt>Last updated</dt>
+                  <dd>{{ animal()!.updatedAt | date:'d MMM y' }}</dd>
+                </div>
+              }
             </dl>
           }
         </div>
