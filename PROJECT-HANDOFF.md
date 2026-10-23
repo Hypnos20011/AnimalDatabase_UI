@@ -149,10 +149,10 @@ Route parameters reach components as inputs (`id = input<string>()`) because of
 API base URL: `src/environments/environment.ts` and `environment.development.ts`, both currently
 `apiUrl: 'http://localhost:5190/api'`. Services build their URLs from `environment.apiUrl`.
 
-### Backend: ASP.NET Core .NET 8 (`D:\AnimalDatabase.Api`)
+### Backend: ASP.NET Core .NET 10 (`D:\AnimalDatabase.Api`)
 
-Controllers-style Web API. NuGet packages: **Dapper**, **MySqlConnector**,
-**Swashbuckle.AspNetCore**. Don't add EF Core; it fights Dapper.
+Controllers-style Web API targeting `net10.0` (API and tests; needs the .NET 10 SDK). NuGet packages:
+**Dapper**, **MySqlConnector**, **Swashbuckle.AspNetCore** 10.x. Don't add EF Core; it fights Dapper.
 
 ```
 Program.cs                      DI, camelCase JSON, CORS for http://localhost:4200, Dapper underscore mapping
