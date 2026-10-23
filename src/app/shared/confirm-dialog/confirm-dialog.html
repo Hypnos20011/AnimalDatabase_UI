@@ -1,0 +1,33 @@
+<dialog
+  #dialog
+  class="confirm-dialog"
+  [attr.aria-labelledby]="titleId"
+  [attr.aria-describedby]="messageId"
+  (cancel)="onNativeCancel($event)"
+>
+  <h2 class="confirm-title" [id]="titleId">{{ title() }}</h2>
+  <p class="confirm-message" [id]="messageId">{{ message() }}</p>
+  @if (error()) {
+    <p class="confirm-error" role="alert">{{ error() }}</p>
+  }
+  <div class="confirm-actions">
+    <button
+      #cancelButton
+      type="button"
+      class="btn btn-secondary confirm-cancel"
+      [disabled]="busy()"
+      (click)="cancel()"
+    >
+      Cancel
+    </button>
+    <button
+      type="button"
+      class="btn confirm-delete"
+      [disabled]="busy()"
+      [attr.aria-busy]="busy()"
+      (click)="confirm()"
+    >
+      {{ busy() ? busyLabel() : confirmLabel() }}
+    </button>
+  </div>
+</dialog>

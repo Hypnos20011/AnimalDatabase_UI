@@ -5,10 +5,11 @@ import { Animal } from '../animal-model/animal.model';
 import { AnimalService } from '../animal.service';
 import { AnimalImage } from '../animal-model/animal-image.model';
 import { RangePipe } from '../shared/range.pipe';
+import { ConfirmDialog } from '../shared/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-animal-detail',
-  imports: [CommonModule, RouterLink, RangePipe],
+  imports: [CommonModule, RouterLink, RangePipe, ConfirmDialog],
   templateUrl: './animal-detail.html',
   styleUrl: './animal-detail.css',
 })
@@ -35,8 +36,12 @@ export class AnimalDetail {
   funFact = computed(() => this.profileParts().funFact);
   imagesLoading = signal(true);
   showDetails = signal(false);
+  confirmOpen = signal(false);
   deleting = signal(false);
   deleteError = signal('');
+  deleteTitle = computed(() => `Delete ${this.animal()?.commonName ?? 'this animal'}?`);
+  readonly deleteMessage =
+    "This removes the animal and its pictures for good, and it drops out of Top searches. This can't be undone.";
 
   constructor() {
     effect(() => {
@@ -81,15 +86,29 @@ export class AnimalDetail {
   }
 
   onDelete(): void {
+    if (!this.animal()) return;
+    this.deleteError.set('');
+    this.confirmOpen.set(true);
+  }
+
+  cancelDelete(): void {
+    if (this.deleting()) return;
+    this.confirmOpen.set(false);
+    this.deleteError.set('');
+  }
+
+  confirmDelete(): void {
     const animal = this.animal();
-    if (!animal) return;
-    if (!confirm(`Delete ${animal.commonName}? This can't be undone.`)) return;
+    if (!animal || this.deleting()) return;
     this.deleting.set(true);
     this.deleteError.set('');
     this.animalService.delete(animal.id).subscribe({
-      next: () => this.router.navigate(['/']),
+      next: () => {
+        this.confirmOpen.set(false);
+        this.router.navigate(['/']);
+      },
       error: () => {
-        this.deleteError.set('Could not delete this animal.');
+        this.deleteError.set('Could not delete this animal. Please try again.');
         this.deleting.set(false);
       },
     });

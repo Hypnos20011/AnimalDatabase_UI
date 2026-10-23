@@ -146,12 +146,20 @@
         [disabled]="deleting()"
         (click)="onDelete()"
       >
-        {{ deleting() ? 'Deleting...' : 'Delete' }}
+        Delete
       </button>
     </div>
-    @if (deleteError()) {
-      <p class="delete-error">{{ deleteError() }}</p>
-    }
+    <app-confirm-dialog
+      [open]="confirmOpen()"
+      [title]="deleteTitle()"
+      [message]="deleteMessage"
+      confirmLabel="Delete"
+      busyLabel="Deleting..."
+      [busy]="deleting()"
+      [error]="deleteError()"
+      (confirmed)="confirmDelete()"
+      (cancelled)="cancelDelete()"
+    />
   </article>
 } @else {
   @if (loading()) {
