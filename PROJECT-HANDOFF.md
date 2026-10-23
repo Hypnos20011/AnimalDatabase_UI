@@ -165,7 +165,7 @@ Data/
   ISearchRepository.cs          interface the controller uses (lets tests fake it)
   SearchRepository.cs           searches SQL
 Services/
-  WikipediaImporter.cs          Wikipedia + Wikidata lookup (typed HttpClient, 15 s timeout, own User-Agent)
+  WikipediaImporter.cs          Wikipedia + Wikidata lookup (typed HttpClient, 15 s client timeout, 10 s per attempt, one retry, own User-Agent)
 Models/                         Animal (in Animals.cs), AnimalImage, CreateAnimalRequest,
                                 CreateAnimalImageRequest, CreateSearchRequest, TopSearch, WikipediaImportResult
 Database/searches.sql           CREATE TABLE for searches
@@ -388,37 +388,64 @@ notes, not re-checked today:
 
 ### Wikipedia lookup (`Services/WikipediaImporter.cs`, `GET /api/wikipedia/import?q=`)
 
+Wikidata is always used first; everything read from the article only fills fields that are still
+empty.
+
 1. **Find the article**: if `q` is a `*.wikipedia.org/wiki/...` link it's parsed directly.
    Otherwise it searches English Wikipedia (`generator=search`, 8 results) and takes the first
    result that is not a disambiguation page.
-2. **REST summary** (`/api/rest_v1/page/summary/...`): title, intro extract (becomes the profile),
-   article URL and the Wikidata item id. Disambiguation pages return 404.
-3. **Page image** via `prop=pageimages` (500px thumbnail URL).
+2. **REST summary** (`/api/rest_v1/page/summary/...`): title, intro extract, article URL and the
+   Wikidata item id. Disambiguation pages return 404.
+3. In parallel: page image (`prop=pageimages`, 1280px thumbnail), image info for all article
+   images, the full plain-text article, the wikitext, Wikidata claims and the SPARQL ancestor query.
 4. **Wikidata claims** (`wbgetentities`):
    - `P225` scientific name
    - `P141` IUCN status, mapped from known item ids; for newer status items not in the map it
      falls back to the item's English label (for example "endangered species" becomes
      "endangered")
-   - `P2067` mass (converted to kg), `P2043` length (cm, rounded to one decimal half away from zero; a real length never becomes 0, the minimum is 0.1 cm), `P2250` lifespan (years); min/max come
-     from all values including lower/upper bounds; deprecated values are skipped
+   - `P2067` mass (converted to kg), `P2043` length (cm, rounded to one decimal half away from
+     zero; a real length never becomes 0, the minimum is 0.1 cm), `P2250` lifespan (years);
+     min/max come from all values including lower/upper bounds; deprecated values are skipped
    - For these quantities only values with no `P3831` role qualifier, or with role "adult", are
      used, so chick/newborn weights don't end up in the range
-5. **One SPARQL query** on `query.wikidata.org` walks the ancestor tree (`P171*`) to get every
-   ancestor's name and rank: the ancestor with rank "family" becomes the family, and the set of
-   ancestor names decides the class: Mammalia = mammal, Aves = bird, Reptilia/Squamata/Testudines/
-   Crocodilia/... = reptile, Amphibia = amphibian, ray-finned/cartilaginous/jawless fish groups =
-   fish, Sarcopterygii without Tetrapoda = fish, Animalia without Vertebrata = invertebrate.
-6. **Fun fact**: reads the full plain-text article, cuts it at "See also"/"References"/etc., and
-   picks the first sentence (50-280 chars, not already in the intro) containing a hint word such
-   as "the only", "unique", "largest", "able to", "regenerat". It's appended to the profile as
-   `\n\nFun fact: ...`.
-7. If the scientific name equals the article title (articles titled by Latin name), the common
-   name becomes the name the user typed.
+5. **One SPARQL query** on `query.wikidata.org` walks the ancestor tree (`P171*`): the ancestor
+   with rank "family" becomes the family, and the set of ancestor names decides the class
+   (Mammalia = mammal, Aves = bird, Reptilia/Squamata/Testudines/... = reptile, Amphibia =
+   amphibian, fish groups = fish, Animalia without Vertebrata = invertebrate).
+6. **Infobox fallbacks** (wikitext `{{Speciesbox}}`/`{{Taxobox}}`/`{{Automatic taxobox}}`):
+   `status` (only when `status_system` is IUCN, not CITES) gives the IUCN status, and `family`
+   from the infobox or, if missing, by walking the `Template:Taxonomy/...` parent chain.
+7. **Text fallbacks** from the article (sections like References/See also cut off, citation and
+   markup stripped):
+   - length (cm/mm/m/in/ft), weight (g/kg/lb) and lifespan ranges from sentences with "long",
+     "length", "weighs", "lives", "lifespan" etc. Only for species (scientific name with a space),
+     so genus/order pages don't get one species' numbers. Sentences about birth, hatchlings,
+     eggs, tadpoles, newborns, records or single specimens are skipped.
+   - habitat and range region from phrases like "inhabits ...", "found in ...", "native/endemic
+     to ...". Habitat must contain a habitat noun (forest, swamp, grassland, waters, ...); range
+     must look geographic (capitalised place or ocean/sea/tropical/...). Historic or former ranges
+     are skipped.
+8. **Common name**: if the article is titled by the Latin name, the typed name is kept; for link
+   imports the bold English name from the article's first sentence is used.
+9. **Picture**: if the lead image is a drawing, map, diagram, skeleton, old plate or SVG
+   (judged from file type, categories, description and date), the first real photo in the article
+   is used instead (1280px thumbnail when wider).
+10. **Profile + fun fact**: the first two intro sentences (IPA brackets stripped) become the
+    profile. The fun fact is the best-scoring sentence from the rest of the article (superlatives,
+    "the only", unique behaviour; penalised for conservation-status, plain measurements, weak
+    openers like "Another"/"Like most" and history phrasing). It never repeats a profile sentence;
+    if nothing scores high enough there is no fun fact. Appended as `\n\nFun fact: ...`.
+11. **Retry**: each Wikipedia/Wikidata request has a 10 s attempt timeout and is retried once
+    after 400 ms on a 5xx or network error/timeout (404s are not retried). A required request that
+    still fails returns 502 (5xx) or 504 (timeout) from the controller; optional requests
+    (images, wikitext, article text) just leave their fields empty.
 
-Known gaps: length and lifespan are often missing on Wikidata, some animals have no IUCN status
-there, and the fun fact is a heuristic, so it can be dull or missing. Always check the filled
+The result also has `habitat` and `rangeRegion`, but the frontend form (`applyImport` in
+`animal-form.ts`) does not map those two yet.
+
+Known gaps: text parsing is conservative, so sizes or lifespan can still be empty, habitat can
+be generic ("Forests") and range can be long; the fun fact can be missing. Always check the filled
 values before saving.
-
 ### UI / theme
 
 - Dark, flat editorial theme (redesign of 2026-10-23: "Index" list + photo-first detail page).
@@ -506,8 +533,9 @@ the Wikipedia lookup fills a correct URL automatically.
 
 Known issues:
 
-- Wikipedia lookup: length and lifespan often empty; some animals have no IUCN status on
-  Wikidata; fun-fact choice is heuristic; English Wikipedia only for name searches.
+- Wikipedia lookup: text-parsed sizes/lifespan/habitat/range are conservative and can be empty or
+  generic; fun-fact choice is heuristic; English Wikipedia only for name searches; the form doesn't
+  fill habitat/range from the lookup yet.
 - CORS only allows `http://localhost:4200`, and both environment files point at
   `http://localhost:5190/api`; deploying anywhere else needs both changed.
 - List state (filters, sort, query) resets on a full page reload; it isn't in the URL.
