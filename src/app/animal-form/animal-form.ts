@@ -62,6 +62,8 @@ export class AnimalForm {
   importMessage = signal('');
   importError = signal('');
   private originalCaptions = new Map<string, string | null>();
+  private importedImageUrl = '';
+  private importedValues = new Map<string, unknown>();
   error = signal('');
 
   form = this.fb.group({
@@ -236,16 +238,36 @@ export class AnimalForm {
     ] as const;
     let filled = 0;
     for (const key of keys) {
+      const control = this.form.get(key);
+      if (!control) continue;
       const value = data[key];
       if (value !== null && value !== undefined && value !== '') {
-        this.form.get(key)?.setValue(value as never);
+        control.setValue(value as never);
+        this.importedValues.set(key, value);
         filled++;
+      } else if (this.importedValues.has(key)) {
+        const previous = this.importedValues.get(key);
+        if (this.sameValue(control.value, previous)) {
+          control.setValue((typeof previous === 'number' ? null : '') as never);
+        }
+        this.importedValues.delete(key);
       }
     }
     const imageControl = this.form.controls.otherImageUrl;
-    if (data.imageUrl && !imageControl.value) {
-      imageControl.setValue(data.imageUrl);
-      filled++;
+    const current = (imageControl.value ?? '').trim();
+    if (!current || current === this.importedImageUrl) {
+      const next = (data.imageUrl ?? '').trim();
+      if (next !== current) {
+        imageControl.setValue(next);
+        imageControl.markAsUntouched();
+        this.failedPreviews.update((urls) => {
+          const remaining = new Set(urls);
+          remaining.delete(next);
+          return remaining;
+        });
+      }
+      this.importedImageUrl = next;
+      if (next) filled++;
     }
     return filled;
   }
@@ -304,6 +326,10 @@ export class AnimalForm {
       }
     }
     return images;
+  }
+
+  private sameValue(a: unknown, b: unknown): boolean {
+    return String(a ?? '').trim() === String(b ?? '').trim();
   }
 
   private normalize(value: string | null | undefined): string {

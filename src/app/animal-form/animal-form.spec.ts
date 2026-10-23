@@ -67,3 +67,101 @@ describe('AnimalForm Wikipedia lookup', () => {
     expect(form.importMessage()).toContain('Filled in 11 fields');
   });
 });
+describe('AnimalForm repeated Wikipedia lookups', () => {
+  const catPicture = 'https://upload.wikimedia.org/wikipedia/commons/a/a1/Cat.jpg';
+  const octopusPicture = 'https://upload.wikimedia.org/wikipedia/commons/b/b2/Octopus.jpg';
+
+  function setup(...results: WikipediaImport[]) {
+    const lookup = vi.fn();
+    for (const result of results) lookup.mockReturnValueOnce(of(result));
+    TestBed.configureTestingModule({
+      imports: [AnimalForm],
+      providers: [
+        provideRouter([]),
+        {
+          provide: AnimalService,
+          useValue: { getAll: vi.fn(() => of([])), importFromWikipedia: lookup },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(AnimalForm);
+    fixture.detectChanges();
+    return { fixture, form: fixture.componentInstance };
+  }
+
+  function lookUp(form: AnimalForm, query: string) {
+    form.wikiUrl.set(query);
+    form.importFromWikipedia();
+  }
+
+  it('replaces the picture from an earlier lookup', () => {
+    const { fixture, form } = setup(
+      shoebill({ commonName: 'Cat', imageUrl: catPicture }),
+      shoebill({ commonName: 'Blue-ringed octopus', imageUrl: octopusPicture }),
+    );
+    lookUp(form, 'cat');
+    form.markPreviewFailed(octopusPicture);
+    lookUp(form, 'blue-ringed octopus');
+    fixture.detectChanges();
+    expect(form.form.controls.commonName.value).toBe('Blue-ringed octopus');
+    expect(form.form.controls.otherImageUrl.value).toBe(octopusPicture);
+    expect(form.previewFailed(octopusPicture)).toBe(false);
+    const preview = (fixture.nativeElement as HTMLElement).querySelector('img.preview');
+    expect(preview?.getAttribute('src')).toBe(octopusPicture);
+  });
+
+  it('clears the earlier picture when the new lookup has none', () => {
+    const { form } = setup(shoebill({ imageUrl: catPicture }), shoebill({ imageUrl: null }));
+    lookUp(form, 'cat');
+    lookUp(form, 'blue-ringed octopus');
+    expect(form.form.controls.otherImageUrl.value).toBe('');
+  });
+
+  it('keeps a picture the user entered', () => {
+    const own = 'https://upload.wikimedia.org/wikipedia/commons/c/c3/Own.jpg';
+    const { form } = setup(
+      shoebill({ imageUrl: catPicture }),
+      shoebill({ imageUrl: octopusPicture }),
+    );
+    form.form.controls.otherImageUrl.setValue(own);
+    lookUp(form, 'cat');
+    expect(form.form.controls.otherImageUrl.value).toBe(own);
+    lookUp(form, 'blue-ringed octopus');
+    expect(form.form.controls.otherImageUrl.value).toBe(own);
+  });
+
+  it('clears values left over from the earlier lookup', () => {
+    const { form } = setup(
+      shoebill({
+        commonName: 'Cat',
+        lifespanYearsMin: 12,
+        lifespanYearsMax: 15,
+        rangeRegion: 'Much of the world',
+      }),
+      shoebill({
+        commonName: 'Blue-ringed octopus',
+        lifespanYearsMin: null,
+        lifespanYearsMax: null,
+        rangeRegion: null,
+      }),
+    );
+    lookUp(form, 'cat');
+    lookUp(form, 'blue-ringed octopus');
+    expect(form.form.controls.lifespanYearsMin.value).toBeNull();
+    expect(form.form.controls.lifespanYearsMax.value).toBeNull();
+    expect(form.form.controls.rangeRegion.value).toBe('');
+  });
+
+  it('keeps a value the user changed after the earlier lookup', () => {
+    const { form } = setup(
+      shoebill({ rangeRegion: 'Much of the world', lifespanYearsMax: 15 }),
+      shoebill({ rangeRegion: null, lifespanYearsMax: null }),
+    );
+    lookUp(form, 'cat');
+    form.form.controls.rangeRegion.setValue('Indo-Pacific');
+    form.form.controls.lifespanYearsMax.setValue(2);
+    lookUp(form, 'blue-ringed octopus');
+    expect(form.form.controls.rangeRegion.value).toBe('Indo-Pacific');
+    expect(form.form.controls.lifespanYearsMax.value).toBe(2);
+  });
+});
