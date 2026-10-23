@@ -257,3 +257,10 @@ ul {
     border-radius: var(--radius) var(--radius) 0 0;
   }
 }
+
+.match-hint {
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-accent-hover);
+}

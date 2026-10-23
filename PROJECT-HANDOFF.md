@@ -289,9 +289,18 @@ notes, not re-checked today:
 
 ### List page (`animals-list/`)
 
-- **Search box**: filters the list by common name, scientific name and profile text (case
-  insensitive). From 2 typed characters a **suggestions dropdown** shows up to 8 animals whose
-  common or scientific name matches, each with its thumbnail.
+- **Search box** ("Search name, habitat or range..."): filters the list by common name,
+  scientific name, **habitat**, **range** (`range_region`) and profile text. Matching lives in
+  `animals-list/animal-search.ts` (`normalizeText`, `matchAnimal`, `matchRank`, `matchHint`):
+  query and fields are trimmed, lowercased and whitespace-collapsed, then the whole query must
+  appear as a substring of a field. It's all client-side over `GET /api/animals`; the API isn't
+  involved. From 2 typed characters a **suggestions dropdown** shows up to 8 animals whose common
+  or scientific name matches (name matches only), each with its thumbnail.
+  - Ranking (Sort by "Best match", the default): name matches first, then habitat, then range,
+    then profile-only matches; ties and the no-query case sort by name A-Z. Any other Sort by
+    choice is kept as chosen.
+  - Cards that matched only through habitat or range show a small teal hint: "Matches habitat",
+    "Matches range" or "Matches habitat and range". Name and profile-only matches show no hint.
 - **Animal cards** in a grid: thumbnail (or a "No picture" tile), name, scientific name, IUCN
   status badge.
 - **Filters popup** (modal), opened with the **Filters** button. The button shows a badge with the
@@ -303,8 +312,8 @@ notes, not re-checked today:
   - **Length (cm)** and **Weight (kg)** ranges (from / to). An animal matches if its min-max range
     overlaps the filter; animals with no length/weight are excluded while that range is set.
   - Active count = each selected class + each selected status + wild only + 1 per range in use.
-- **Sort by** dropdown: Name (A to Z), Name (Z to A), Longest first, Shortest first, Heaviest
-  first, Lightest first, Newest first. Length/weight sorting uses the max value (falls back to
+- **Sort by** dropdown: Best match (default), Name (A to Z), Name (Z to A), Longest first,
+  Shortest first, Heaviest first, Lightest first, Newest first. Length/weight sorting uses the max value (falls back to
   min); animals without a value go last; ties sort by name. "Newest" sorts by `id` descending.
 - **State kept when navigating back**: query, filters, ranges and sort live in the root-provided
   `AnimalListState` service (`animals-list/animal-list-state.ts`), not in the component, so they
@@ -315,7 +324,8 @@ notes, not re-checked today:
 - **Top searches**: chips with thumbnail, name and count from `GET /api/searches/top`, loaded when
   the list opens.
   - Opening an animal from the **list cards or the suggestions** calls `POST /api/searches`
-    (`selectAnimal()`), so it counts.
+    (`selectAnimal()`), so it counts. That's the same whether the query matched the name,
+    habitat or range: Top searches counts opened animals, and `query_text` keeps what was typed.
   - Clicks on **Top searches** chips and the **Random animal** button navigate directly and do
     **not** count.
 - **+ Add animal** link goes to `/animals/new`.
@@ -456,14 +466,12 @@ Known issues:
 - CORS only allows `http://localhost:4200`, and both environment files point at
   `http://localhost:5190/api`; deploying anywhere else needs both changed.
 - List state (filters, sort, query) resets on a full page reload; it isn't in the URL.
-- Search only matches name, scientific name and profile text, not habitat or range.
 - PUT replaces all images of an animal, so image ids change on every save.
 - Delete uses the browser's `confirm()` dialog.
 
 Ideas (not started; ask Leo before building):
 
 - Put filters/sort in the URL query string so they survive reloads and can be shared.
-- Search habitat and range too ("characteristics" search from the original vision).
 - Height and lifespan range filters, like length and weight.
 - A recent-searches time window for Top searches (for example last 30 days, using `searched_at`).
 

@@ -18,7 +18,7 @@
   <input
     type="text"
     class="search"
-    placeholder="Search name or description..."
+    placeholder="Search name, habitat or range..."
     [value]="query()"
     (input)="onQueryChange($any($event.target).value)"
   />
@@ -231,6 +231,9 @@
           <strong class="card-title">{{ animal.commonName }}</strong>
           @if (animal.scientificName) {
             <em class="sci">{{ animal.scientificName }}</em>
+          }
+          @if (matchHint(animal); as hint) {
+            <span class="match-hint">{{ hint }}</span>
           }
           @if (animal.iucnStatus) {
             <span class="status" [attr.data-status]="animal.iucnStatus">{{

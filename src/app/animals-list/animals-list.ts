@@ -6,6 +6,7 @@ import { Animal } from '../animal-model/animal.model';
 import { AnimalListState, SortOption } from './animal-list-state';
 import { SearchService } from '../search.service';
 import { TopSearch } from '../animal-model/top-search.model';
+import { SearchMatch, matchAnimal, matchHint, matchRank, normalizeText } from './animal-search';
 
 @Component({
   selector: 'app-animals-list',
@@ -38,6 +39,7 @@ export class AnimalsList {
   filtersOpen = signal(false);
 
   readonly sortOptions: { value: SortOption; label: string }[] = [
+    { value: 'relevance', label: 'Best match' },
     { value: 'name-asc', label: 'Name (A to Z)' },
     { value: 'name-desc', label: 'Name (Z to A)' },
     { value: 'length-desc', label: 'Longest first' },
@@ -57,16 +59,23 @@ export class AnimalsList {
       (this.weightFrom() !== null || this.weightTo() !== null ? 1 : 0),
   );
 
+  searchMatches = computed(() => {
+    const matches = new Map<number, SearchMatch>();
+    const query = this.query();
+    if (!normalizeText(query)) return matches;
+    for (const animal of this.animals()) {
+      const match = matchAnimal(animal, query);
+      if (match) matches.set(animal.id, match);
+    }
+    return matches;
+  });
+
   suggestions = computed(() => {
-    const q = this.query().trim().toLowerCase();
-    if (q.length < 2) return [];
+    if (normalizeText(this.query()).length < 2) return [];
+    const matches = this.searchMatches();
 
     return this.animals()
-      .filter((animal) => {
-        const name = animal.commonName.toLowerCase();
-        const sci = (animal.scientificName ?? '').toLowerCase();
-        return name.includes(q) || sci.includes(q);
-      })
+      .filter((animal) => matches.get(animal.id)?.name)
       .slice(0, 8);
   });
 
@@ -89,7 +98,8 @@ export class AnimalsList {
   showDomesticated = computed(() => this.filterType() === 'all');
 
   filteredAnimals = computed(() => {
-    const q = this.query().trim().toLowerCase();
+    const hasQuery = normalizeText(this.query()).length > 0;
+    const matches = this.searchMatches();
     const classes = this.selectedClasses();
     const statuses = this.selectedStatuses();
     const type = this.filterType();
@@ -99,12 +109,7 @@ export class AnimalsList {
     const weightTo = this.weightTo();
 
     return this.animals().filter((animal) => {
-      if (q) {
-        const haystack = [animal.commonName, animal.scientificName ?? '', animal.profile ?? '']
-          .join(' ')
-          .toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
+      if (hasQuery && !matches.has(animal.id)) return false;
 
       if (classes.size > 0 && animal.taxonomicClass && !classes.has(animal.taxonomicClass)) {
         return false;
@@ -130,6 +135,9 @@ export class AnimalsList {
     const sort = this.sortBy();
     const list = [...this.filteredAnimals()];
     const byName = (a: Animal, b: Animal) => a.commonName.localeCompare(b.commonName);
+    const matches = this.searchMatches();
+    const byRelevance = (a: Animal, b: Animal) =>
+      matchRank(matches.get(a.id)) - matchRank(matches.get(b.id)) || byName(a, b);
     const byNumber = (
       value: (a: Animal) => number | null,
       descending: boolean,
@@ -147,6 +155,8 @@ export class AnimalsList {
     const weight = (a: Animal) => a.weightKgMax ?? a.weightKgMin;
 
     switch (sort) {
+      case 'relevance':
+        return list.sort(byRelevance);
       case 'name-desc':
         return list.sort((a, b) => byName(b, a));
       case 'length-desc':
@@ -243,6 +253,10 @@ export class AnimalsList {
     if (from !== null && high < from) return false;
     if (to !== null && low > to) return false;
     return true;
+  }
+
+  matchHint(animal: Animal): string {
+    return matchHint(this.searchMatches().get(animal.id));
   }
 
   getThumbnail(animal: Animal): string | null {
