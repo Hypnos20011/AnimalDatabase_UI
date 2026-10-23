@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { Animal } from '../animal-model/animal.model';
 import { AnimalService } from '../animal.service';
 import { AnimalImage } from '../animal-model/animal-image.model';
@@ -30,6 +31,7 @@ export class AnimalDetail {
 
   private animalService = inject(AnimalService);
   private router = inject(Router);
+  private title = inject(Title);
   protected admin = inject(AdminKeyService);
 
   animal = signal<Animal | null>(null);
@@ -74,6 +76,7 @@ export class AnimalDetail {
     this.animalService.getById(id).subscribe({
       next: (data) => {
         this.animal.set(data);
+        this.title.setTitle(` · Unusual Animals`);
         this.loading.set(false);
       },
       error: () => {
