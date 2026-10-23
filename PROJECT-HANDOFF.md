@@ -1,7 +1,7 @@
 # Animal Database: Project Handoff
 
 Notes so Leo, or another AI assistant, can pick this project up without re-reading old
-conversations. Last updated 2026-10-22 (end of day), checked against the code in both repos.
+conversations. Last updated 2026-10-23, checked against the code in both repos.
 
 ---
 
@@ -39,7 +39,7 @@ All of this is built now (see section 7).
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
 | Angular frontend       | `D:\AnimalDatabaseProject\`                                                                                                          | https://github.com/Hypnos20011/AnimalDatabase_UI     |
 | ASP.NET Core API       | `D:\AnimalDatabase.Api\`                                                                                                             | https://github.com/Hypnos20011/AnimalDatabase_Server |
-| Production (planned)   | Hetzner Cloud VPS, Docker Compose stack in `D:\AnimalDatabase.Api\deploy\` (see `deploy/README.md`)                                  | same as the API                                      |
+| Production (live)      | https://49-12-226-169.sslip.io, Hetzner VPS `49.12.226.169`, stack from `D:\AnimalDatabase.Api\deploy\` (see section 3)            | same as the API                                      |
 | Database               | MariaDB service on `C:` (data in `C:\Program Files\MariaDB*\data`)                                                                   | none                                                 |
 | Backups of originals   | `D:\AnimalDatabase-backup-2026-10-22\` (one folder per change, for example `before-wikipedia`, `before-ui-polish`, `before-restyle`) | none                                                 |
 | Abandoned Java version | `%USERPROFILE%\Pictures\animal-database-api\`                                                                                        | https://github.com/Hypnos20011/AnimalDatabase        |
@@ -129,6 +129,37 @@ it on a new machine:
 ```
 dotnet user-secrets set "ConnectionStrings:AnimalDatabase" "Server=localhost;Port=3306;Database=animaldatabase;User=root;Password=<password>"
 ```
+
+### Live server (since 2026-10-23)
+
+- URL: **https://49-12-226-169.sslip.io** (Let's Encrypt certificate, managed by Caddy; no domain needed).
+- Hetzner Cloud VPS, IPv4 `49.12.226.169`, Ubuntu 26.04, x86_64, 1 vCPU / ~1 GB RAM plus a 2 GB swap
+  file. SSH host key: `ED25519 SHA256:fhH6tP06cltVmYU73eeAzyI+vABH8T/PDCpXirfOVlM`.
+- Login: `ssh deploy@49.12.226.169` with Leo's ed25519 key from this PC. `deploy` has passwordless sudo
+  and is in the `docker` group. Root login and password login are off; ufw allows only 22, 80, 443.
+  Unattended security upgrades are on.
+- Code: `/opt/animaldatabase/AnimalDatabase_Server` and `/opt/animaldatabase/AnimalDatabase_UI`, copied
+  from this PC (no GitHub access on the server). Compose project `animaldatabase`, run from
+  `/opt/animaldatabase/AnimalDatabase_Server/deploy`.
+- Secrets: the server's `.env` (mode 600) next to `docker-compose.yml`; a copy of the MariaDB root and app
+  passwords is in `D:\AnimalDatabase-server-secrets.txt`. The admin key is the same as in
+  `D:\AnimalDatabase-admin-key.txt`.
+- Database: imported from the local `animaldatabase` on 2026-10-23 (18 animals); the app uses the limited
+  user `animaldb_app` (SELECT/INSERT/UPDATE/DELETE only). Local and live data are separate from now on.
+- Backups: nightly at 01:30 UTC into the `mariadb_backups` volume, kept 14 days (restore steps in
+  `deploy/README.md`).
+
+**Redeploy** after committing changes in either repo (only committed `master` is deployed):
+
+```powershell
+D:\AnimalDatabase.Api\deploy\redeploy.ps1
+```
+
+It archives both repos with `git archive`, copies them over SSH, takes a backup, swaps the folders
+(keeping `.env`), and runs `docker compose up -d --build`. The build on the server takes about 10 minutes.
+
+Useful on the server: `cd /opt/animaldatabase/AnimalDatabase_Server/deploy && docker compose ps`,
+`docker compose logs -f api`, `docker compose exec -T backup bash /usr/local/bin/backup.sh now`.
 
 ### Admin key (protects every write)
 
@@ -693,9 +724,9 @@ Known issues:
 - Wikipedia lookup: text-parsed sizes/lifespan/habitat/range are conservative and can be empty or
   generic; fun-fact choice is heuristic; English Wikipedia only for name searches; the form doesn't
   fill habitat/range from the lookup yet.
-- The server is not created yet: follow `D:\AnimalDatabase.Api\deploy\README.md`. `deploy/schema.sql`
-  is a snapshot; data added locally after it was taken is not on the server unless it is re-dumped
-  before the first start.
+- Local and live databases are separate: animals added locally don't appear on the live site (add them
+  there with the admin key, or move data by hand).
+- The server has only ~1 GB RAM; builds rely on the 2 GB swap file.
 - List state (filters, sort, query) resets on a full page reload; it isn't in the URL.
 - PUT replaces all images of an animal, so image ids change on every save.
 - The admin key is one shared secret, not user accounts; anyone who has it can edit. Rotate it if
