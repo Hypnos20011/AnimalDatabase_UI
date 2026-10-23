@@ -76,7 +76,7 @@ export class AnimalDetail {
     this.animalService.getById(id).subscribe({
       next: (data) => {
         this.animal.set(data);
-        this.title.setTitle(` · Unusual Animals`);
+        this.title.setTitle(`${data.commonName} · Unusual Animals`);
         this.loading.set(false);
       },
       error: () => {
