@@ -1,0 +1,66 @@
+import { formatNumber, formatRange } from './format-range';
+import { RangePipe } from './range.pipe';
+
+describe('formatRange', () => {
+  it('shows a single value when both ends are equal', () => {
+    expect(formatRange(5, 5, 'cm')).toBe('5 cm');
+  });
+
+  it('treats ends that only differ after rounding as equal', () => {
+    expect(formatRange(2.5, 2.5, 'kg', 2)).toBe('2.5 kg');
+    expect(formatRange(2.501, 2.499, 'kg', 2)).toBe('2.5 kg');
+  });
+
+  it('shows both ends with an en dash when they differ', () => {
+    expect(formatRange(140, 280, 'cm')).toBe('140–280 cm');
+  });
+
+  it('shows only the maximum as up to', () => {
+    expect(formatRange(null, 5, 'cm')).toBe('up to 5 cm');
+    expect(formatRange(undefined, 0.17, 'kg', 2)).toBe('up to 0.17 kg');
+  });
+
+  it('shows only the minimum as at least', () => {
+    expect(formatRange(2, null, 'cm')).toBe('at least 2 cm');
+    expect(formatRange(10, undefined, 'years', 0)).toBe('at least 10 years');
+  });
+
+  it('returns an empty string when neither end is known', () => {
+    expect(formatRange(null, null, 'cm')).toBe('');
+    expect(formatRange(undefined, undefined, 'kg', 2)).toBe('');
+  });
+
+  it('keeps zero as a known value', () => {
+    expect(formatRange(0, 3, 'years', 0)).toBe('0–3 years');
+  });
+
+  it('drops trailing zeros and keeps one decimal for lengths', () => {
+    expect(formatRange(150.0, 150.0, 'cm')).toBe('150 cm');
+    expect(formatRange(0.1, 12.5, 'cm')).toBe('0.1–12.5 cm');
+    expect(formatRange(12.34, 12.36, 'cm')).toBe('12.3–12.4 cm');
+  });
+
+  it('keeps up to two decimals for weights', () => {
+    expect(formatRange(0.06, 0.25, 'kg', 2)).toBe('0.06–0.25 kg');
+    expect(formatRange(10.0, 16.0, 'kg', 2)).toBe('10–16 kg');
+    expect(formatRange(0.125, 1.5, 'kg', 2)).toBe('0.13–1.5 kg');
+  });
+});
+
+describe('formatNumber', () => {
+  it('rounds to the given decimals without trailing zeros', () => {
+    expect(formatNumber(140.0, 1)).toBe('140');
+    expect(formatNumber(0.05, 1)).toBe('0.1');
+    expect(formatNumber(2.5, 2)).toBe('2.5');
+    expect(formatNumber(7.6, 0)).toBe('8');
+  });
+});
+
+describe('RangePipe', () => {
+  it('uses the same wording as formatRange', () => {
+    const pipe = new RangePipe();
+    expect(pipe.transform(null, 5, 'cm')).toBe('up to 5 cm');
+    expect(pipe.transform(200, 300, 'kg', 2)).toBe('200–300 kg');
+    expect(pipe.transform(null, null, 'cm')).toBe('');
+  });
+});

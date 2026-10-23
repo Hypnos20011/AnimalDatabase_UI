@@ -44,16 +44,19 @@
           </dd>
         </div>
       }
-      @if (animal()!.weightKgMin != null && animal()!.weightKgMax != null) {
+      @if (animal()!.weightKgMin | range: animal()!.weightKgMax : 'kg' : 2; as weight) {
         <div class="fact">
           <dt>Weight</dt>
-          <dd>{{ animal()!.weightKgMin }}–{{ animal()!.weightKgMax }} kg</dd>
+          <dd>{{ weight }}</dd>
         </div>
       }
-      @if (animal()!.lifespanYearsMin != null && animal()!.lifespanYearsMax != null) {
+      @if (
+        animal()!.lifespanYearsMin | range: animal()!.lifespanYearsMax : 'years' : 0;
+        as lifespan
+      ) {
         <div class="fact">
           <dt>Lifespan</dt>
-          <dd>{{ animal()!.lifespanYearsMin }}–{{ animal()!.lifespanYearsMax }} years</dd>
+          <dd>{{ lifespan }}</dd>
         </div>
       }
       @if (animal()!.habitat) {
@@ -99,16 +102,22 @@
             <dd>Wild</dd>
           </div>
         }
-        @if (animal()!.sizeLengthCmMin != null && animal()!.sizeLengthCmMax != null) {
+        @if (
+          animal()!.sizeLengthCmMin | range: animal()!.sizeLengthCmMax : 'cm' : 1;
+          as bodyLength
+        ) {
           <div class="fact">
             <dt>Body length</dt>
-            <dd>{{ animal()!.sizeLengthCmMin }}–{{ animal()!.sizeLengthCmMax }} cm</dd>
+            <dd>{{ bodyLength }}</dd>
           </div>
         }
-        @if (animal()!.sizeHeightCmMin != null && animal()!.sizeHeightCmMax != null) {
+        @if (
+          animal()!.sizeHeightCmMin | range: animal()!.sizeHeightCmMax : 'cm' : 1;
+          as shoulderHeight
+        ) {
           <div class="fact">
             <dt>Shoulder height</dt>
-            <dd>{{ animal()!.sizeHeightCmMin }}–{{ animal()!.sizeHeightCmMax }} cm</dd>
+            <dd>{{ shoulderHeight }}</dd>
           </div>
         }
       </dl>

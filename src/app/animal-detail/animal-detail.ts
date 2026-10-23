@@ -4,10 +4,11 @@ import { Router, RouterLink } from '@angular/router';
 import { Animal } from '../animal-model/animal.model';
 import { AnimalService } from '../animal.service';
 import { AnimalImage } from '../animal-model/animal-image.model';
+import { RangePipe } from '../shared/range.pipe';
 
 @Component({
   selector: 'app-animal-detail',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, RangePipe],
   templateUrl: './animal-detail.html',
   styleUrl: './animal-detail.css',
 })
