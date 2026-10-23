@@ -261,4 +261,28 @@ describe('AnimalDetail hero layout', () => {
 
     expect(element.querySelector('.hero .hero-caption')?.textContent).toContain('Okapi at Epulu');
   });
+
+  it('marks the intro with the layout so tall photos get the facts beside them', async () => {
+    const { element, loadPhoto } = await setup([photo]);
+    const intro = () => element.querySelector('.intro') as HTMLElement;
+
+    expect(intro().dataset['layout']).toBe('pending');
+    await loadPhoto(1000, 1348);
+    expect(intro().dataset['layout']).toBe('side');
+    await loadPhoto(1280, 853);
+    expect(intro().dataset['layout']).toBe('overlay');
+  });
+
+  it('keeps the facts and the More details toggle together in the intro', async () => {
+    const { element, settle } = await setup([photo]);
+    const facts = element.querySelector('.intro .intro-facts') as HTMLElement;
+
+    expect(facts.querySelector('.facts .fact dt')?.textContent).toContain('IUCN status');
+    expect(facts.querySelector('.more')?.textContent).toContain('More details');
+
+    (facts.querySelector('.more') as HTMLButtonElement).click();
+    await settle();
+
+    expect(facts.querySelector('.facts.extra')?.textContent).toContain('Giraffidae');
+  });
 });
