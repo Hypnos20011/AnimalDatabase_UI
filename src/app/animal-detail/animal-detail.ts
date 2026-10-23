@@ -33,6 +33,8 @@ export class AnimalDetail {
   animal = signal<Animal | null>(null);
   loading = signal(true);
   images = signal<AnimalImage[]>([]);
+  heroImage = computed(() => this.images()[0] ?? null);
+  moreImages = computed(() => this.images().slice(1));
 
   private profileParts = computed(() => {
     const profile = this.animal()?.profile ?? '';

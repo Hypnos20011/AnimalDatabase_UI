@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { AnimalService } from '../animal.service';
@@ -11,6 +11,8 @@ import { Subscription } from 'rxjs';
 import { formatCount } from '../shared/plural';
 import { wikimediaSrcset } from '../shared/wikimedia-image';
 import { TOP_SEARCH_WINDOWS, parseTopSearchDays, topSearchEmptyText } from './top-search-window';
+import { indexLabel, pickActive } from './active-animal';
+import { iucnCode, iucnLabel } from '../shared/iucn';
 
 @Component({
   selector: 'app-animals-list',
@@ -191,7 +193,22 @@ export class AnimalsList {
     }
   });
 
+  activeId = signal<number | null>(null);
+  active = computed(() => pickActive(this.sortedAnimals(), this.activeId()));
+  countDigits = computed(() => String(this.filteredAnimals().length).padStart(2, '0'));
+  countText = computed(() =>
+    formatCount(this.filteredAnimals().length, { one: 'animal', other: 'animals' }),
+  );
+  readonly indexLabel = indexLabel;
+  readonly iucnCode = iucnCode;
+  readonly iucnLabel = iucnLabel;
+
   constructor() {
+    effect(() => {
+      const visible = this.filteredAnimals();
+      const pool = visible.length > 0 ? visible : this.animals();
+      this.state.randomPool.set(pool.map((animal) => animal.id));
+    });
     this.loadTopSearches();
     this.animalService.getAll().subscribe({
       next: (data) => {
@@ -300,19 +317,20 @@ export class AnimalsList {
     return animal.thumbnailUrl;
   }
 
-  selectAnimal(animal: Animal): void {
+  setActive(id: number): void {
+    this.activeId.set(id);
+  }
+
+  previewExtra(animal: Animal): string {
+    return [animal.family, animal.habitat].filter((part) => !!part?.trim()).join(' / ');
+  }
+
+  recordOpen(animal: Animal): void {
     this.searchService.record(this.query(), animal.id).subscribe({ error: () => {} });
-    this.router.navigate(['/animals', animal.id]);
   }
 
-  openRandomAnimal(): void {
-    const pool = this.filteredAnimals().length > 0 ? this.filteredAnimals() : this.animals();
-    if (pool.length === 0) return;
-    const animal = pool[Math.floor(Math.random() * pool.length)];
+  selectAnimal(animal: Animal): void {
+    this.recordOpen(animal);
     this.router.navigate(['/animals', animal.id]);
-  }
-
-  openTopSearch(top: TopSearch): void {
-    this.router.navigate(['/animals', top.animalId]);
   }
 }

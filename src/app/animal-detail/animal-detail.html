@@ -1,38 +1,33 @@
 @if (animal()) {
   <article class="detail">
-    <header class="detail-header">
-      <h2>{{ animal()!.commonName }}</h2>
-      @if (animal()!.scientificName) {
-        <em class="sci">{{ animal()!.scientificName }}</em>
+    <section class="hero" [class.no-photo]="!heroImage()">
+      @if (heroImage(); as hero) {
+        <img
+          class="hero-image"
+          [src]="hero.url"
+          [attr.srcset]="srcset(hero.url)"
+          sizes="(max-width: 1240px) 100vw, 1192px"
+          [alt]="hero.caption ?? animal()!.commonName"
+          decoding="async"
+          (error)="hero.url = ''"
+        />
       }
-    </header>
+      <header class="detail-header">
+        <h2>{{ animal()!.commonName }}</h2>
+        @if (animal()!.scientificName) {
+          <em class="sci">{{ animal()!.scientificName }}</em>
+        }
+      </header>
+    </section>
 
     @if (imagesLoading()) {
       <p class="hint">Loading images...</p>
     }
 
-    @if (!imagesLoading() && images().length > 0) {
-      <section class="gallery">
-        @for (img of images(); track img.id) {
-          <figure>
-            <img
-              [src]="img.url"
-              [attr.srcset]="srcset(img.url)"
-              [attr.sizes]="
-                images().length === 1
-                  ? '(max-width: 960px) 100vw, 870px'
-                  : '(max-width: 600px) 100vw, 420px'
-              "
-              [alt]="img.caption ?? animal()!.commonName"
-              decoding="async"
-              (error)="img.url = ''"
-            />
-            @if (showCaption(img)) {
-              <figcaption>{{ img.caption }}</figcaption>
-            }
-          </figure>
-        }
-      </section>
+    @if (heroImage(); as hero) {
+      @if (showCaption(hero)) {
+        <p class="hero-caption">{{ hero.caption }}</p>
+      }
     }
 
     @if (!imagesLoading() && images().length === 0) {
@@ -140,6 +135,27 @@
       <section class="profile">
         <h3>Profile</h3>
         <p>{{ profileText() }}</p>
+      </section>
+    }
+
+    @if (moreImages().length > 0) {
+      <section class="gallery" aria-label="More pictures">
+        @for (img of moreImages(); track img.id) {
+          <figure>
+            <img
+              [src]="img.url"
+              [attr.srcset]="srcset(img.url)"
+              sizes="(max-width: 600px) 100vw, 380px"
+              [alt]="img.caption ?? animal()!.commonName"
+              loading="lazy"
+              decoding="async"
+              (error)="img.url = ''"
+            />
+            @if (showCaption(img)) {
+              <figcaption>{{ img.caption }}</figcaption>
+            }
+          </figure>
+        }
       </section>
     }
 

@@ -1,75 +1,72 @@
 <div class="page-head">
-  <h2>Animals</h2>
-
-  <div class="top-actions">
-    <a routerLink="/animals/new" class="add-link btn btn-primary">+ Add animal</a>
-    <button
-      type="button"
-      class="random-button btn btn-secondary"
-      [disabled]="animals().length === 0"
-      (click)="openRandomAnimal()"
-    >
-      Random animal
-    </button>
-  </div>
-</div>
-
-<div class="search-wrap">
-  <input
-    type="text"
-    class="search"
-    placeholder="Search name, habitat or range..."
-    [value]="query()"
-    (input)="onQueryChange($any($event.target).value)"
-  />
-
-  @if (query().trim().length >= 2 && suggestions().length > 0) {
-    <ul class="suggestions">
-      @for (animal of suggestions(); track animal.id) {
-        <li tabindex="0" (click)="selectAnimal(animal)" (keydown.enter)="selectAnimal(animal)">
-          @if (getThumbnail(animal); as thumb) {
-            <img
-              class="thumb"
-              [src]="thumb"
-              [attr.srcset]="srcset(thumb)"
-              sizes="44px"
-              [alt]="animal.commonName"
-              decoding="async"
-              (error)="$any($event.target).style.visibility = 'hidden'"
-            />
-          }
-          <div class="suggestion-text">
-            <strong>{{ animal.commonName }}</strong>
-            @if (animal.scientificName) {
-              <em class="sci"> · {{ animal.scientificName }}</em>
-            }
-          </div>
-        </li>
-      }
-    </ul>
-  }
-</div>
-
-<div class="filter-bar">
-  <button type="button" class="filter-toggle btn btn-secondary" (click)="filtersOpen.set(true)">
-    Filters
-    @if (activeFilterCount() > 0) {
-      <span class="badge">{{ activeFilterCount() }}</span>
+  <h2>
+    Animals
+    @if (!loading()) {
+      <span class="count" aria-hidden="true">{{ countDigits() }}</span>
+      <span class="visually-hidden">({{ countText() }})</span>
     }
-  </button>
-  @if (activeFilterCount() > 0) {
-    <button type="button" class="chip" (click)="clearAll()">Clear all</button>
-  }
-  <label class="sort">
-    Sort by
-    <select (change)="onSortChange($any($event.target).value)">
-      @for (option of sortOptions; track option.value) {
-        <option [value]="option.value" [selected]="option.value === sortBy()">
-          {{ option.label }}
-        </option>
+  </h2>
+</div>
+
+<div class="toolbar">
+  <div class="search-wrap">
+    <input
+      type="search"
+      class="search"
+      aria-label="Search animals"
+      placeholder="Search name, habitat or range..."
+      [value]="query()"
+      (input)="onQueryChange($any($event.target).value)"
+    />
+
+    @if (query().trim().length >= 2 && suggestions().length > 0) {
+      <ul class="suggestions">
+        @for (animal of suggestions(); track animal.id) {
+          <li tabindex="0" (click)="selectAnimal(animal)" (keydown.enter)="selectAnimal(animal)">
+            @if (getThumbnail(animal); as thumb) {
+              <img
+                class="thumb"
+                [src]="thumb"
+                [attr.srcset]="srcset(thumb)"
+                sizes="44px"
+                [alt]="animal.commonName"
+                decoding="async"
+                (error)="$any($event.target).style.visibility = 'hidden'"
+              />
+            }
+            <div class="suggestion-text">
+              <strong>{{ animal.commonName }}</strong>
+              @if (animal.scientificName) {
+                <em class="sci"> · {{ animal.scientificName }}</em>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+
+  <div class="filter-bar">
+    <button type="button" class="filter-toggle btn btn-secondary" (click)="filtersOpen.set(true)">
+      Filters
+      @if (activeFilterCount() > 0) {
+        <span class="badge">{{ activeFilterCount() }}</span>
       }
-    </select>
-  </label>
+    </button>
+    @if (activeFilterCount() > 0) {
+      <button type="button" class="chip clear" (click)="clearAll()">Clear all</button>
+    }
+    <label class="sort">
+      <span class="visually-hidden">Sort by</span>
+      <select (change)="onSortChange($any($event.target).value)">
+        @for (option of sortOptions; track option.value) {
+          <option [value]="option.value" [selected]="option.value === sortBy()">
+            {{ option.label }}
+          </option>
+        }
+      </select>
+    </label>
+  </div>
 </div>
 
 @if (filtersOpen()) {
@@ -196,21 +193,11 @@
     @if (topSearches().length > 0) {
       <ul>
         @for (top of topSearches(); track top.animalId) {
-          <li tabindex="0" (click)="openTopSearch(top)" (keydown.enter)="openTopSearch(top)">
-            @if (top.thumbnailUrl) {
-              <img
-                class="thumb"
-                [src]="top.thumbnailUrl"
-                [attr.srcset]="srcset(top.thumbnailUrl)"
-                sizes="28px"
-                [alt]="top.commonName"
-                loading="lazy"
-                decoding="async"
-                (error)="$any($event.target).style.visibility = 'hidden'"
-              />
-            }
-            <span class="top-name">{{ top.commonName }}</span>
-            <span class="top-count">{{ top.searchCount }}</span>
+          <li>
+            <a class="top-link" [routerLink]="['/animals', top.animalId]">
+              <span class="top-name">{{ top.commonName }}</span>
+              <span class="top-count">{{ top.searchCount }}</span>
+            </a>
           </li>
         }
       </ul>
@@ -219,55 +206,93 @@
     }
   </section>
 }
+
 @if (loading()) {
   <p class="state-message">Loading...</p>
 }
 
 @if (error()) {
-  <p class="error-message">{{ error() }}</p>
+  <p class="error-message" role="alert">{{ error() }}</p>
 }
 
-@if (!loading() && filteredAnimals().length === 0) {
+@if (!loading() && !error() && filteredAnimals().length === 0) {
   <p class="state-message">No animals match your filters.</p>
 }
 
 @if (filteredAnimals().length > 0) {
-  <ul class="animal-grid">
-    @for (animal of sortedAnimals(); track animal.id) {
-      <li
-        class="animal-card"
-        tabindex="0"
-        (click)="selectAnimal(animal)"
-        (keydown.enter)="selectAnimal(animal)"
-      >
-        <div class="card-media">
-          @if (getThumbnail(animal); as thumb) {
+  <div class="index">
+    <ol class="animal-index">
+      @for (animal of sortedAnimals(); track animal.id; let i = $index) {
+        <li class="row" [class.is-active]="active()?.item?.id === animal.id">
+          <a
+            class="row-link"
+            [routerLink]="['/animals', animal.id]"
+            (click)="recordOpen(animal)"
+            (mouseenter)="setActive(animal.id)"
+            (focus)="setActive(animal.id)"
+          >
+            <span class="num" aria-hidden="true">{{ indexLabel(i) }}</span>
+            <span class="row-thumb" aria-hidden="true">
+              @if (getThumbnail(animal); as thumb) {
+                <img
+                  [src]="thumb"
+                  [attr.srcset]="srcset(thumb)"
+                  sizes="48px"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  (error)="$any($event.target).style.visibility = 'hidden'"
+                />
+              }
+            </span>
+            <span class="title">
+              <span class="name">{{ animal.commonName }}</span>
+              @if (matchHint(animal); as hint) {
+                <span class="match-hint">{{ hint }}</span>
+              }
+            </span>
+            <span class="meta">
+              @if (animal.scientificName) {
+                <em class="sci">{{ animal.scientificName }}</em>
+              }
+              @if (animal.taxonomicClass) {
+                <span class="cls">{{ animal.taxonomicClass }}</span>
+              }
+            </span>
+            <span class="code" [attr.data-status]="animal.iucnStatus" aria-hidden="true">{{
+              iucnCode(animal.iucnStatus)
+            }}</span>
+            <span class="visually-hidden">, {{ iucnLabel(animal.iucnStatus) }}</span>
+          </a>
+        </li>
+      }
+    </ol>
+
+    @if (active(); as current) {
+      <aside class="preview" aria-hidden="true">
+        <div class="preview-media">
+          @if (getThumbnail(current.item); as thumb) {
             <img
               [src]="thumb"
               [attr.srcset]="srcset(thumb)"
-              sizes="(max-width: 600px) 50vw, 260px"
+              sizes="360px"
               alt=""
-              loading="lazy"
               decoding="async"
               (error)="$any($event.target).style.visibility = 'hidden'"
             />
           }
         </div>
-        <div class="card-body">
-          <strong class="card-title">{{ animal.commonName }}</strong>
-          @if (animal.scientificName) {
-            <em class="sci">{{ animal.scientificName }}</em>
+        <div class="preview-meta">
+          <span class="preview-num">{{ indexLabel(current.index) }}</span>
+          <strong class="preview-name">{{ current.item.commonName }}</strong>
+          @if (current.item.scientificName) {
+            <em class="preview-sci">{{ current.item.scientificName }}</em>
           }
-          @if (matchHint(animal); as hint) {
-            <span class="match-hint">{{ hint }}</span>
-          }
-          @if (animal.iucnStatus) {
-            <span class="status" [attr.data-status]="animal.iucnStatus">{{
-              animal.iucnStatus
-            }}</span>
+          @if (previewExtra(current.item); as extra) {
+            <span class="preview-extra">{{ extra }}</span>
           }
         </div>
-      </li>
+      </aside>
     }
-  </ul>
+  </div>
 }

@@ -116,15 +116,19 @@ src/
     environment.ts               apiUrl used by production builds
     environment.development.ts   swapped in for dev builds via fileReplacements in angular.json
   app/
-    app.ts / app.html / app.css  header bar ("Animal Database" links home) + <router-outlet>
+    app.ts / app.html / app.css  top bar ("Animal Database" links home, Random animal + Add animal
+                                 text links on the right) + <router-outlet>
+    random-animal.service.ts     Random animal from the top bar (uses AnimalListState.randomPool)
     app.config.ts                provideRouter(routes, withComponentInputBinding()), provideHttpClient()
     app.routes.ts                routes, see below
-    app.spec.ts                  2 tests (app creates, header shows the title)
+    app.spec.ts                  app creates, header shows the title and the two top-bar links
     animal.service.ts            /api/animals and /api/wikipedia calls
     search.service.ts            /api/searches calls (getTop(limit, days)), spec checks the query params
     animal-model/                animal.model.ts (Animal, NewAnimal, NewAnimalImage),
                                  animal-image.model.ts, top-search.model.ts, wikipedia-import.model.ts
-    animals-list/                list page + animal-list-state.ts, top-search-window.ts (Top searches window options)
+    animals-list/                list page + animal-list-state.ts, top-search-window.ts (Top searches window options),
+                                 active-animal.ts (which row the preview pane shows, row numbers)
+    shared/iucn.ts               IUCN status to code (LC, NT, VU, EN, CR, EW, EX, DD; dash when empty)
     animal-detail/               detail page
     animal-form/                 add / edit form
 ```
@@ -302,10 +306,17 @@ notes, not re-checked today:
   - Ranking (Sort by "Best match", the default): name matches first, then habitat, then range,
     then profile-only matches; ties and the no-query case sort by name A-Z. Any other Sort by
     choice is kept as chosen.
-  - Cards that matched only through habitat or range show a small teal hint: "Matches habitat",
+  - Rows that matched only through habitat or range show a small teal hint: "Matches habitat",
     "Matches range" or "Matches habitat and range". Name and profile-only matches show no hint.
-- **Animal cards** in a grid: thumbnail (or a "No picture" tile), name, scientific name, IUCN
-  status badge.
+- **Index list**: numbered rows (01, 02, ...) with thin dividers. Each row is a link to the
+  detail page and shows the name, scientific name, class and the IUCN status code (a dash when
+  there is no status; screen readers get the full status). Header: "Animals" plus the count.
+- **Preview pane** on the right (sticky): big picture, number, name, scientific name and
+  "FAMILY / HABITAT" of the active row. The first animal is active by default; hovering or
+  keyboard-focusing a row makes it active (`pickActive()` in `active-animal.ts`; if the active
+  animal is filtered out it falls back to the first one). Tapping a row opens the detail page.
+  Below 900px the pane is hidden and every row gets a small thumbnail; below 600px the class
+  column is hidden too.
 - **Filters popup** (modal), opened with the **Filters** button. The button shows a badge with the
   number of active filters; **Clear all** appears next to it and in the popup footer. Closes on
   the X, the "Show N animals" button or a click on the backdrop. Filters in it:
@@ -322,9 +333,11 @@ notes, not re-checked today:
   `AnimalListState` service (`animals-list/animal-list-state.ts`), not in the component, so they
   survive going to an animal and back. They reset on a full page reload. The popup open state
   doesn't persist.
-- **Random animal** button: opens a random animal from the currently filtered list (falls back to
-  all animals if the filters match none). Disabled while there are no animals.
-- **Top searches**: chips with thumbnail, name and count from `GET /api/searches/top`, loaded when
+- **Random animal** (text link in the top bar, every page): opens a random animal from the
+  currently filtered list (falls back to all animals if the filters match none). The list page
+  shares the ids through `AnimalListState.randomPool`; if the pool is empty (e.g. the list was
+  never opened) `RandomAnimalService` loads all animals and picks one.
+- **Top searches**: one line under the search bar with name and count links from `GET /api/searches/top`, loaded when
   the list opens.
   - A small select next to the heading picks the window: **Last 7 days**, **Last 30 days**
     (default) or **All time** (`days` = 7, 30, 0). The choice lives in `AnimalListState`
@@ -335,22 +348,26 @@ notes, not re-checked today:
     the same session time zone; index `idx_searches_searched_at` covers the filter).
   - Empty window: "No searches in the last 30 days." / "No searches in the last 7 days." /
     "No searches yet." (all time). If the request fails: "Top searches are unavailable right now."
-  - Opening an animal from the **list cards or the suggestions** calls `POST /api/searches`
-    (`selectAnimal()`), so it counts. That's the same whether the query matched the name,
+  - Opening an animal from the **list rows or the suggestions** calls `POST /api/searches`
+    (`recordOpen()` / `selectAnimal()`), so it counts. That's the same whether the query matched the name,
     habitat or range: Top searches counts opened animals, and `query_text` keeps what was typed.
-  - Clicks on **Top searches** chips and the **Random animal** button navigate directly and do
-    **not** count.
-- **+ Add animal** link goes to `/animals/new`.
+  - Clicks on **Top searches** entries and **Random animal** navigate directly and do **not**
+    count.
+- **Add animal** (text link in the top bar, teal while on the form) goes to `/animals/new`.
 
 ### Detail page (`animal-detail/`, route `animals/:id`)
 
-- Loads the animal and its images. Gallery of all images (shown uncropped) with captions.
-- Facts as tiles: IUCN status (badge), weight, lifespan, habitat, range.
+- Loads the animal and its images. Photo first: the first image is a full-width hero
+  (`min(60vh, 500px)`, cropped with `object-fit: cover`) with the name and scientific name on a
+  dark gradient at its bottom; its caption sits under it. Any further images appear in a gallery
+  near the end, with captions. Without images the name shows as a plain heading.
+- Facts in columns with a thin left rule: IUCN status (coloured dot + label), weight, lifespan,
+  habitat, range.
 - **More details / Hide details** toggle shows the "nerd" facts: family, class, wild/domesticated,
   body length, shoulder height.
 - Profile text. If the profile contains `Fun fact:`, everything after it is shown in its own
   **Fun fact** box (`profileParts` in `animal-detail.ts`); the stored profile isn't changed.
-- Actions: **Back to list**, **Edit** (`/animals/:id/edit`), **Delete** (browser confirm dialog,
+- Actions: **Back to list**, **Edit** (`/animals/:id/edit`), **Delete** (in-app confirm dialog,
   then `DELETE /api/animals/{id}` and back to the list; shows an error if it fails).
 
 ### Add / edit form (`animal-form/`, routes `animals/new` and `animals/:id/edit`)
@@ -404,14 +421,30 @@ values before saving.
 
 ### UI / theme
 
-- Flat "deep ocean" theme: navy primary `#1c3d66` (header bar, primary buttons, links) and teal
-  accent `#0b7a78` (focus ring, highlights, active chips, fun-fact box, Wikipedia panel),
-  background `#f1f4f8`, text `#16243a`, danger red `#b3261e`.
-- All colours, radii (4-6px) and the focus ring are CSS custom properties in `:root` of
-  `src/styles.css`. Shared classes live there too: `.btn` / `.btn-primary` / `.btn-secondary` /
-  `.btn-danger` / `.btn-sm`, `.chip`, `.status[data-status=...]` (muted IUCN colour scale),
-  `.page-head`, `.animal-grid` / `.animal-card`, form control styles.
-- System font stack only (no Google Fonts). Flat design: 1px borders, almost no shadows, no hover
+- Dark, flat editorial theme (redesign of 2026-10-23: "Index" list + photo-first detail page).
+  Background `#0e1012`, surfaces `#16191c` / `#1c2024`, borders `#262b30`, input borders
+  `#5f686e`, text `#f2f4f5`, muted text `#9aa3a8`, teal accent `#2bb3ac` (hover `#3fc7c0`).
+  Text on teal (primary buttons, active chips, filter badge) is dark `#061615`, because white
+  on teal fails AA. Danger text `#ff7b70`; the filled delete button is `#b8322a` with white text.
+  The duplicate warning uses `#241f10` / `#6b5a26` / `#f0d58c`. All pairs were checked for WCAG AA.
+- IUCN tones (via `[data-status]`, used by `.status` and the list's `.code`): teal by default,
+  amber `#f0b44c` for vulnerable/endangered, red `#ff6b5e` for critically endangered / extinct in
+  the wild / extinct, muted for data deficient.
+- Font: **Inter Tight**, self-hosted (variable woff2, latin + latin-ext, normal + italic) in
+  `public/fonts/inter-tight/` with its OFL licence; `@font-face` rules are in `styles.css`, and
+  `index.html` preloads the latin normal file. No CDN or Google services. Fallback: Segoe UI,
+  Arial.
+- Sizes: page title (`h2`) 2.75rem / 800; list row names 1.625rem (26px) / 700, inactive rows in
+  `#858e94`, the active row white with a teal number and arrow; preview name 1.5rem; detail title
+  5rem (2.75rem on phones).
+- Top bar: sticky, solid background with a bottom border (no transparency, so nothing shows
+  through when scrolling), height `--header-height` (60px). Brand in uppercase with a teal dot;
+  Random animal and Add animal are small plain text links on the right.
+- All colours, radii (2-3px), the focus ring and `--header-height` are CSS custom properties in
+  `:root` of `src/styles.css`. Shared classes live there too: `.btn` / `.btn-primary` /
+  `.btn-secondary` / `.btn-danger` / `.btn-sm`, `.chip`, `.status` / `.code`, `.page-head`,
+  `.visually-hidden`, `.modal*` (filter popup), `.suggestions`, the search field, form controls.
+- Flat design: 1px borders, no shadows (the focus ring is the only box-shadow), no hover
   animations. Two-column form on wide screens, one column on phones; the filter popup becomes a
   bottom sheet on phones.
 - Keep component CSS under Angular's 4 kB per-component budget (warning at 4 kB, error at 8 kB);
