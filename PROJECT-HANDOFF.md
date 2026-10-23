@@ -72,7 +72,12 @@ git @a -C D:\AnimalDatabase.Api status
 2. **API:** open `D:\AnimalDatabase.Api` in **Rider** and run the `http` launch profile. It
    listens on `http://localhost:5190` (the `https` profile adds `https://localhost:7106`).
    Command-line alternative: `dotnet run --launch-profile http` in that folder.
-   In Development, the Swagger page is at `http://localhost:5190/swagger`.
+   In Development, the Swagger page is at `http://localhost:5190/swagger`. If it ever says "Unable
+   to render this definition. The provided definition does not specify a valid version field", the
+   browser is running an old cached Swagger UI script (Swashbuckle 6.x only knew OpenAPI 3.0.0-3.0.3,
+   the API now serves `"openapi": "3.0.4"`). Press Ctrl+F5 once. Since the rate limiting commit the
+   page loads its scripts as `swagger-ui-bundle.js?v=<Swashbuckle version>` (`OpenApi/SwaggerUiAssets.cs`),
+   so a package upgrade changes the URLs and the browser can't reuse a stale copy.
 3. **Frontend:** open `D:\AnimalDatabaseProject` in **WebStorm** (or a terminal) and run
    `npm start` (`ng serve`). Open `http://localhost:4200`.
 
@@ -121,6 +126,47 @@ Adding, editing and deleting animals and the Wikipedia lookup need the request h
   once; open tabs get a 401 and are sent back to `/admin`. Don't use `RandomNumberGenerator.Fill`:
   Windows PowerShell 5 doesn't have it.
 
+### Rate limiting (per client IP)
+
+Built-in ASP.NET Core rate limiter (`RateLimiting/` in the API, no extra package). Fixed windows of
+60 seconds per client IP, no queueing:
+
+| What | Limit | Notes |
+| --- | --- | --- |
+| `GET /api/wikipedia/import` | 10 per minute | applies to everyone, with or without the admin key (it calls Wikipedia for us) |
+| `POST /api/searches` | 30 per minute | skipped when the request carries a valid admin key |
+| `GET /api/admin/check` | 10 per minute | never skipped, so key guessing is slow |
+| everything else | 300 per minute | global limit; Swagger is not limited |
+
+Over the limit the API answers **429** with a `Retry-After` header (seconds) and the text "Too many
+requests. Try again in N seconds." CORS exposes `Retry-After`.
+
+Settings live in `appsettings.json` under `RateLimiting` (`Enabled`, `WindowSeconds`,
+`GlobalPerWindow`, `WikipediaImportPerWindow`, `SearchLogPerWindow`, `AdminCheckPerWindow`); missing
+values fall back to the same defaults in `RateLimitSettings.cs`. Override with environment variables
+such as `RateLimiting__WikipediaImportPerWindow=20`, or `RateLimiting__Enabled=false` to switch it off.
+
+**How the client IP is found.** Today every request reaches the API from 127.0.0.1 (cloudflared ->
+`ng serve` proxy -> API). The Vite dev-server proxy passes the incoming `X-Forwarded-For` and
+`CF-Connecting-IP` headers through unchanged (checked against the project's Vite 8.3), so
+`proxy.conf.json` needs no `xfwd` setting.
+
+1. If the direct peer is loopback and there is no `X-Forwarded-For`, `CF-Connecting-IP` (when it is
+   a valid IP) becomes the client address.
+2. `UseForwardedHeaders` then reads `X-Forwarded-For`, trusting only loopback proxies
+   (`127.0.0.0/8`, `::1`). It walks the list from the right, skipping loopback hops.
+3. Otherwise the TCP peer address is used. Headers from any non-loopback peer are ignored, so a
+   forged header can't dodge the limit. IPv4-mapped IPv6 addresses count as the plain IPv4 address.
+
+When Caddy comes in front, it also connects from loopback and appends to `X-Forwarded-For`, so this
+keeps working. If a proxy ever runs on another machine, add its address to `KnownProxies` in
+`RateLimiting/ClientIp.cs`.
+
+**In the UI:** a 429 from the Wikipedia lookup shows "Too many lookups. Try again in a minute." (or
+"in N seconds" when the server says 45 seconds or less) in the usual inline error spot. The admin
+unlock page says "Too many attempts. Try again ...". Recording a search stays silent: the search and
+opening the animal keep working when the search log is limited. Helper: `src/app/shared/rate-limit.ts`.
+
 Checks used after frontend changes (run in `D:\AnimalDatabaseProject`):
 
 ```powershell
@@ -131,7 +177,11 @@ npx ng test --watch=false
 
 `ng test` runs Vitest; all `*.spec.ts` files must pass. API tests: `dotnet test` on
 `D:\AnimalDatabase.Api\tests\AnimalDatabase.Api.Tests` (xUnit, offline fixtures, fake repository for
-`SearchesController`).
+`SearchesController`). `RateLimitingTests` and `SwaggerTests` start the whole API in memory with
+`WebApplicationFactory` (`ApiFactory.cs`: test key, dummy connection string, fake search repository,
+and an `X-Test-Peer` header that sets the caller's IP). While Rider is running the API, build and test
+into a temp folder so the locked `bin` doesn't matter:
+`dotnet test tests\AnimalDatabase.Api.Tests --artifacts-path "$env:TEMP\adb-test"`.
 
 ---
 
@@ -197,7 +247,7 @@ Controllers-style Web API targeting `net10.0` (API and tests; needs the .NET 10 
 **Dapper**, **MySqlConnector**, **Swashbuckle.AspNetCore** 10.x. Don't add EF Core; it fights Dapper.
 
 ```
-Program.cs                      DI, camelCase JSON, CORS for http://localhost:4200, Dapper underscore mapping
+Program.cs                      DI, camelCase JSON, CORS for http://localhost:4200, Dapper underscore mapping, client IP + rate limiter
 Controllers/
   AdminController.cs            /api/admin/check
   AnimalsController.cs          /api/animals
@@ -214,6 +264,13 @@ Models/                         Animal (in Animals.cs), AnimalImage, CreateAnima
 Security/
   AdminKey.cs                   header/config names, constant-time key comparison
   RequireAdminKeyAttribute.cs   [RequireAdminKey] filter: 503 when no key is configured, 401 on a bad key
+RateLimiting/
+  RateLimitSettings.cs          RateLimiting:* settings and defaults
+  RateLimitPolicies.cs          policy names used by [EnableRateLimiting]
+  RateLimitingSetup.cs          limiter registration, admin bypass, 429 + Retry-After
+  ClientIp.cs                   forwarded headers (loopback only), CF-Connecting-IP, partition key
+OpenApi/
+  SwaggerUiAssets.cs            adds ?v=<version> to Swagger UI script and style URLs
 Database/searches.sql           CREATE TABLE for searches
 ```
 

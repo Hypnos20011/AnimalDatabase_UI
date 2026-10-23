@@ -2,6 +2,7 @@ import { Component, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AdminKeyService } from './admin-key.service';
+import { isRateLimited, rateLimitMessage } from '../shared/rate-limit';
 
 @Component({
   selector: 'app-admin-unlock',
@@ -35,9 +36,13 @@ export class AdminUnlock {
         this.key.set('');
         this.router.navigateByUrl(this.safeReturnUrl());
       },
-      error: () => {
+      error: (err: unknown) => {
         this.checking.set(false);
-        this.error.set("Couldn't reach the server to check the key. Try again in a moment.");
+        this.error.set(
+          isRateLimited(err)
+            ? rateLimitMessage(err, 'attempts')
+            : "Couldn't reach the server to check the key. Try again in a moment.",
+        );
       },
     });
   }

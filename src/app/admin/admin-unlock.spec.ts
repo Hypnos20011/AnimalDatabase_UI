@@ -3,7 +3,7 @@ import { Router, provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import { AdminUnlock } from './admin-unlock';
 import { AdminKeyService } from './admin-key.service';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 
 describe('AdminUnlock', () => {
   async function setup(verify: (key: string) => Observable<boolean>, returnUrl?: string) {
@@ -66,6 +66,17 @@ describe('AdminUnlock', () => {
     const { navigate, submit } = await setup(() => of(true), '//evil.example');
     await submit('right');
     expect(navigate).toHaveBeenCalledWith('/');
+  });
+
+  it('asks the visitor to wait after too many attempts', async () => {
+    const { element, admin, submit } = await setup(() =>
+      throwError(() => new HttpErrorResponse({ status: 429, error: 'Too many requests.' })),
+    );
+    await submit('guess');
+    expect(element.querySelector('.field-error')!.textContent!.trim()).toBe(
+      'Too many attempts. Try again in a minute.',
+    );
+    expect(admin.unlocked()).toBe(false);
   });
 
   it('explains when the server cannot be reached', async () => {

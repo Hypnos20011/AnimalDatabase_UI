@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AnimalForm } from './animal-form';
 import { AnimalService } from '../animal.service';
 import { WikipediaImport } from '../animal-model/wikipedia-import.model';
@@ -163,5 +164,64 @@ describe('AnimalForm repeated Wikipedia lookups', () => {
     lookUp(form, 'blue-ringed octopus');
     expect(form.form.controls.rangeRegion.value).toBe('Indo-Pacific');
     expect(form.form.controls.lifespanYearsMax.value).toBe(2);
+  });
+});
+
+describe('AnimalForm lookup rate limit', () => {
+  function setup(error: HttpErrorResponse) {
+    TestBed.configureTestingModule({
+      imports: [AnimalForm],
+      providers: [
+        provideRouter([]),
+        {
+          provide: AnimalService,
+          useValue: {
+            getAll: vi.fn(() => of([])),
+            importFromWikipedia: vi.fn(() => throwError(() => error)),
+          },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(AnimalForm);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  it('shows a short inline message after too many lookups', () => {
+    const fixture = setup(new HttpErrorResponse({ status: 429, error: 'Too many requests.' }));
+    const form = fixture.componentInstance;
+    form.wikiUrl.set('Shoebill');
+    form.importFromWikipedia();
+    fixture.detectChanges();
+
+    expect(form.importError()).toBe('Too many lookups. Try again in a minute.');
+    expect(form.importing()).toBe(false);
+    const message = (fixture.nativeElement as HTMLElement).querySelector('.field-error');
+    expect(message?.textContent?.trim()).toBe('Too many lookups. Try again in a minute.');
+  });
+
+  it('uses a short server wait when one is given', () => {
+    const fixture = setup(
+      new HttpErrorResponse({
+        status: 429,
+        headers: new HttpHeaders({ 'Retry-After': '20' }),
+      }),
+    );
+    const form = fixture.componentInstance;
+    form.wikiUrl.set('Shoebill');
+    form.importFromWikipedia();
+
+    expect(form.importError()).toBe('Too many lookups. Try again in 20 seconds.');
+  });
+
+  it('still shows the server message for other lookup errors', () => {
+    const fixture = setup(
+      new HttpErrorResponse({ status: 400, error: "That isn't a Wikipedia article link." }),
+    );
+    const form = fixture.componentInstance;
+    form.wikiUrl.set('https://example.org');
+    form.importFromWikipedia();
+
+    expect(form.importError()).toBe("That isn't a Wikipedia article link.");
   });
 });

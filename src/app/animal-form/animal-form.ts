@@ -14,6 +14,7 @@ import { AnimalService } from '../animal.service';
 import { Animal, NewAnimal, NewAnimalImage } from '../animal-model/animal.model';
 import { WikipediaImport } from '../animal-model/wikipedia-import.model';
 import { formatCount } from '../shared/plural';
+import { isRateLimited, rateLimitMessage } from '../shared/rate-limit';
 
 const oneDecimal: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const value = control.value;
@@ -210,9 +211,11 @@ export class AnimalForm {
       },
       error: (err) => {
         this.importError.set(
-          typeof err.error === 'string' && err.error
-            ? err.error
-            : 'Could not load that Wikipedia page.',
+          isRateLimited(err)
+            ? rateLimitMessage(err, 'lookups')
+            : typeof err.error === 'string' && err.error
+              ? err.error
+              : 'Could not load that Wikipedia page.',
         );
         this.importing.set(false);
       },
