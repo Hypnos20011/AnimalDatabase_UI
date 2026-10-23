@@ -8,6 +8,7 @@ import { RangePipe } from '../shared/range.pipe';
 import { YEARS } from '../shared/format-range';
 import { ConfirmDialog } from '../shared/confirm-dialog/confirm-dialog';
 import { sameName, wikimediaSrcset } from '../shared/wikimedia-image';
+import { heroLayout } from './hero-layout';
 
 @Component({
   selector: 'app-animal-detail',
@@ -35,6 +36,13 @@ export class AnimalDetail {
   images = signal<AnimalImage[]>([]);
   heroImage = computed(() => this.images()[0] ?? null);
   moreImages = computed(() => this.images().slice(1));
+  heroSize = signal<{ width: number; height: number } | null>(null);
+  heroFailed = signal(false);
+  heroLayout = computed(() => {
+    const size = this.heroSize();
+    return heroLayout(size?.width, size?.height);
+  });
+  noPhoto = computed(() => !this.imagesLoading() && (!this.heroImage() || this.heroFailed()));
 
   private profileParts = computed(() => {
     const profile = this.animal()?.profile ?? '';
@@ -82,6 +90,8 @@ export class AnimalDetail {
 
   loadImages(animalId: number): void {
     this.imagesLoading.set(true);
+    this.heroSize.set(null);
+    this.heroFailed.set(false);
     this.animalService.getImages(animalId).subscribe({
       next: (data) => {
         this.images.set(data);
@@ -92,6 +102,16 @@ export class AnimalDetail {
         this.imagesLoading.set(false);
       },
     });
+  }
+
+  onHeroLoad(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    this.heroSize.set({ width: img.naturalWidth, height: img.naturalHeight });
+  }
+
+  onHeroError(): void {
+    this.heroSize.set(null);
+    this.heroFailed.set(true);
   }
 
   toggleDetails(): void {

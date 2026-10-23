@@ -1,16 +1,19 @@
 @if (animal()) {
   <article class="detail">
-    <section class="hero" [class.no-photo]="!heroImage()">
+    <section class="hero" [class.no-photo]="noPhoto()" [attr.data-layout]="heroLayout()">
       @if (heroImage(); as hero) {
-        <img
-          class="hero-image"
-          [src]="hero.url"
-          [attr.srcset]="srcset(hero.url)"
-          sizes="(max-width: 1240px) 100vw, 1192px"
-          [alt]="hero.caption ?? animal()!.commonName"
-          decoding="async"
-          (error)="hero.url = ''"
-        />
+        @if (!heroFailed()) {
+          <img
+            class="hero-image"
+            [src]="hero.url"
+            [attr.srcset]="srcset(hero.url)"
+            sizes="(max-width: 1240px) 100vw, 1192px"
+            [alt]="hero.caption ?? animal()!.commonName"
+            decoding="async"
+            (load)="onHeroLoad($event)"
+            (error)="onHeroError()"
+          />
+        }
       }
       <header class="detail-header">
         <h2>{{ animal()!.commonName }}</h2>
@@ -18,16 +21,15 @@
           <em class="sci">{{ animal()!.scientificName }}</em>
         }
       </header>
+      @if (heroImage(); as hero) {
+        @if (!heroFailed() && showCaption(hero)) {
+          <p class="hero-caption">{{ hero.caption }}</p>
+        }
+      }
     </section>
 
     @if (imagesLoading()) {
       <p class="hint">Loading images...</p>
-    }
-
-    @if (heroImage(); as hero) {
-      @if (showCaption(hero)) {
-        <p class="hero-caption">{{ hero.caption }}</p>
-      }
     }
 
     @if (!imagesLoading() && images().length === 0) {
