@@ -156,6 +156,12 @@ dotnet user-secrets set "ConnectionStrings:AnimalDatabase" "Server=localhost;Por
   user, no admin) runs it hidden 2 minutes after logon and daily at 18:00, catching up missed runs; with
   the SSD unplugged it does nothing. Restore steps for a local copy: `deploy/README.md`, "Backups and
   restore".
+- Watchdog: systemd timer `animaldatabase-watchdog.timer` runs `/usr/local/bin/animaldatabase-watchdog`
+  (source `D:\AnimalDatabase.Api\deploy\watchdog\`) every 5 minutes. It checks the site and `/api/animals`
+  through the local Caddy plus the caddy/api/mariadb containers; after 2 failed runs in a row it POSTs
+  `down` to the alert webhook once, and `recovered` once when healthy again. Webhook URL and key:
+  `/etc/animaldatabase-alert.env` on the server only (root, 600; key sent as `Authorization: Bearer`).
+  Details: `deploy/README.md`, "Watchdog".
 
 **Redeploy** after committing changes in either repo (only committed `master` is deployed):
 
