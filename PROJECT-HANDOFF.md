@@ -146,8 +146,14 @@ dotnet user-secrets set "ConnectionStrings:AnimalDatabase" "Server=localhost;Por
   `D:\AnimalDatabase-admin-key.txt`.
 - Database: imported from the local `animaldatabase` on 2026-10-23 (18 animals); the app uses the limited
   user `animaldb_app` (SELECT/INSERT/UPDATE/DELETE only). Local and live data are separate from now on.
-- Backups: nightly at 01:30 UTC into the `mariadb_backups` volume, kept 14 days (restore steps in
-  `deploy/README.md`).
+- Backups: nightly at 01:30 UTC into `/opt/animaldatabase/backups` on the server (host folder, readable by
+  `deploy`, kept 14 days). The old `animaldatabase_mariadb_backups` volume is no longer used.
+- Copies on the SSD: `D:\AnimalDatabase.Api\deploy\pull-backups.ps1` copies new dumps into
+  `D:\AnimalDatabase-server-backups\` (size and SHA-256 checked, newest 60 kept locally, nothing deleted on
+  the server, one line per run in `pull.log`). The Scheduled Task "AnimalDatabase pull backups" (current
+  user, no admin) runs it hidden 2 minutes after logon and daily at 18:00, catching up missed runs; with
+  the SSD unplugged it does nothing. Restore steps for a local copy: `deploy/README.md`, "Backups and
+  restore".
 
 **Redeploy** after committing changes in either repo (only committed `master` is deployed):
 
