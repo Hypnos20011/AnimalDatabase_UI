@@ -13,6 +13,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AnimalService } from '../animal.service';
 import { Animal, NewAnimal, NewAnimalImage } from '../animal-model/animal.model';
 import { WikipediaImport } from '../animal-model/wikipedia-import.model';
+import { formatCount } from '../shared/plural';
 
 const oneDecimal: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const value = control.value;
@@ -190,7 +191,7 @@ export class AnimalForm {
         const filled = this.applyImport(data);
         this.importMessage.set(
           filled > 0
-            ? `Filled in ${filled} fields from Wikipedia. Check them before saving.`
+            ? `Filled in ${formatCount(filled, { one: 'field', other: 'fields' })} from Wikipedia. Check them before saving.`
             : 'Wikipedia had nothing to fill in for this animal.',
         );
         this.importing.set(false);

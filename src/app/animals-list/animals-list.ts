@@ -8,6 +8,7 @@ import { SearchService } from '../search.service';
 import { TopSearch } from '../animal-model/top-search.model';
 import { SearchMatch, matchAnimal, matchHint, matchRank, normalizeText } from './animal-search';
 import { Subscription } from 'rxjs';
+import { formatCount } from '../shared/plural';
 import { TOP_SEARCH_WINDOWS, parseTopSearchDays, topSearchEmptyText } from './top-search-window';
 
 @Component({
@@ -55,6 +56,9 @@ export class AnimalsList {
   topLoaded = signal(false);
   topError = signal(false);
   readonly topSearchWindows = TOP_SEARCH_WINDOWS;
+  showAnimalsLabel = computed(
+    () => `Show ${formatCount(this.filteredAnimals().length, { one: 'animal', other: 'animals' })}`,
+  );
   topEmptyText = computed(() =>
     this.topError()
       ? 'Top searches are unavailable right now.'

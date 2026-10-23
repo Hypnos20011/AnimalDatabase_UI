@@ -5,6 +5,7 @@ import { Animal } from '../animal-model/animal.model';
 import { AnimalService } from '../animal.service';
 import { AnimalImage } from '../animal-model/animal-image.model';
 import { RangePipe } from '../shared/range.pipe';
+import { YEARS } from '../shared/format-range';
 import { ConfirmDialog } from '../shared/confirm-dialog/confirm-dialog';
 
 @Component({
@@ -14,6 +15,7 @@ import { ConfirmDialog } from '../shared/confirm-dialog/confirm-dialog';
   styleUrl: './animal-detail.css',
 })
 export class AnimalDetail {
+  readonly years = YEARS;
   id = input.required<string>();
 
   private animalService = inject(AnimalService);
