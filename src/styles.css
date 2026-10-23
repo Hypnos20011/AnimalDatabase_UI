@@ -287,8 +287,7 @@ fieldset {
 }
 
 .field-error,
-.error-message,
-.delete-error {
+.error-message {
   color: var(--color-danger);
   font-size: 0.9rem;
 }
