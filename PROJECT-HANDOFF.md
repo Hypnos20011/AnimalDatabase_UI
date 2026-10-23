@@ -39,6 +39,7 @@ All of this is built now (see section 7).
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
 | Angular frontend       | `D:\AnimalDatabaseProject\`                                                                                                          | https://github.com/Hypnos20011/AnimalDatabase_UI     |
 | ASP.NET Core API       | `D:\AnimalDatabase.Api\`                                                                                                             | https://github.com/Hypnos20011/AnimalDatabase_Server |
+| Production (planned)   | Hetzner Cloud VPS, Docker Compose stack in `D:\AnimalDatabase.Api\deploy\` (see `deploy/README.md`)                                  | same as the API                                      |
 | Database               | MariaDB service on `C:` (data in `C:\Program Files\MariaDB*\data`)                                                                   | none                                                 |
 | Backups of originals   | `D:\AnimalDatabase-backup-2026-10-22\` (one folder per change, for example `before-wikipedia`, `before-ui-polish`, `before-restyle`) | none                                                 |
 | Abandoned Java version | `%USERPROFILE%\Pictures\animal-database-api\`                                                                                        | https://github.com/Hypnos20011/AnimalDatabase        |
@@ -82,6 +83,44 @@ git @a -C D:\AnimalDatabase.Api status
    `npm start` (`ng serve`). Open `http://localhost:4200`.
 
 **After any API change, the API must be restarted in Rider**; there is no hot reload set up.
+
+### Production: one origin, the API serves the site
+
+In production the browser talks to a single origin. The Angular build (`ng build`, output
+`dist/AnimalDatabaseProject/browser`) is copied into the API's `wwwroot`, and the API serves it:
+
+- `UseDefaultFiles` + `UseStaticFiles` for the files, `MapFallbackToFile("index.html")` for deep links
+  such as `/animals/12/edit` (`Hosting/SpaHosting.cs`). Only active when `<Spa:RootPath>/index.html`
+  exists (`Spa:RootPath` defaults to `wwwroot`; `Spa:Enabled=false` turns it off), so in Rider nothing
+  changes.
+- `/api/...` and `/swagger/...` never get `index.html`: unknown API paths answer **404** with a JSON
+  problem body (`application/problem+json`). Swagger stays Development-only.
+- Cache headers: `index.html` `no-cache`; hashed files (`main-XXXXXXXX.js`, `styles-XXXXXXXX.css`,
+  `chunk-...`) `public, max-age=31536000, immutable`; everything else one hour.
+- The production `environment.ts` uses `apiUrl: '/api'` (same origin). Development keeps
+  `environment.development.ts` (`'/api'`) plus `proxy.conf.json`, so `ng serve` still forwards `/api`
+  to `http://localhost:5190`.
+- CORS origins come from `Cors:AllowedOrigins` (`appsettings.Development.json` keeps
+  `http://localhost:4200`; production needs none).
+
+Deployment: `D:\AnimalDatabase.Api\deploy\` holds the multi-stage `Dockerfile` (Node 22 builds Angular
+from the UI repo passed in as the named build context `ui-src`, the .NET 10 SDK publishes the API, the
+runtime is `mcr.microsoft.com/dotnet/aspnet:10.0` as a non-root user, amd64 and ARM64),
+`docker-compose.yml` (caddy, api, mariadb:11.8, nightly backup kept 14 days, named volumes),
+`Caddyfile` (`{$DOMAIN}`; `<ip-with-dashes>.sslip.io` works without a domain), `.env.example`
+(placeholders; the real `.env` is git-ignored and never committed), `schema.sql` (schema + data dump of
+the local database, no users), `init/02-app-user.sh` (limited app user) and `README.md` with the exact
+Hetzner/Ubuntu 24.04 steps. The old Cloudflare quick tunnel (`start-share.ps1`) has been removed.
+
+To try the production build locally without Docker:
+
+```powershell
+npx ng build --output-path "$env:TEMP\adb-ui-dist"
+$env:Spa__RootPath = "$env:TEMP\adb-ui-dist\browser"
+dotnet run --project D:\AnimalDatabase.Api --launch-profile http --urls http://localhost:5199
+```
+
+(Development keeps Swagger on; the site, deep links and `/api` all come from port 5199.)
 
 The connection string is stored in **dotnet user-secrets** (key `ConnectionStrings:AnimalDatabase`,
 `UserSecretsId` in the `.csproj`), not in `appsettings.json`. Never print it or commit it. To set
@@ -146,21 +185,23 @@ Settings live in `appsettings.json` under `RateLimiting` (`Enabled`, `WindowSeco
 values fall back to the same defaults in `RateLimitSettings.cs`. Override with environment variables
 such as `RateLimiting__WikipediaImportPerWindow=20`, or `RateLimiting__Enabled=false` to switch it off.
 
-**How the client IP is found.** Today every request reaches the API from 127.0.0.1 (cloudflared ->
-`ng serve` proxy -> API). The Vite dev-server proxy passes the incoming `X-Forwarded-For` and
-`CF-Connecting-IP` headers through unchanged (checked against the project's Vite 8.3), so
-`proxy.conf.json` needs no `xfwd` setting.
+**How the client IP is found.** Locally, requests reach the API from 127.0.0.1 through the
+`ng serve` proxy, which passes `X-Forwarded-For` and `CF-Connecting-IP` through unchanged (checked
+against the project's Vite 8.3), so `proxy.conf.json` needs no `xfwd` setting. On the server, Caddy
+connects from its fixed Docker address `172.30.0.10`, which compose passes to the API as
+`ForwardedHeaders__KnownProxies__0`.
 
 1. If the direct peer is loopback and there is no `X-Forwarded-For`, `CF-Connecting-IP` (when it is
    a valid IP) becomes the client address.
-2. `UseForwardedHeaders` then reads `X-Forwarded-For`, trusting only loopback proxies
-   (`127.0.0.0/8`, `::1`). It walks the list from the right, skipping loopback hops.
+2. `UseForwardedHeaders` then reads `X-Forwarded-For`, trusting loopback (`127.0.0.0/8`, `::1`)
+   plus whatever is configured under `ForwardedHeaders:KnownProxies` /
+   `ForwardedHeaders:KnownNetworks`. It walks the list from the right, skipping trusted hops.
 3. Otherwise the TCP peer address is used. Headers from any non-loopback peer are ignored, so a
    forged header can't dodge the limit. IPv4-mapped IPv6 addresses count as the plain IPv4 address.
 
-When Caddy comes in front, it also connects from loopback and appends to `X-Forwarded-For`, so this
-keeps working. If a proxy ever runs on another machine, add its address to `KnownProxies` in
-`RateLimiting/ClientIp.cs`.
+Caddy overwrites any `X-Forwarded-For` the visitor sends with the real visitor IP, so behind Caddy each
+visitor gets their own limit and a forged header changes nothing. `CF-Connecting-IP` is ignored there
+(Caddy is not loopback). Another proxy in front means adding its IP or network to those settings.
 
 **In the UI:** a 429 from the Wikipedia lookup shows "Too many lookups. Try again in a minute." (or
 "in N seconds" when the server says 45 seconds or less) in the usual inline error spot. The admin
@@ -177,7 +218,8 @@ npx ng test --watch=false
 
 `ng test` runs Vitest; all `*.spec.ts` files must pass. API tests: `dotnet test` on
 `D:\AnimalDatabase.Api\tests\AnimalDatabase.Api.Tests` (xUnit, offline fixtures, fake repository for
-`SearchesController`). `RateLimitingTests` and `SwaggerTests` start the whole API in memory with
+`SearchesController`). `RateLimitingTests`, `SwaggerTests`, `SpaHostingTests` (site fallback, cache
+headers, 404 JSON for unknown `/api` paths) and `DeploymentConfigTests` (CORS and proxy settings) start the whole API in memory with
 `WebApplicationFactory` (`ApiFactory.cs`: test key, dummy connection string, fake search repository,
 and an `X-Test-Peer` header that sets the caller's IP). While Rider is running the API, build and test
 into a temp folder so the locked `bin` doesn't matter:
@@ -238,8 +280,9 @@ Routes (`app.routes.ts`):
 Route parameters reach components as inputs (`id = input<string>()`) because of
 `withComponentInputBinding()`.
 
-API base URL: `src/environments/environment.ts` and `environment.development.ts`, both currently
-`apiUrl: 'http://localhost:5190/api'`. Services build their URLs from `environment.apiUrl`.
+API base URL: `src/environments/environment.ts` (production build) and `environment.development.ts`
+(`ng serve`), both `apiUrl: '/api'`: same origin in production, `proxy.conf.json` in development.
+Services build their URLs from `environment.apiUrl`.
 
 ### Backend: ASP.NET Core .NET 10 (`D:\AnimalDatabase.Api`)
 
@@ -247,7 +290,7 @@ Controllers-style Web API targeting `net10.0` (API and tests; needs the .NET 10 
 **Dapper**, **MySqlConnector**, **Swashbuckle.AspNetCore** 10.x. Don't add EF Core; it fights Dapper.
 
 ```
-Program.cs                      DI, camelCase JSON, CORS for http://localhost:4200, Dapper underscore mapping, client IP + rate limiter
+Program.cs                      DI, camelCase JSON, CORS from config, Dapper underscore mapping, client IP + rate limiter, site hosting
 Controllers/
   AdminController.cs            /api/admin/check
   AnimalsController.cs          /api/animals
@@ -271,7 +314,12 @@ RateLimiting/
   ClientIp.cs                   forwarded headers (loopback only), CF-Connecting-IP, partition key
 OpenApi/
   SwaggerUiAssets.cs            adds ?v=<version> to Swagger UI script and style URLs
+Hosting/
+  SpaHosting.cs                 serves the Angular build, index.html fallback, 404 JSON for /api and /swagger, cache headers
+  SpaSettings.cs                Spa:Enabled, Spa:RootPath (default wwwroot)
+  CorsSetup.cs                  Cors:AllowedOrigins
 Database/searches.sql           CREATE TABLE for searches
+deploy/                         Dockerfile, docker-compose.yml, Caddyfile, .env.example, schema.sql, init/, backup/, README.md
 ```
 
 Two gotchas that cost real time:
@@ -645,8 +693,9 @@ Known issues:
 - Wikipedia lookup: text-parsed sizes/lifespan/habitat/range are conservative and can be empty or
   generic; fun-fact choice is heuristic; English Wikipedia only for name searches; the form doesn't
   fill habitat/range from the lookup yet.
-- CORS only allows `http://localhost:4200`, and both environment files point at
-  `http://localhost:5190/api`; deploying anywhere else needs both changed.
+- The server is not created yet: follow `D:\AnimalDatabase.Api\deploy\README.md`. `deploy/schema.sql`
+  is a snapshot; data added locally after it was taken is not on the server unless it is re-dumped
+  before the first start.
 - List state (filters, sort, query) resets on a full page reload; it isn't in the URL.
 - PUT replaces all images of an animal, so image ids change on every save.
 - The admin key is one shared secret, not user accounts; anyone who has it can edit. Rotate it if
