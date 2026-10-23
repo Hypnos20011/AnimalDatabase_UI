@@ -1,0 +1,35 @@
+<section class="admin">
+  <h2>Admin</h2>
+  @if (admin.unlocked()) {
+    <p class="lead">Editing is unlocked for this browser tab.</p>
+    <p class="links">
+      <a routerLink="/">Back to the list</a>
+      <button type="button" class="text-link lock" (click)="lock()">Lock</button>
+    </p>
+  } @else {
+    <p class="lead">Adding, editing and deleting animals needs the admin key.</p>
+    <form class="unlock" (ngSubmit)="unlock()" novalidate>
+      <label for="admin-key">Admin key</label>
+      <div class="row">
+        <input
+          id="admin-key"
+          name="key"
+          type="password"
+          autocomplete="current-password"
+          spellcheck="false"
+          [ngModel]="key()"
+          (ngModelChange)="key.set($event); error.set('')"
+          [attr.aria-invalid]="error() ? 'true' : null"
+          [attr.aria-describedby]="error() ? 'admin-key-error' : null"
+        />
+        <button type="submit" class="btn btn-primary" [disabled]="checking() || !key().trim()">
+          {{ checking() ? 'Checking...' : 'Unlock' }}
+        </button>
+      </div>
+      @if (error()) {
+        <p id="admin-key-error" class="field-error" role="alert">{{ error() }}</p>
+      }
+    </form>
+    <p class="links"><a routerLink="/">Back to the list</a></p>
+  }
+</section>

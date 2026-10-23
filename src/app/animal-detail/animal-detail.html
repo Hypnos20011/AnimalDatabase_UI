@@ -164,15 +164,17 @@
 
     <div class="actions">
       <button type="button" class="back btn btn-secondary" (click)="onClose()">Back to list</button>
-      <a class="edit btn btn-primary" [routerLink]="['/animals', animal()!.id, 'edit']">Edit</a>
-      <button
-        type="button"
-        class="delete btn btn-danger"
-        [disabled]="deleting()"
-        (click)="onDelete()"
-      >
-        Delete
-      </button>
+      @if (admin.unlocked()) {
+        <a class="edit btn btn-primary" [routerLink]="['/animals', animal()!.id, 'edit']">Edit</a>
+        <button
+          type="button"
+          class="delete btn btn-danger"
+          [disabled]="deleting()"
+          (click)="onDelete()"
+        >
+          Delete
+        </button>
+      }
     </div>
     <app-confirm-dialog
       [open]="confirmOpen()"

@@ -86,6 +86,41 @@ it on a new machine:
 dotnet user-secrets set "ConnectionStrings:AnimalDatabase" "Server=localhost;Port=3306;Database=animaldatabase;User=root;Password=<password>"
 ```
 
+### Admin key (protects every write)
+
+Adding, editing and deleting animals and the Wikipedia lookup need the request header
+`X-Admin-Key`. Reading the list, the detail pages, Top searches and recording a search stay public.
+
+- **Where the key lives:** dotnet user-secrets of the API, key `Admin:ApiKey` (same secrets store as
+  the connection string; on Windows that store sits under `%APPDATA%\Microsoft\UserSecrets\`), plus
+  one copy in `D:\AnimalDatabase-admin-key.txt` on the SSD, outside both repos, so Leo can paste it.
+  It is never in `appsettings*.json`, the repos, commits or chat. In production set the environment
+  variable `Admin__ApiKey` instead of user-secrets.
+- **Fail closed:** with no key configured, every write returns 503 ("Editing is turned off...") and
+  reads keep working. A missing or wrong key returns 401. The comparison hashes both values with
+  SHA-256 and uses `CryptographicOperations.FixedTimeEquals`.
+- **Unlocking in the UI:** the quiet "Admin" link in the footer opens `/admin` (one password field,
+  Unlock). The key is checked against `GET /api/admin/check` (204 = valid, 401 = wrong) and then kept
+  in `sessionStorage` for that tab only. "Lock" in the footer or on `/admin` forgets it. While
+  locked, "Add animal", Edit and Delete are hidden and `animals/new` / `animals/:id/edit` redirect to
+  `/admin?returnUrl=...`. If any API call answers 401, the UI clears the key and sends you to
+  `/admin`.
+- **Rotating the key** (PowerShell, in `D:\AnimalDatabase.Api`):
+
+  ```powershell
+  $bytes = New-Object byte[] 32
+  [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
+  $key = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+  dotnet user-secrets set "Admin:ApiKey" $key | Out-Null
+  [IO.File]::WriteAllText('D:\AnimalDatabase-admin-key.txt', $key)
+  Remove-Variable key, bytes
+  ```
+
+  Then restart the API in Rider (configuration is read per request, but restart anyway so nothing
+  stale is running), and unlock again in the browser with the new key. Old keys stop working at
+  once; open tabs get a 401 and are sent back to `/admin`. Don't use `RandomNumberGenerator.Fill`:
+  Windows PowerShell 5 doesn't have it.
+
 Checks used after frontend changes (run in `D:\AnimalDatabaseProject`):
 
 ```powershell
@@ -117,11 +152,17 @@ src/
     environment.development.ts   swapped in for dev builds via fileReplacements in angular.json
   app/
     app.ts / app.html / app.css  top bar ("Animal Database" links home, Random animal + Add animal
-                                 text links on the right) + <router-outlet>
+                                 text links on the right; Add animal only when unlocked) +
+                                 <router-outlet> + quiet footer with "Admin" / "Lock"
     random-animal.service.ts     Random animal from the top bar (uses AnimalListState.randomPool)
-    app.config.ts                provideRouter(routes, withComponentInputBinding()), provideHttpClient()
+    app.config.ts                provideRouter(routes, withComponentInputBinding()),
+                                 provideHttpClient(withInterceptors([adminKeyInterceptor]))
     app.routes.ts                routes, see below
-    app.spec.ts                  app creates, header shows the title and the two top-bar links
+    app.spec.ts                  app creates, header title, top-bar links and footer link, locked and unlocked
+    admin/                       admin-key.service.ts (key signal + sessionStorage, verify via
+                                 /api/admin/check), admin-key.interceptor.ts (adds X-Admin-Key to
+                                 apiUrl requests, clears the key on 401), admin.guard.ts,
+                                 admin-unlock.ts (route `admin`)
     animal.service.ts            /api/animals and /api/wikipedia calls
     search.service.ts            /api/searches calls (getTop(limit, days)), spec checks the query params
     animal-model/                animal.model.ts (Animal, NewAnimal, NewAnimalImage),
@@ -135,13 +176,14 @@ src/
 
 Routes (`app.routes.ts`):
 
-| Path               | Component                                                              |
-| ------------------ | ---------------------------------------------------------------------- |
-| `''`               | `AnimalsList`                                                          |
-| `animals/new`      | `AnimalForm` (add)                                                     |
-| `animals/:id/edit` | `AnimalForm` (edit, same component; `id` arrives as a component input) |
-| `animals/:id`      | `AnimalDetail`                                                         |
-| `**`               | redirect to `''`                                                       |
+| Path               | Component                                                                            |
+| ------------------ | ------------------------------------------------------------------------------------ |
+| `''`               | `AnimalsList`                                                                        |
+| `admin`            | `AdminUnlock` (unlock / lock; optional `returnUrl` query param)                      |
+| `animals/new`      | `AnimalForm` (add; `adminGuard`)                                                     |
+| `animals/:id/edit` | `AnimalForm` (edit, same component; `id` arrives as a component input; `adminGuard`) |
+| `animals/:id`      | `AnimalDetail`                                                                       |
+| `**`               | redirect to `''`                                                                     |
 
 Route parameters reach components as inputs (`id = input<string>()`) because of
 `withComponentInputBinding()`.
@@ -157,6 +199,7 @@ Controllers-style Web API targeting `net10.0` (API and tests; needs the .NET 10 
 ```
 Program.cs                      DI, camelCase JSON, CORS for http://localhost:4200, Dapper underscore mapping
 Controllers/
+  AdminController.cs            /api/admin/check
   AnimalsController.cs          /api/animals
   SearchesController.cs         /api/searches
   WikipediaController.cs        /api/wikipedia/import
@@ -168,6 +211,9 @@ Services/
   WikipediaImporter.cs          Wikipedia + Wikidata lookup (typed HttpClient, 15 s client timeout, 10 s per attempt, one retry, own User-Agent)
 Models/                         Animal (in Animals.cs), AnimalImage, CreateAnimalRequest,
                                 CreateAnimalImageRequest, CreateSearchRequest, TopSearch, WikipediaImportResult
+Security/
+  AdminKey.cs                   header/config names, constant-time key comparison
+  RequireAdminKeyAttribute.cs   [RequireAdminKey] filter: 503 when no key is configured, 401 on a bad key
 Database/searches.sql           CREATE TABLE for searches
 ```
 
@@ -196,7 +242,12 @@ Repositories are singletons that read the connection string from configuration a
 | DELETE | `/api/animals/{id}`                 | Delete; images go with it (`ON DELETE CASCADE`), searches keep their row with `animal_id` set to NULL; 204 or 404                                                                                                      |
 | POST   | `/api/searches`                     | Body `{ queryText, animalId }`; records a search only if the animal exists (else 404); 204                                                                                                                             |
 | GET    | `/api/searches/top?limit=5&days=30` | Most-opened animals: `{ animalId, commonName, thumbnailUrl, searchCount }`. `limit` clamped to 1-20 (default 5). `days` = window in days, 1-365 (default 30), `0` = all time; anything else is a 400                   |
+| GET    | `/api/admin/check`                  | 204 if the `X-Admin-Key` header is valid, 401 if not, 503 if no key is configured                                                                                                                                      |
 | GET    | `/api/wikipedia/import?q=...`       | `q` = animal name or Wikipedia link; returns a `WikipediaImportResult` to pre-fill the form. 400 for empty/over 300 chars or a non-article link, 404 if nothing found, 502 if Wikipedia is unreachable, 504 on timeout |
+
+POST, PUT and DELETE on `/api/animals` (images are saved through the animal's `images`) and the
+Wikipedia import need the `X-Admin-Key` header (`[RequireAdminKey]`); see "Admin key" in section 3.
+The other endpoints are public.
 
 Validation is on `CreateAnimalRequest` via data annotations (lengths match the columns, numbers
 
@@ -446,6 +497,7 @@ The result also has `habitat` and `rangeRegion`, but the frontend form (`applyIm
 Known gaps: text parsing is conservative, so sizes or lifespan can still be empty, habitat can
 be generic ("Forests") and range can be long; the fun fact can be missing. Always check the filled
 values before saving.
+
 ### UI / theme
 
 - Dark, flat editorial theme (redesign of 2026-10-23: "Index" list + photo-first detail page).
@@ -540,6 +592,8 @@ Known issues:
   `http://localhost:5190/api`; deploying anywhere else needs both changed.
 - List state (filters, sort, query) resets on a full page reload; it isn't in the URL.
 - PUT replaces all images of an animal, so image ids change on every save.
+- The admin key is one shared secret, not user accounts; anyone who has it can edit. Rotate it if
+  it may have leaked (section 3).
 
 Ideas (not started; ask Leo before building):
 

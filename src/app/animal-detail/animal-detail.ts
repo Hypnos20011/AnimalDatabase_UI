@@ -8,6 +8,7 @@ import { RangePipe } from '../shared/range.pipe';
 import { YEARS } from '../shared/format-range';
 import { ConfirmDialog } from '../shared/confirm-dialog/confirm-dialog';
 import { sameName, wikimediaSrcset } from '../shared/wikimedia-image';
+import { AdminKeyService } from '../admin/admin-key.service';
 
 @Component({
   selector: 'app-animal-detail',
@@ -29,6 +30,7 @@ export class AnimalDetail {
 
   private animalService = inject(AnimalService);
   private router = inject(Router);
+  protected admin = inject(AdminKeyService);
 
   animal = signal<Animal | null>(null);
   loading = signal(true);

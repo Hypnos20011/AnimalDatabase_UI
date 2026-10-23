@@ -77,6 +77,37 @@
   padding-bottom: 3rem;
 }
 
+.site-footer {
+  border-top: 1px solid var(--color-border);
+}
+
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+  min-height: 3rem;
+  font-size: 0.8rem;
+}
+
+.footer-note {
+  color: var(--color-dim);
+}
+
+.footer-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-dim);
+  font-size: inherit;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.footer-link:hover {
+  color: var(--color-accent);
+}
+
 @media (max-width: 600px) {
   .site-nav {
     gap: 1rem;

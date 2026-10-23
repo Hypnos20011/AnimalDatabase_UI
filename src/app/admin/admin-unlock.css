@@ -1,0 +1,60 @@
+.admin {
+  max-width: 32rem;
+  padding-top: 1rem;
+}
+
+.lead {
+  color: var(--color-muted);
+}
+
+.unlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 2rem 0 1.5rem;
+}
+
+label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.row input {
+  flex: 1;
+  min-width: 0;
+}
+
+.field-error {
+  margin: 0.25rem 0 0;
+}
+
+.links {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.text-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  font-size: inherit;
+  font-weight: 600;
+}
+
+.text-link:hover {
+  color: var(--color-accent);
+}
+
+@media (max-width: 600px) {
+  .row {
+    flex-direction: column;
+  }
+}

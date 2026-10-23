@@ -5,6 +5,8 @@ import { AnimalDetail } from './animal-detail';
 import { AnimalService } from '../animal.service';
 import { Animal } from '../animal-model/animal.model';
 import { AnimalImage } from '../animal-model/animal-image.model';
+import { AdminKeyService } from '../admin/admin-key.service';
+import { signal } from '@angular/core';
 
 type DialogShim = { showModal?: () => void; close?: () => void };
 
@@ -51,7 +53,11 @@ describe('AnimalDetail delete confirmation', () => {
     };
     TestBed.configureTestingModule({
       imports: [AnimalDetail],
-      providers: [provideRouter([]), { provide: AnimalService, useValue: service }],
+      providers: [
+        provideRouter([]),
+        { provide: AnimalService, useValue: service },
+        { provide: AdminKeyService, useValue: { unlocked: signal(true) } },
+      ],
     });
     const router = TestBed.inject(Router);
     const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
@@ -168,7 +174,11 @@ describe('AnimalDetail hero', () => {
     };
     TestBed.configureTestingModule({
       imports: [AnimalDetail],
-      providers: [provideRouter([]), { provide: AnimalService, useValue: service }],
+      providers: [
+        provideRouter([]),
+        { provide: AnimalService, useValue: service },
+        { provide: AdminKeyService, useValue: { unlocked: signal(true) } },
+      ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
     fixture.componentRef.setInput('id', '2');
@@ -250,5 +260,31 @@ describe('AnimalDetail hero', () => {
     await settle();
 
     expect(text.querySelector('.facts.extra')?.textContent).toContain('Giraffidae');
+  });
+});
+
+describe('AnimalDetail while locked', () => {
+  it('hides Edit and Delete but keeps Back', async () => {
+    TestBed.configureTestingModule({
+      imports: [AnimalDetail],
+      providers: [
+        provideRouter([]),
+        {
+          provide: AnimalService,
+          useValue: { getById: vi.fn(() => of(okapi)), getImages: vi.fn(() => of([])) },
+        },
+        { provide: AdminKeyService, useValue: { unlocked: signal(false) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(AnimalDetail);
+    fixture.componentRef.setInput('id', '2');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const actions = (fixture.nativeElement as HTMLElement).querySelector('.actions')!;
+
+    expect(actions.querySelector('.edit')).toBeNull();
+    expect(actions.querySelector('.delete')).toBeNull();
+    expect(actions.querySelectorAll('a, button').length).toBeGreaterThan(0);
   });
 });
