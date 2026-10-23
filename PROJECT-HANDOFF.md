@@ -39,7 +39,7 @@ All of this is built now (see section 7).
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
 | Angular frontend       | `D:\AnimalDatabaseProject\`                                                                                                          | https://github.com/Hypnos20011/AnimalDatabase_UI     |
 | ASP.NET Core API       | `D:\AnimalDatabase.Api\`                                                                                                             | https://github.com/Hypnos20011/AnimalDatabase_Server |
-| Production (live)      | https://49-12-226-169.sslip.io, Hetzner VPS `49.12.226.169`, stack from `D:\AnimalDatabase.Api\deploy\` (see section 3)            | same as the API                                      |
+| Production (live)      | https://unusualanimals.duckdns.org, Hetzner VPS `49.12.226.169`, stack from `D:\AnimalDatabase.Api\deploy\` (see section 3)       | same as the API                                      |
 | Database               | MariaDB service on `C:` (data in `C:\Program Files\MariaDB*\data`)                                                                   | none                                                 |
 | Backups of originals   | `D:\AnimalDatabase-backup-2026-10-22\` (one folder per change, for example `before-wikipedia`, `before-ui-polish`, `before-restyle`) | none                                                 |
 | Abandoned Java version | `%USERPROFILE%\Pictures\animal-database-api\`                                                                                        | https://github.com/Hypnos20011/AnimalDatabase        |
@@ -107,7 +107,7 @@ Deployment: `D:\AnimalDatabase.Api\deploy\` holds the multi-stage `Dockerfile` (
 from the UI repo passed in as the named build context `ui-src`, the .NET 10 SDK publishes the API, the
 runtime is `mcr.microsoft.com/dotnet/aspnet:10.0` as a non-root user, amd64 and ARM64),
 `docker-compose.yml` (caddy, api, mariadb:11.8, nightly backup kept 14 days, named volumes),
-`Caddyfile` (`{$DOMAIN}`; `<ip-with-dashes>.sslip.io` works without a domain), `.env.example`
+`Caddyfile` (`{$DOMAIN}`, plus a 308 redirect from `{$OLD_DOMAIN}`; `<ip-with-dashes>.sslip.io` works without a domain), `.env.example`
 (placeholders; the real `.env` is git-ignored and never committed), `schema.sql` (schema + data dump of
 the local database, no users), `init/02-app-user.sh` (limited app user) and `README.md` with the exact
 Hetzner/Ubuntu 24.04 steps. The old Cloudflare quick tunnel (`start-share.ps1`) has been removed.
@@ -132,7 +132,9 @@ dotnet user-secrets set "ConnectionStrings:AnimalDatabase" "Server=localhost;Por
 
 ### Live server (since 2026-10-23)
 
-- URL: **https://49-12-226-169.sslip.io** (Let's Encrypt certificate, managed by Caddy; no domain needed).
+- URL: **https://unusualanimals.duckdns.org** (free DuckDNS name, A record to `49.12.226.169`; Let's Encrypt
+  certificate managed by Caddy). The old https://49-12-226-169.sslip.io permanently redirects (308) to it,
+  keeping the path and query (`OLD_DOMAIN` in the server's `.env`).
 - Hetzner Cloud VPS, IPv4 `49.12.226.169`, Ubuntu 26.04, x86_64, 1 vCPU / ~1 GB RAM plus a 2 GB swap
   file. SSH host key: `ED25519 SHA256:fhH6tP06cltVmYU73eeAzyI+vABH8T/PDCpXirfOVlM`.
 - Login: `ssh deploy@49.12.226.169` with Leo's ed25519 key from this PC. `deploy` has passwordless sudo
