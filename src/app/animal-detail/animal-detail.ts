@@ -7,6 +7,7 @@ import { AnimalImage } from '../animal-model/animal-image.model';
 import { RangePipe } from '../shared/range.pipe';
 import { YEARS } from '../shared/format-range';
 import { ConfirmDialog } from '../shared/confirm-dialog/confirm-dialog';
+import { sameName, wikimediaSrcset } from '../shared/wikimedia-image';
 
 @Component({
   selector: 'app-animal-detail',
@@ -16,6 +17,14 @@ import { ConfirmDialog } from '../shared/confirm-dialog/confirm-dialog';
 })
 export class AnimalDetail {
   readonly years = YEARS;
+  readonly srcset = wikimediaSrcset;
+
+  showCaption(img: AnimalImage): boolean {
+    const animal = this.animal();
+    return (
+      !!img.caption?.trim() && !sameName(img.caption, animal?.commonName, animal?.scientificName)
+    );
+  }
   id = input.required<string>();
 
   private animalService = inject(AnimalService);

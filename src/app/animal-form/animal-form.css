@@ -90,9 +90,11 @@ form > .field-error {
 
 .preview {
   display: block;
-  max-width: 220px;
-  max-height: 160px;
-  object-fit: cover;
+  align-self: flex-start;
+  width: auto;
+  height: auto;
+  max-width: min(100%, 280px);
+  max-height: 200px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
 }

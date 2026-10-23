@@ -164,6 +164,16 @@ export class AnimalForm {
     });
   }
 
+  private failedPreviews = signal<ReadonlySet<string>>(new Set());
+
+  previewFailed(url: string): boolean {
+    return this.failedPreviews().has(url);
+  }
+
+  markPreviewFailed(url: string): void {
+    this.failedPreviews.update((urls) => new Set(urls).add(url));
+  }
+
   imageUrl(key: string): string {
     return (this.form.get(key)?.value ?? '').trim();
   }

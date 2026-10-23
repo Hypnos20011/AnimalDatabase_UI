@@ -17,11 +17,17 @@
           <figure>
             <img
               [src]="img.url"
+              [attr.srcset]="srcset(img.url)"
+              [attr.sizes]="
+                images().length === 1
+                  ? '(max-width: 960px) 100vw, 870px'
+                  : '(max-width: 600px) 100vw, 420px'
+              "
               [alt]="img.caption ?? animal()!.commonName"
-              loading="lazy"
+              decoding="async"
               (error)="img.url = ''"
             />
-            @if (img.caption) {
+            @if (showCaption(img)) {
               <figcaption>{{ img.caption }}</figcaption>
             }
           </figure>

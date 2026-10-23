@@ -148,7 +148,19 @@
         <p class="field-error">That doesn't look like an image link.</p>
       }
       @if (imageUrl(field.key) && !imageInvalid(field.key)) {
-        <img class="preview" [src]="imageUrl(field.key)" [alt]="field.label" />
+        @if (previewFailed(imageUrl(field.key))) {
+          <p class="field-error">
+            No picture found at this link. Right-click the photo itself and copy its image address.
+          </p>
+        } @else {
+          <img
+            class="preview"
+            [src]="imageUrl(field.key)"
+            [alt]="field.label"
+            decoding="async"
+            (error)="markPreviewFailed(imageUrl(field.key))"
+          />
+        }
       }
     }
   </fieldset>

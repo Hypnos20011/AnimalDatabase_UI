@@ -9,6 +9,7 @@ import { TopSearch } from '../animal-model/top-search.model';
 import { SearchMatch, matchAnimal, matchHint, matchRank, normalizeText } from './animal-search';
 import { Subscription } from 'rxjs';
 import { formatCount } from '../shared/plural';
+import { wikimediaSrcset } from '../shared/wikimedia-image';
 import { TOP_SEARCH_WINDOWS, parseTopSearchDays, topSearchEmptyText } from './top-search-window';
 
 @Component({
@@ -292,6 +293,8 @@ export class AnimalsList {
   matchHint(animal: Animal): string {
     return matchHint(this.searchMatches().get(animal.id));
   }
+
+  readonly srcset = wikimediaSrcset;
 
   getThumbnail(animal: Animal): string | null {
     return animal.thumbnailUrl;

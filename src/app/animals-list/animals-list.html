@@ -31,7 +31,10 @@
             <img
               class="thumb"
               [src]="thumb"
+              [attr.srcset]="srcset(thumb)"
+              sizes="44px"
               [alt]="animal.commonName"
+              decoding="async"
               (error)="$any($event.target).style.visibility = 'hidden'"
             />
           }
@@ -198,7 +201,11 @@
               <img
                 class="thumb"
                 [src]="top.thumbnailUrl"
+                [attr.srcset]="srcset(top.thumbnailUrl)"
+                sizes="28px"
                 [alt]="top.commonName"
+                loading="lazy"
+                decoding="async"
                 (error)="$any($event.target).style.visibility = 'hidden'"
               />
             }
@@ -237,8 +244,11 @@
           @if (getThumbnail(animal); as thumb) {
             <img
               [src]="thumb"
+              [attr.srcset]="srcset(thumb)"
+              sizes="(max-width: 600px) 50vw, 260px"
               alt=""
               loading="lazy"
+              decoding="async"
               (error)="$any($event.target).style.visibility = 'hidden'"
             />
           }
