@@ -139,7 +139,9 @@ dotnet user-secrets set "ConnectionStrings:AnimalDatabase" "Server=localhost;Por
   file. SSH host key: `ED25519 SHA256:fhH6tP06cltVmYU73eeAzyI+vABH8T/PDCpXirfOVlM`.
 - Login: `ssh deploy@49.12.226.169` with Leo's ed25519 key from this PC. `deploy` has passwordless sudo
   and is in the `docker` group. Root login and password login are off; ufw allows only 22, 80, 443.
-  Unattended security upgrades are on.
+  Unattended security upgrades are on (Ubuntu origins only, not Docker's repo); kernel updates reboot
+  automatically at 03:30 UTC (`/etc/apt/apt.conf.d/52unattended-upgrades-reboot`), and all services and the
+  watchdog come back on their own.
 - Code: `/opt/animaldatabase/AnimalDatabase_Server` and `/opt/animaldatabase/AnimalDatabase_UI`, copied
   from this PC (no GitHub access on the server). Compose project `animaldatabase`, run from
   `/opt/animaldatabase/AnimalDatabase_Server/deploy`.
@@ -156,6 +158,8 @@ dotnet user-secrets set "ConnectionStrings:AnimalDatabase" "Server=localhost;Por
   user, no admin) runs it hidden 2 minutes after logon and daily at 18:00, catching up missed runs; with
   the SSD unplugged it does nothing. Restore steps for a local copy: `deploy/README.md`, "Backups and
   restore".
+- Restore test passed on 2026-10-23: the newest dump loaded into a throwaway MariaDB 11.8 container gave
+  18 animals, 18 images, 98 searches, identical to live (steps in `deploy/README.md`, "Backups and restore").
 - Watchdog: systemd timer `animaldatabase-watchdog.timer` runs `/usr/local/bin/animaldatabase-watchdog`
   (source `D:\AnimalDatabase.Api\deploy\watchdog\`) every 5 minutes. It checks the site and `/api/animals`
   through the local Caddy plus the caddy/api/mariadb containers; after 2 failed runs in a row it POSTs
