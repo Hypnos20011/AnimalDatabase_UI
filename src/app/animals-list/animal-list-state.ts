@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { DEFAULT_TOP_SEARCH_DAYS, TopSearchDays } from './top-search-window';
 
 export type FilterType = 'all' | 'wild';
 
@@ -23,4 +24,5 @@ export class AnimalListState {
   weightFrom = signal<number | null>(null);
   weightTo = signal<number | null>(null);
   sortBy = signal<SortOption>('relevance');
+  topSearchDays = signal<TopSearchDays>(DEFAULT_TOP_SEARCH_DAYS);
 }

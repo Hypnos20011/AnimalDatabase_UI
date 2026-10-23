@@ -195,9 +195,30 @@ ul {
   margin: 0 0 1.5rem;
 }
 
+.top-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
 .top-searches h3 {
+  margin: 0;
   font-size: 0.875rem;
   font-weight: 600;
+  color: var(--color-muted);
+}
+
+.top-head select {
+  min-height: 1.75rem;
+  padding: 0.15rem 1.6rem 0.15rem 0.5rem;
+  background-position: right 0.5rem center;
+  font-size: 0.8rem;
+}
+
+.top-empty {
+  margin: 0;
+  font-size: 0.9rem;
   color: var(--color-muted);
 }
 

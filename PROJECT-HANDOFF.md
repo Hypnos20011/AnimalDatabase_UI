@@ -94,7 +94,9 @@ npx ng build --output-path "$env:TEMP\adb-buildcheck"
 npx ng test --watch=false
 ```
 
-`ng test` runs Vitest; the 2 tests in `src/app/app.spec.ts` must pass.
+`ng test` runs Vitest; all `*.spec.ts` files must pass. API tests: `dotnet test` on
+`D:\AnimalDatabase.Api\tests\AnimalDatabase.Api.Tests` (xUnit, offline fixtures, fake repository for
+`SearchesController`).
 
 ---
 
@@ -119,10 +121,10 @@ src/
     app.routes.ts                routes, see below
     app.spec.ts                  2 tests (app creates, header shows the title)
     animal.service.ts            /api/animals and /api/wikipedia calls
-    search.service.ts            /api/searches calls
+    search.service.ts            /api/searches calls (getTop(limit, days)), spec checks the query params
     animal-model/                animal.model.ts (Animal, NewAnimal, NewAnimalImage),
                                  animal-image.model.ts, top-search.model.ts, wikipedia-import.model.ts
-    animals-list/                list page + animal-list-state.ts
+    animals-list/                list page + animal-list-state.ts, top-search-window.ts (Top searches window options)
     animal-detail/               detail page
     animal-form/                 add / edit form
 ```
@@ -156,6 +158,7 @@ Controllers/
   WikipediaController.cs        /api/wikipedia/import
 Data/
   AnimalRepository.cs           animals + animal_images SQL (Dapper)
+  ISearchRepository.cs          interface the controller uses (lets tests fake it)
   SearchRepository.cs           searches SQL
 Services/
   WikipediaImporter.cs          Wikipedia + Wikidata lookup (typed HttpClient, 15 s timeout, own User-Agent)
@@ -179,17 +182,17 @@ Repositories are singletons that read the connection string from configuration a
 
 ## 5. API endpoints
 
-| Method | Path                          | What it does                                                                                                                                                                                                           |
-| ------ | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/api/animals`                | All animals ordered by common name, each with `thumbnailUrl` (first image by `sort_order`, `id`)                                                                                                                       |
-| GET    | `/api/animals/{id}`           | One animal (404 if missing)                                                                                                                                                                                            |
-| GET    | `/api/animals/{id}/images`    | Images of an animal ordered by `sort_order`, `id`                                                                                                                                                                      |
-| POST   | `/api/animals`                | Create animal + images (`CreateAnimalRequest`), returns 201 with the animal                                                                                                                                            |
-| PUT    | `/api/animals/{id}`           | Update the animal; **replaces all its images** (deletes then re-inserts); 404 if missing                                                                                                                               |
-| DELETE | `/api/animals/{id}`           | Delete; images go with it (`ON DELETE CASCADE`), searches keep their row with `animal_id` set to NULL; 204 or 404                                                                                                      |
-| POST   | `/api/searches`               | Body `{ queryText, animalId }`; records a search only if the animal exists (else 404); 204                                                                                                                             |
-| GET    | `/api/searches/top?limit=5`   | Most-opened animals: `{ animalId, commonName, thumbnailUrl, searchCount }`, limit clamped to 1-20                                                                                                                      |
-| GET    | `/api/wikipedia/import?q=...` | `q` = animal name or Wikipedia link; returns a `WikipediaImportResult` to pre-fill the form. 400 for empty/over 300 chars or a non-article link, 404 if nothing found, 502 if Wikipedia is unreachable, 504 on timeout |
+| Method | Path                                | What it does                                                                                                                                                                                                           |
+| ------ | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/animals`                      | All animals ordered by common name, each with `thumbnailUrl` (first image by `sort_order`, `id`)                                                                                                                       |
+| GET    | `/api/animals/{id}`                 | One animal (404 if missing)                                                                                                                                                                                            |
+| GET    | `/api/animals/{id}/images`          | Images of an animal ordered by `sort_order`, `id`                                                                                                                                                                      |
+| POST   | `/api/animals`                      | Create animal + images (`CreateAnimalRequest`), returns 201 with the animal                                                                                                                                            |
+| PUT    | `/api/animals/{id}`                 | Update the animal; **replaces all its images** (deletes then re-inserts); 404 if missing                                                                                                                               |
+| DELETE | `/api/animals/{id}`                 | Delete; images go with it (`ON DELETE CASCADE`), searches keep their row with `animal_id` set to NULL; 204 or 404                                                                                                      |
+| POST   | `/api/searches`                     | Body `{ queryText, animalId }`; records a search only if the animal exists (else 404); 204                                                                                                                             |
+| GET    | `/api/searches/top?limit=5&days=30` | Most-opened animals: `{ animalId, commonName, thumbnailUrl, searchCount }`. `limit` clamped to 1-20 (default 5). `days` = window in days, 1-365 (default 30), `0` = all time; anything else is a 400                   |
+| GET    | `/api/wikipedia/import?q=...`       | `q` = animal name or Wikipedia link; returns a `WikipediaImportResult` to pre-fill the form. 400 for empty/over 300 chars or a non-article link, 404 if nothing found, 502 if Wikipedia is unreachable, 504 on timeout |
 
 Validation is on `CreateAnimalRequest` via data annotations (lengths match the columns, numbers
 
@@ -323,6 +326,15 @@ notes, not re-checked today:
   all animals if the filters match none). Disabled while there are no animals.
 - **Top searches**: chips with thumbnail, name and count from `GET /api/searches/top`, loaded when
   the list opens.
+  - A small select next to the heading picks the window: **Last 7 days**, **Last 30 days**
+    (default) or **All time** (`days` = 7, 30, 0). The choice lives in `AnimalListState`
+    (`topSearchDays`), so it survives going to an animal and back; options and wording are in
+    `animals-list/top-search-window.ts`.
+  - The window counts from now on the database clock: `searched_at >= NOW() - INTERVAL days DAY`
+    (`searched_at` is a `TIMESTAMP` filled by `DEFAULT current_timestamp()`, so both sides use
+    the same session time zone; index `idx_searches_searched_at` covers the filter).
+  - Empty window: "No searches in the last 30 days." / "No searches in the last 7 days." /
+    "No searches yet." (all time). If the request fails: "Top searches are unavailable right now."
   - Opening an animal from the **list cards or the suggestions** calls `POST /api/searches`
     (`selectAnimal()`), so it counts. That's the same whether the query matched the name,
     habitat or range: Top searches counts opened animals, and `query_text` keeps what was typed.
@@ -467,13 +479,11 @@ Known issues:
   `http://localhost:5190/api`; deploying anywhere else needs both changed.
 - List state (filters, sort, query) resets on a full page reload; it isn't in the URL.
 - PUT replaces all images of an animal, so image ids change on every save.
-- Delete uses the browser's `confirm()` dialog.
 
 Ideas (not started; ask Leo before building):
 
 - Put filters/sort in the URL query string so they survive reloads and can be shared.
 - Height and lifespan range filters, like length and weight.
-- A recent-searches time window for Top searches (for example last 30 days, using `searched_at`).
 
 ---
 

@@ -7,6 +7,8 @@ import { AnimalListState, SortOption } from './animal-list-state';
 import { SearchService } from '../search.service';
 import { TopSearch } from '../animal-model/top-search.model';
 import { SearchMatch, matchAnimal, matchHint, matchRank, normalizeText } from './animal-search';
+import { Subscription } from 'rxjs';
+import { TOP_SEARCH_WINDOWS, parseTopSearchDays, topSearchEmptyText } from './top-search-window';
 
 @Component({
   selector: 'app-animals-list',
@@ -49,6 +51,16 @@ export class AnimalsList {
     { value: 'newest', label: 'Newest first' },
   ];
   topSearches = signal<TopSearch[]>([]);
+  topSearchDays = this.state.topSearchDays;
+  topLoaded = signal(false);
+  topError = signal(false);
+  readonly topSearchWindows = TOP_SEARCH_WINDOWS;
+  topEmptyText = computed(() =>
+    this.topError()
+      ? 'Top searches are unavailable right now.'
+      : topSearchEmptyText(this.topSearchDays()),
+  );
+  private topRequest?: Subscription;
 
   activeFilterCount = computed(
     () =>
@@ -175,10 +187,7 @@ export class AnimalsList {
   });
 
   constructor() {
-    this.searchService.getTop().subscribe({
-      next: (data) => this.topSearches.set(data),
-      error: () => this.topSearches.set([]),
-    });
+    this.loadTopSearches();
     this.animalService.getAll().subscribe({
       next: (data) => {
         this.animals.set(data);
@@ -187,6 +196,27 @@ export class AnimalsList {
       error: (err) => {
         this.error.set(err.message ?? 'Could not load animals');
         this.loading.set(false);
+      },
+    });
+  }
+
+  onTopSearchDaysChange(value: string): void {
+    this.topSearchDays.set(parseTopSearchDays(value));
+    this.loadTopSearches();
+  }
+
+  private loadTopSearches(): void {
+    this.topRequest?.unsubscribe();
+    this.topRequest = this.searchService.getTop(5, this.topSearchDays()).subscribe({
+      next: (data) => {
+        this.topSearches.set(data);
+        this.topError.set(false);
+        this.topLoaded.set(true);
+      },
+      error: () => {
+        this.topSearches.set([]);
+        this.topError.set(true);
+        this.topLoaded.set(true);
       },
     });
   }

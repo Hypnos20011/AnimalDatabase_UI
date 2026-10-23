@@ -13,7 +13,7 @@ export class SearchService {
     return this.http.post<void>(this.apiUrl, { queryText, animalId });
   }
 
-  getTop(limit = 5): Observable<TopSearch[]> {
-    return this.http.get<TopSearch[]>(`${this.apiUrl}/top`, { params: { limit } });
+  getTop(limit = 5, days = 30): Observable<TopSearch[]> {
+    return this.http.get<TopSearch[]>(`${this.apiUrl}/top`, { params: { limit, days } });
   }
 }

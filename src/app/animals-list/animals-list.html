@@ -175,25 +175,41 @@
   </div>
 }
 
-@if (topSearches().length > 0) {
-  <section class="top-searches">
-    <h3>Top searches</h3>
-    <ul>
-      @for (top of topSearches(); track top.animalId) {
-        <li tabindex="0" (click)="openTopSearch(top)" (keydown.enter)="openTopSearch(top)">
-          @if (top.thumbnailUrl) {
-            <img
-              class="thumb"
-              [src]="top.thumbnailUrl"
-              [alt]="top.commonName"
-              (error)="$any($event.target).style.visibility = 'hidden'"
-            />
-          }
-          <span class="top-name">{{ top.commonName }}</span>
-          <span class="top-count">{{ top.searchCount }}</span>
-        </li>
-      }
-    </ul>
+@if (topLoaded()) {
+  <section class="top-searches" aria-labelledby="top-searches-title">
+    <div class="top-head">
+      <h3 id="top-searches-title">Top searches</h3>
+      <select
+        aria-label="Top searches time window"
+        (change)="onTopSearchDaysChange($any($event.target).value)"
+      >
+        @for (window of topSearchWindows; track window.days) {
+          <option [value]="window.days" [selected]="window.days === topSearchDays()">
+            {{ window.label }}
+          </option>
+        }
+      </select>
+    </div>
+    @if (topSearches().length > 0) {
+      <ul>
+        @for (top of topSearches(); track top.animalId) {
+          <li tabindex="0" (click)="openTopSearch(top)" (keydown.enter)="openTopSearch(top)">
+            @if (top.thumbnailUrl) {
+              <img
+                class="thumb"
+                [src]="top.thumbnailUrl"
+                [alt]="top.commonName"
+                (error)="$any($event.target).style.visibility = 'hidden'"
+              />
+            }
+            <span class="top-name">{{ top.commonName }}</span>
+            <span class="top-count">{{ top.searchCount }}</span>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="top-empty">{{ topEmptyText() }}</p>
+    }
   </section>
 }
 @if (loading()) {
