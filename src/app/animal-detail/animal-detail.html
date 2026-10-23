@@ -1,132 +1,129 @@
 @if (animal()) {
   <article class="detail">
-    <div class="intro" [attr.data-layout]="heroLayout()">
-      <section class="hero" [class.no-photo]="noPhoto()" [attr.data-layout]="heroLayout()">
-        @if (heroImage(); as hero) {
-          @if (!heroFailed()) {
+    <div class="intro" [class.no-photo]="noPhoto()">
+      @if (!noPhoto()) {
+        <figure class="hero">
+          @if (heroImage(); as hero) {
             <img
               class="hero-image"
               [src]="hero.url"
               [attr.srcset]="srcset(hero.url)"
-              sizes="(max-width: 1240px) 100vw, 1192px"
+              sizes="(max-width: 900px) 100vw, 720px"
               [alt]="hero.caption ?? animal()!.commonName"
               decoding="async"
-              (load)="onHeroLoad($event)"
               (error)="onHeroError()"
             />
           }
-        }
+          @if (heroImage(); as hero) {
+            @if (showCaption(hero)) {
+              <figcaption class="hero-caption">{{ hero.caption }}</figcaption>
+            }
+          }
+        </figure>
+      }
+
+      <div class="intro-text">
         <header class="detail-header">
           <h2>{{ animal()!.commonName }}</h2>
           @if (animal()!.scientificName) {
             <em class="sci">{{ animal()!.scientificName }}</em>
           }
         </header>
-        @if (heroImage(); as hero) {
-          @if (!heroFailed() && showCaption(hero)) {
-            <p class="hero-caption">{{ hero.caption }}</p>
-          }
+        @if (!imagesLoading() && images().length === 0) {
+          <p class="no-images">No images uploaded yet.</p>
         }
-      </section>
 
-      @if (imagesLoading()) {
-        <p class="hint">Loading images...</p>
-      }
-
-      @if (!imagesLoading() && images().length === 0) {
-        <p class="no-images">No images uploaded yet.</p>
-      }
-
-      <div class="intro-facts">
-        <dl class="facts">
-          @if (animal()!.iucnStatus) {
-            <div class="fact">
-              <dt>IUCN status</dt>
-              <dd>
-                <span class="status" [attr.data-status]="animal()!.iucnStatus">{{
-                  animal()!.iucnStatus
-                }}</span>
-              </dd>
-            </div>
-          }
-          @if (animal()!.weightKgMin | range: animal()!.weightKgMax : 'kg' : 2; as weight) {
-            <div class="fact">
-              <dt>Weight</dt>
-              <dd>{{ weight }}</dd>
-            </div>
-          }
-          @if (
-            animal()!.lifespanYearsMin | range: animal()!.lifespanYearsMax : years : 0;
-            as lifespan
-          ) {
-            <div class="fact">
-              <dt>Lifespan</dt>
-              <dd>{{ lifespan }}</dd>
-            </div>
-          }
-          @if (animal()!.habitat) {
-            <div class="fact">
-              <dt>Habitat</dt>
-              <dd>{{ animal()!.habitat }}</dd>
-            </div>
-          }
-          @if (animal()!.rangeRegion) {
-            <div class="fact">
-              <dt>Range</dt>
-              <dd>{{ animal()!.rangeRegion }}</dd>
-            </div>
-          }
-        </dl>
-
-        <button type="button" class="more btn btn-secondary btn-sm" (click)="toggleDetails()">
-          {{ showDetails() ? 'Hide details' : 'More details' }}
-        </button>
-
-        @if (showDetails()) {
-          <dl class="facts extra">
-            @if (animal()!.family) {
+        <div class="intro-facts">
+          <dl class="facts">
+            @if (animal()!.iucnStatus) {
               <div class="fact">
-                <dt>Family</dt>
-                <dd>{{ animal()!.family }}</dd>
+                <dt>IUCN status</dt>
+                <dd>
+                  <span class="status" [attr.data-status]="animal()!.iucnStatus">{{
+                    animal()!.iucnStatus
+                  }}</span>
+                </dd>
               </div>
             }
-            @if (animal()!.taxonomicClass) {
+            @if (animal()!.weightKgMin | range: animal()!.weightKgMax : 'kg' : 2; as weight) {
               <div class="fact">
-                <dt>Class</dt>
-                <dd>{{ animal()!.taxonomicClass }}</dd>
-              </div>
-            }
-            @if (animal()!.isDomesticated) {
-              <div class="fact">
-                <dt>Type</dt>
-                <dd>Domesticated</dd>
-              </div>
-            } @else {
-              <div class="fact">
-                <dt>Type</dt>
-                <dd>Wild</dd>
+                <dt>Weight</dt>
+                <dd>{{ weight }}</dd>
               </div>
             }
             @if (
-              animal()!.sizeLengthCmMin | range: animal()!.sizeLengthCmMax : 'cm' : 1;
-              as bodyLength
+              animal()!.lifespanYearsMin | range: animal()!.lifespanYearsMax : years : 0;
+              as lifespan
             ) {
               <div class="fact">
-                <dt>Body length</dt>
-                <dd>{{ bodyLength }}</dd>
+                <dt>Lifespan</dt>
+                <dd>{{ lifespan }}</dd>
               </div>
             }
-            @if (
-              animal()!.sizeHeightCmMin | range: animal()!.sizeHeightCmMax : 'cm' : 1;
-              as shoulderHeight
-            ) {
+            @if (animal()!.habitat) {
               <div class="fact">
-                <dt>Shoulder height</dt>
-                <dd>{{ shoulderHeight }}</dd>
+                <dt>Habitat</dt>
+                <dd>{{ animal()!.habitat }}</dd>
+              </div>
+            }
+            @if (animal()!.rangeRegion) {
+              <div class="fact">
+                <dt>Range</dt>
+                <dd>{{ animal()!.rangeRegion }}</dd>
               </div>
             }
           </dl>
-        }
+
+          <button type="button" class="more btn btn-secondary btn-sm" (click)="toggleDetails()">
+            {{ showDetails() ? 'Hide details' : 'More details' }}
+          </button>
+
+          @if (showDetails()) {
+            <dl class="facts extra">
+              @if (animal()!.family) {
+                <div class="fact">
+                  <dt>Family</dt>
+                  <dd>{{ animal()!.family }}</dd>
+                </div>
+              }
+              @if (animal()!.taxonomicClass) {
+                <div class="fact">
+                  <dt>Class</dt>
+                  <dd>{{ animal()!.taxonomicClass }}</dd>
+                </div>
+              }
+              @if (animal()!.isDomesticated) {
+                <div class="fact">
+                  <dt>Type</dt>
+                  <dd>Domesticated</dd>
+                </div>
+              } @else {
+                <div class="fact">
+                  <dt>Type</dt>
+                  <dd>Wild</dd>
+                </div>
+              }
+              @if (
+                animal()!.sizeLengthCmMin | range: animal()!.sizeLengthCmMax : 'cm' : 1;
+                as bodyLength
+              ) {
+                <div class="fact">
+                  <dt>Body length</dt>
+                  <dd>{{ bodyLength }}</dd>
+                </div>
+              }
+              @if (
+                animal()!.sizeHeightCmMin | range: animal()!.sizeHeightCmMax : 'cm' : 1;
+                as shoulderHeight
+              ) {
+                <div class="fact">
+                  <dt>Shoulder height</dt>
+                  <dd>{{ shoulderHeight }}</dd>
+                </div>
+              }
+            </dl>
+          }
+        </div>
       </div>
     </div>
 

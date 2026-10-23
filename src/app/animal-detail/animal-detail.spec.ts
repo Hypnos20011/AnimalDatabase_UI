@@ -152,7 +152,7 @@ describe('AnimalDetail delete confirmation', () => {
   });
 });
 
-describe('AnimalDetail hero layout', () => {
+describe('AnimalDetail hero', () => {
   const photo = {
     id: 7,
     animalId: 2,
@@ -179,75 +179,49 @@ describe('AnimalDetail hero layout', () => {
       fixture.detectChanges();
     };
     await settle();
-    const hero = () => element.querySelector('.hero') as HTMLElement;
-    const loadPhoto = async (width: number, height: number) => {
-      const img = element.querySelector('.hero-image') as HTMLImageElement;
-      Object.defineProperty(img, 'naturalWidth', { configurable: true, value: width });
-      Object.defineProperty(img, 'naturalHeight', { configurable: true, value: height });
-      img.dispatchEvent(new Event('load'));
-      await settle();
-    };
-    return { fixture, element, hero, loadPhoto, settle };
+    const intro = () => element.querySelector('.intro') as HTMLElement;
+    return { fixture, element, intro, settle };
   }
 
-  it('is pending with reserved space before the photo has loaded', async () => {
-    const { hero } = await setup([photo]);
+  it('uses the same layout for every photo, with the photo before the name and facts', async () => {
+    const { element, intro } = await setup([photo]);
 
-    expect(hero().dataset['layout']).toBe('pending');
-    expect(hero().classList).not.toContain('no-photo');
+    expect(intro().classList).not.toContain('no-photo');
+    expect(intro().dataset['layout']).toBeUndefined();
+    expect(element.querySelector('.hero .hero-image')).not.toBeNull();
+    expect(element.querySelector('.hero .detail-header')).toBeNull();
+    const children = Array.from(intro().children).map((child) => child.className);
+    expect(children).toEqual(['hero', 'intro-text']);
   });
 
-  it('overlays the name on a wide photo', async () => {
-    const { hero, loadPhoto } = await setup([photo]);
-
-    await loadPhoto(1280, 853);
-
-    expect(hero().dataset['layout']).toBe('overlay');
-  });
-
-  it('places the name beside a portrait photo', async () => {
-    const { fixture, hero, loadPhoto } = await setup([photo]);
-
-    await loadPhoto(1000, 1348);
-
-    expect(hero().dataset['layout']).toBe('side');
-    expect(fixture.componentInstance.heroSize()).toEqual({ width: 1000, height: 1348 });
-  });
-
-  it('places the name beside a square photo', async () => {
-    const { hero, loadPhoto } = await setup([photo]);
-
-    await loadPhoto(900, 900);
-
-    expect(hero().dataset['layout']).toBe('side');
-  });
-
-  it('falls back to the plain header when the photo fails to load', async () => {
-    const { element, hero, settle } = await setup([photo]);
+  it('drops the photo area when the photo fails to load', async () => {
+    const { element, intro, settle } = await setup([photo]);
 
     element.querySelector('.hero-image')!.dispatchEvent(new Event('error'));
     await settle();
 
-    expect(element.querySelector('.hero-image')).toBeNull();
-    expect(hero().classList).toContain('no-photo');
-    expect(hero().dataset['layout']).toBe('pending');
+    expect(element.querySelector('.hero')).toBeNull();
+    expect(intro().classList).toContain('no-photo');
+    expect(element.querySelector('.intro-text h2')?.textContent).toContain('Okapi');
   });
 
-  it('uses the plain header when the animal has no photos', async () => {
-    const { element, hero } = await setup([]);
+  it('drops the photo area when the animal has no photos', async () => {
+    const { element, intro } = await setup([]);
 
-    expect(element.querySelector('.hero-image')).toBeNull();
-    expect(hero().classList).toContain('no-photo');
+    expect(element.querySelector('.hero')).toBeNull();
+    expect(intro().classList).toContain('no-photo');
+    expect(element.querySelector('.no-images')?.textContent).toContain('No images');
   });
 
-  it('resets the layout when another animal is loaded', async () => {
-    const { fixture, hero, loadPhoto, settle } = await setup([photo]);
-    await loadPhoto(1280, 853);
+  it('shows the photo again after loading another animal', async () => {
+    const { fixture, element, settle } = await setup([photo]);
+    element.querySelector('.hero-image')!.dispatchEvent(new Event('error'));
+    await settle();
 
     fixture.componentRef.setInput('id', '3');
     await settle();
 
-    expect(hero().dataset['layout']).toBe('pending');
+    expect(element.querySelector('.hero .hero-image')).not.toBeNull();
   });
 
   it('hides the caption when it only repeats the name', async () => {
@@ -256,33 +230,25 @@ describe('AnimalDetail hero layout', () => {
     expect(element.querySelector('.hero-caption')).toBeNull();
   });
 
-  it('shows a real caption inside the hero', async () => {
+  it('shows a real caption under the photo', async () => {
     const { element } = await setup([{ ...photo, caption: 'Okapi at Epulu' }]);
 
-    expect(element.querySelector('.hero .hero-caption')?.textContent).toContain('Okapi at Epulu');
+    expect(element.querySelector('.hero figcaption.hero-caption')?.textContent).toContain(
+      'Okapi at Epulu',
+    );
   });
 
-  it('marks the intro with the layout so tall photos get the facts beside them', async () => {
-    const { element, loadPhoto } = await setup([photo]);
-    const intro = () => element.querySelector('.intro') as HTMLElement;
-
-    expect(intro().dataset['layout']).toBe('pending');
-    await loadPhoto(1000, 1348);
-    expect(intro().dataset['layout']).toBe('side');
-    await loadPhoto(1280, 853);
-    expect(intro().dataset['layout']).toBe('overlay');
-  });
-
-  it('keeps the facts and the More details toggle together in the intro', async () => {
+  it('keeps the name, facts and More details together in the text column', async () => {
     const { element, settle } = await setup([photo]);
-    const facts = element.querySelector('.intro .intro-facts') as HTMLElement;
+    const text = element.querySelector('.intro .intro-text') as HTMLElement;
 
-    expect(facts.querySelector('.facts .fact dt')?.textContent).toContain('IUCN status');
-    expect(facts.querySelector('.more')?.textContent).toContain('More details');
+    expect(text.querySelector('.detail-header h2')?.textContent).toContain('Okapi');
+    expect(text.querySelector('.facts .fact dt')?.textContent).toContain('IUCN status');
+    expect(text.querySelector('.more')?.textContent).toContain('More details');
 
-    (facts.querySelector('.more') as HTMLButtonElement).click();
+    (text.querySelector('.more') as HTMLButtonElement).click();
     await settle();
 
-    expect(facts.querySelector('.facts.extra')?.textContent).toContain('Giraffidae');
+    expect(text.querySelector('.facts.extra')?.textContent).toContain('Giraffidae');
   });
 });
