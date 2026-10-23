@@ -311,7 +311,7 @@ notes, not re-checked today:
 - **Index list**: numbered rows (01, 02, ...) with thin dividers. Each row is a link to the
   detail page and shows the name, scientific name, class and the IUCN status code (a dash when
   there is no status; screen readers get the full status). Header: "Animals" plus the count.
-- **Preview pane** on the right (sticky): big picture, number, name, scientific name and
+- **Preview pane** on the right (sticky, 280px): the whole picture (never cropped, at most min(58vh, 28rem) tall), number, name, scientific name and
   "FAMILY / HABITAT" of the active row. The first animal is active by default; hovering or
   keyboard-focusing a row makes it active (`pickActive()` in `active-animal.ts`; if the active
   animal is filtered out it falls back to the first one). Tapping a row opens the detail page.
