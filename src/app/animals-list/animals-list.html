@@ -108,7 +108,7 @@
               [class.active]="isStatusActive(status)"
               (click)="toggleStatus(status)"
             >
-              {{ status | titlecase }}
+              {{ status | titlecase }} · {{ statusCount(status) }}
             </button>
           }
         </div>

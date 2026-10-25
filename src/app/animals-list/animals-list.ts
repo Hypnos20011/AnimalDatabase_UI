@@ -262,6 +262,10 @@ export class AnimalsList {
     return this.selectedStatuses().has(status);
   }
 
+  statusCount(status: string): number {
+    return this.animals().filter((animal) => animal.iucnStatus === status).length;
+  }
+
   toggleStatus(status: string): void {
     const next = new Set(this.selectedStatuses());
     if (next.has(status)) next.delete(status);
