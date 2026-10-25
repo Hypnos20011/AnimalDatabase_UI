@@ -6,13 +6,13 @@ import { Animal } from '../animal-model/animal.model';
 import { AnimalListState, SortOption } from './animal-list-state';
 import { SearchService } from '../search.service';
 import { TopSearch } from '../animal-model/top-search.model';
-import { SearchMatch, matchAnimal, matchHint, matchRank, normalizeText } from './animal-search';
+import { matchAnimal, matchHint, matchRank, normalizeText, SearchMatch } from './animal-search';
 import { Subscription } from 'rxjs';
 import { formatCount } from '../shared/plural';
 import { wikimediaSrcset } from '../shared/wikimedia-image';
-import { TOP_SEARCH_WINDOWS, parseTopSearchDays, topSearchEmptyText } from './top-search-window';
+import { parseTopSearchDays, TOP_SEARCH_WINDOWS, topSearchEmptyText } from './top-search-window';
 import { indexLabel, pickActive } from './active-animal';
-import { iucnCode, iucnLabel } from '../shared/iucn';
+import { iucnCode, iucnLabel, iucnRank } from '../shared/iucn';
 
 @Component({
   selector: 'app-animals-list',
@@ -111,7 +111,7 @@ export class AnimalsList {
     for (const a of this.animals()) {
       if (a.iucnStatus) set.add(a.iucnStatus);
     }
-    return Array.from(set).sort();
+    return Array.from(set).sort((a, b) => iucnRank(a) - iucnRank(b));
   });
 
   showDomesticated = computed(() => this.filterType() === 'all');
@@ -303,8 +303,8 @@ export class AnimalsList {
     const high = max ?? min;
     if (low === null || high === null) return false;
     if (from !== null && high < from) return false;
-    if (to !== null && low > to) return false;
-    return true;
+    return !(to !== null && low > to);
+
   }
 
   matchHint(animal: Animal): string {

@@ -9,6 +9,16 @@ const CODES: Record<string, string> = {
   'data deficient': 'DD',
 };
 
+export const IUCN_STATUSES_ORDER = ['least concern', 'near threatened', 'vulnerable', 'endangered', 'critically endangered', 'extinct in the wild', 'extinct', 'data deficient'];
+
+export function iucnRank(status: string): number {
+  const index = IUCN_STATUSES_ORDER.indexOf(status);
+  if (index === -1) {
+    return IUCN_STATUSES_ORDER.length;
+  }
+  return index;
+}
+
 export const NO_STATUS_CODE = '\u2014';
 
 export function iucnCode(status: string | null | undefined): string {
