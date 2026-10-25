@@ -130,11 +130,11 @@ export class AnimalsList {
     return this.animals().filter((animal) => {
       if (hasQuery && !matches.has(animal.id)) return false;
 
-      if (classes.size > 0 && animal.taxonomicClass && !classes.has(animal.taxonomicClass)) {
+      if (classes.size > 0 && (!animal.taxonomicClass || !classes.has(animal.taxonomicClass))) {
         return false;
       }
 
-      if (statuses.size > 0 && animal.iucnStatus && !statuses.has(animal.iucnStatus)) {
+      if (statuses.size > 0 && (!animal.iucnStatus || !statuses.has(animal.iucnStatus))) {
         return false;
       }
 
