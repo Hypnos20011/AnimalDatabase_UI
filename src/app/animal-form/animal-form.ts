@@ -64,6 +64,8 @@ export class AnimalForm {
   importError = signal('');
   private originalCaptions = new Map<string, string | null>();
   private importedImageUrl = '';
+  private savedImageUrl = '';
+  private savedScientificName = '';
   private importedValues = new Map<string, unknown>();
   error = signal('');
 
@@ -258,7 +260,11 @@ export class AnimalForm {
     }
     const imageControl = this.form.controls.otherImageUrl;
     const current = (imageControl.value ?? '').trim();
-    if (!current || current === this.importedImageUrl) {
+    if (
+      !current ||
+      current === this.importedImageUrl ||
+      (current === this.savedImageUrl && (data.scientificName ?? '') !== this.savedScientificName)
+    ) {
       const next = (data.imageUrl ?? '').trim();
       if (next !== current) {
         imageControl.setValue(next);
@@ -303,11 +309,15 @@ export class AnimalForm {
           profile: animal.profile ?? '',
         });
         this.originalCaptions.clear();
+
         for (const field of this.imageFields) {
           const image = images.find((i) => i.kind === field.kind);
           this.form.get(field.key)?.setValue(image?.url ?? '');
           if (image) this.originalCaptions.set(image.url, image.caption);
         }
+        this.savedScientificName = animal.scientificName ?? '';
+        this.savedImageUrl = this.form.controls.otherImageUrl.value ?? '';
+
         this.loadingAnimal.set(false);
       },
       error: () => {

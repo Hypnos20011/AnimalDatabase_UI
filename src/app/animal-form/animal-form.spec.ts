@@ -5,6 +5,8 @@ import { of, throwError } from 'rxjs';
 import { AnimalForm } from './animal-form';
 import { AnimalService } from '../animal.service';
 import { WikipediaImport } from '../animal-model/wikipedia-import.model';
+import { Animal } from '../animal-model/animal.model';
+import { it } from 'vitest';
 
 function shoebill(overrides: Partial<WikipediaImport> = {}): WikipediaImport {
   return {
@@ -68,6 +70,7 @@ describe('AnimalForm Wikipedia lookup', () => {
     expect(form.importMessage()).toContain('Filled in 11 fields');
   });
 });
+
 describe('AnimalForm repeated Wikipedia lookups', () => {
   const catPicture = 'https://upload.wikimedia.org/wikipedia/commons/a/a1/Cat.jpg';
   const octopusPicture = 'https://upload.wikimedia.org/wikipedia/commons/b/b2/Octopus.jpg';
@@ -223,5 +226,57 @@ describe('AnimalForm lookup rate limit', () => {
     form.importFromWikipedia();
 
     expect(form.importError()).toBe("That isn't a Wikipedia article link.");
+  });
+});
+
+describe('AnimalForm lookup', () => {
+  const boxerCrab = {
+    id: 1,
+    commonName: 'Boxer Crab',
+    scientificName: 'Lybia tessellata',
+  } as Animal;
+  const boxerCrabPicture =
+    'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/Lybia_tessellata.jpg/1280px-Lybia_tessellata.jpg';
+  const hornwormPicture =
+    'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0b/Manduca_quinquemaculata_MHNT_CUT_2010_0_116_Schuylkill_Haven%2C_Schuylkill_Co._Penna_male_dorsal.jpg/1280px-Manduca_quinquemaculata_MHNT_CUT_2010_0_116_Schuylkill_Haven%2C_Schuylkill_Co._Penna_male_dorsal.jpg';
+
+  function setup(...results: WikipediaImport[]) {
+    const lookup = vi.fn();
+    for (const result of results) lookup.mockReturnValueOnce(of(result));
+    TestBed.configureTestingModule({
+      imports: [AnimalForm],
+      providers: [
+        provideRouter([]),
+        {
+          provide: AnimalService,
+          useValue: {
+            getAll: vi.fn(() => of([])),
+            importFromWikipedia: lookup,
+            getById: vi.fn(() => of(boxerCrab)),
+            getImages: vi.fn(() =>
+              of([{ kind: 'unspecified', url: boxerCrabPicture, caption: 'Other' }]),
+            ),
+          },
+        },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(AnimalForm);
+    fixture.componentRef.setInput('id', '1');
+    fixture.detectChanges();
+    return { fixture, form: fixture.componentInstance };
+  }
+
+  function lookUp(form: AnimalForm, query: string) {
+    form.wikiUrl.set(query);
+    form.importFromWikipedia();
+  }
+
+  it('replaces the saved picture when a different animal is filled in', () => {
+    const { form } = setup(
+      shoebill({ imageUrl: hornwormPicture, scientificName: 'Manduca sexta' }),
+    );
+    lookUp(form, 'hornworm');
+    expect(form.form.controls.otherImageUrl.value).toBe(hornwormPicture);
   });
 });
