@@ -279,4 +279,12 @@ describe('AnimalForm lookup', () => {
     lookUp(form, 'hornworm');
     expect(form.form.controls.otherImageUrl.value).toBe(hornwormPicture);
   });
+
+  it('keeps the saved picture when the same animal is filled in again', () => {
+    const { form } = setup(
+      shoebill({imageUrl: hornwormPicture, scientificName: boxerCrab.scientificName }),
+    );
+    lookUp(form, 'boxer crab');
+    expect(form.form.controls.otherImageUrl.value).toBe(boxerCrabPicture);
+  })
 });
