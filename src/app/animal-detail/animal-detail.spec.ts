@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
-import { Subject, of, throwError } from 'rxjs';
+import { provideRouter, Router } from '@angular/router';
+import { of, Subject, throwError } from 'rxjs';
 import { AnimalDetail } from './animal-detail';
 import { AnimalService } from '../animal.service';
 import { Animal } from '../animal-model/animal.model';
@@ -286,5 +286,47 @@ describe('AnimalDetail while locked', () => {
     expect(actions.querySelector('.edit')).toBeNull();
     expect(actions.querySelector('.delete')).toBeNull();
     expect(actions.querySelectorAll('a, button').length).toBeGreaterThan(0);
+  });
+});
+
+describe('AnimalDetail facts', () => {
+  async function setup(animal: Animal) {
+    const service = {
+      getById: vi.fn(() => of(animal)),
+      getImages: vi.fn(() => of([])),
+    };
+    TestBed.configureTestingModule({
+      imports: [AnimalDetail],
+      providers: [
+        provideRouter([]),
+        { provide: AnimalService, useValue: service },
+        { provide: AdminKeyService, useValue: { unlocked: signal(true) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(AnimalDetail);
+    fixture.componentRef.setInput('id', '2');
+    const element = fixture.nativeElement as HTMLElement;
+    const settle = async () => {
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+    };
+    await settle();
+    return { fixture, element };
+  }
+
+  it('shows unknown when the lifespan is missing', async () => {
+    const { element } = await setup({ ...okapi, lifespanYearsMin: null, lifespanYearsMax: null });
+
+    const facts = element.querySelector('.facts')?.textContent;
+    expect(facts).toContain('Unknown');
+  });
+
+  it('shows real lifespan', async () => {
+    const { element } = await setup(okapi);
+
+    const facts = element.querySelector('.facts')?.textContent;
+    expect(facts).toContain('years');
+    expect(facts).not.toContain('Unknown');
   });
 });

@@ -40,8 +40,8 @@
                 <dt>IUCN status</dt>
                 <dd>
                   <span class="status" [attr.data-status]="animal()!.iucnStatus">{{
-                    animal()!.iucnStatus
-                  }}</span>
+                      animal()!.iucnStatus
+                    }}</span>
                 </dd>
               </div>
             }
@@ -51,15 +51,14 @@
                 <dd>{{ weight }}</dd>
               </div>
             }
-            @if (
-              animal()!.lifespanYearsMin | range: animal()!.lifespanYearsMax : years : 0;
-              as lifespan
-            ) {
-              <div class="fact">
-                <dt>Lifespan</dt>
-                <dd>{{ lifespan }}</dd>
-              </div>
-            }
+
+            @let lifespan = animal()!.lifespanYearsMin | range: animal()!.lifespanYearsMax : years : 0;
+
+            <div class="fact">
+              <dt>Lifespan</dt>
+              <dd>{{ lifespan || 'Unknown' }}</dd>
+            </div>
+
             @if (animal()!.habitat) {
               <div class="fact">
                 <dt>Habitat</dt>
@@ -103,19 +102,15 @@
                   <dd>Wild</dd>
                 </div>
               }
-              @if (
-                animal()!.sizeLengthCmMin | range: animal()!.sizeLengthCmMax : 'cm' : 1;
-                as bodyLength
-              ) {
+              @if (animal()!.sizeLengthCmMin | range: animal()!.sizeLengthCmMax : 'cm' : 1;
+                as bodyLength) {
                 <div class="fact">
                   <dt>Body length</dt>
                   <dd>{{ bodyLength }}</dd>
                 </div>
               }
-              @if (
-                animal()!.sizeHeightCmMin | range: animal()!.sizeHeightCmMax : 'cm' : 1;
-                as shoulderHeight
-              ) {
+              @if (animal()!.sizeHeightCmMin | range: animal()!.sizeHeightCmMax : 'cm' : 1;
+                as shoulderHeight) {
                 <div class="fact">
                   <dt>Shoulder height</dt>
                   <dd>{{ shoulderHeight }}</dd>

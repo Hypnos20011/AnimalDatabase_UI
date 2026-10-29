@@ -286,5 +286,5 @@ describe('AnimalForm lookup', () => {
     );
     lookUp(form, 'boxer crab');
     expect(form.form.controls.otherImageUrl.value).toBe(boxerCrabPicture);
-  })
+  });
 });
