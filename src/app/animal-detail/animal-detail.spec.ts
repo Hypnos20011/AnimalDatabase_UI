@@ -312,7 +312,7 @@ describe('AnimalDetail facts', () => {
       fixture.detectChanges();
     };
     await settle();
-    return { fixture, element };
+    return { fixture, element, settle };
   }
 
   it('shows unknown when the lifespan is missing', async () => {
@@ -328,5 +328,27 @@ describe('AnimalDetail facts', () => {
     const facts = element.querySelector('.facts')?.textContent;
     expect(facts).toContain('years');
     expect(facts).not.toContain('Unknown');
+  });
+
+  it('hides shoulder height when it is empty', async () => {
+    const { element, settle } = await setup({ ...okapi, sizeHeightCmMin: null, sizeHeightCmMax: null });
+
+    (element.querySelector('.more') as HTMLButtonElement).click();
+    await settle();
+
+    const extra = element.querySelector('.facts.extra')?.textContent;
+    expect(extra).toContain('Body length');
+    expect(extra).not.toContain('Shoulder height');
+  });
+
+  it('shows shoulder height when it is filled', async () => {
+    const { element, settle } = await setup(okapi);
+
+    (element.querySelector('.more') as HTMLButtonElement).click();
+    await settle();
+
+    const extra = element.querySelector('.facts.extra')?.textContent;
+    expect(extra).toContain('Shoulder height');
+    expect(extra).toContain('140');
   });
 });
