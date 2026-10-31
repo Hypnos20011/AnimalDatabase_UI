@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { AnimalDetail } from './animal-detail';
-import { AnimalService } from '../animal.service';
+import { AnimalService } from '../shared/animal.service';
 import { Animal } from '../animal-model/animal.model';
 import { AnimalImage } from '../animal-model/animal-image.model';
 import { AdminKeyService } from '../admin/admin-key.service';

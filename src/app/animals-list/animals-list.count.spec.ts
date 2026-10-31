@@ -2,8 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { AnimalsList } from './animals-list';
-import { AnimalService } from '../animal.service';
-import { SearchService } from '../search.service';
+import { AnimalService } from '../shared/animal.service';
+import { SearchService } from './search.service';
 import { Animal } from '../animal-model/animal.model';
 
 function animal(id: number, commonName: string): Animal {

@@ -10,7 +10,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AnimalService } from '../animal.service';
+import { AnimalService } from '../shared/animal.service';
 import { Animal, NewAnimal, NewAnimalImage } from '../animal-model/animal.model';
 import { WikipediaImport } from '../animal-model/wikipedia-import.model';
 import { formatCount } from '../shared/plural';

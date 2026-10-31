@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { RandomAnimalService } from './random-animal.service';
+import { RandomAnimalService } from './shared/random-animal.service';
 import { AdminKeyService } from './admin/admin-key.service';
 
 @Component({

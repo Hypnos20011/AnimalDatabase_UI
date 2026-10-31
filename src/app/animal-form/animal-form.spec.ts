@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AnimalForm } from './animal-form';
-import { AnimalService } from '../animal.service';
+import { AnimalService } from '../shared/animal.service';
 import { WikipediaImport } from '../animal-model/wikipedia-import.model';
 import { Animal } from '../animal-model/animal.model';
 import { it } from 'vitest';

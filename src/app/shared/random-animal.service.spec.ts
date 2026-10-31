@@ -3,8 +3,8 @@ import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { RandomAnimalService, pickRandom } from './random-animal.service';
 import { AnimalService } from './animal.service';
-import { AnimalListState } from './animals-list/animal-list-state';
-import { Animal } from './animal-model/animal.model';
+import { AnimalListState } from '../animals-list/animal-list-state';
+import { Animal } from '../animal-model/animal.model';
 
 describe('pickRandom', () => {
   it('returns null for an empty pool', () => {

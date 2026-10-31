@@ -1,10 +1,10 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { AnimalService } from '../animal.service';
+import { AnimalService } from '../shared/animal.service';
 import { Animal } from '../animal-model/animal.model';
 import { AnimalListState, SortOption } from './animal-list-state';
-import { SearchService } from '../search.service';
+import { SearchService } from './search.service';
 import { TopSearch } from '../animal-model/top-search.model';
 import { matchAnimal, matchHint, matchRank, normalizeText, SearchMatch } from './animal-search';
 import { Subscription } from 'rxjs';

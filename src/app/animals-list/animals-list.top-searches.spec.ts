@@ -2,8 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import { AnimalsList } from './animals-list';
-import { AnimalService } from '../animal.service';
-import { SearchService } from '../search.service';
+import { AnimalService } from '../shared/animal.service';
+import { SearchService } from './search.service';
 import { AnimalListState } from './animal-list-state';
 import { TopSearch } from '../animal-model/top-search.model';
 

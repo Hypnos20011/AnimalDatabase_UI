@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { App } from './app';
-import { RandomAnimalService } from './random-animal.service';
+import { RandomAnimalService } from './shared/random-animal.service';
 import { AdminKeyService } from './admin/admin-key.service';
 
 describe('App', () => {

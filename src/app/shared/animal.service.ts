@@ -1,10 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Animal, NewAnimal } from './animal-model/animal.model';
-import { AnimalImage } from './animal-model/animal-image.model';
-import { WikipediaImport } from './animal-model/wikipedia-import.model';
-import { environment } from '../environments/environment';
+import { Animal, NewAnimal } from '../animal-model/animal.model';
+import { AnimalImage } from '../animal-model/animal-image.model';
+import { WikipediaImport } from '../animal-model/wikipedia-import.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AnimalService {

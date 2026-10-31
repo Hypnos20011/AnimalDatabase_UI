@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AnimalService } from './animal.service';
-import { AnimalListState } from './animals-list/animal-list-state';
+import { AnimalListState } from '../animals-list/animal-list-state';
 
 export function pickRandom(
   ids: readonly number[],

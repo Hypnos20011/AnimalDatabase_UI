@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { SearchService } from './search.service';
-import { environment } from '../environments/environment';
+import { environment } from '../../environments/environment';
 
 describe('SearchService.getTop', () => {
   let service: SearchService;

@@ -3,8 +3,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AnimalsList } from './animals-list';
-import { AnimalService } from '../animal.service';
-import { SearchService } from '../search.service';
+import { AnimalService } from '../shared/animal.service';
+import { SearchService } from './search.service';
 import { Animal } from '../animal-model/animal.model';
 
 describe('AnimalsList search log', () => {

@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { Animal } from '../animal-model/animal.model';
-import { AnimalService } from '../animal.service';
+import { AnimalService } from '../shared/animal.service';
 import { AnimalImage } from '../animal-model/animal-image.model';
 import { RangePipe } from '../shared/range.pipe';
 import { YEARS } from '../shared/format-range';
