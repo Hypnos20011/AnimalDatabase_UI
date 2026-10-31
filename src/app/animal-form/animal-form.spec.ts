@@ -352,3 +352,65 @@ describe('AnimalForm source warnings', () => {
     expect(shownWarnings()).toEqual([weightWarning]);
   });
 });
+
+describe('AnimalForm domesticated animals', () => {
+  const dog = { id: 2, commonName: 'Dog', isDomesticated: true, iucnStatus: null } as Animal;
+
+  function setup(id?: string) {
+    const create = vi.fn(() => of(dog));
+    TestBed.configureTestingModule({
+      imports: [AnimalForm],
+      providers: [
+        provideRouter([]),
+        {
+          provide: AnimalService,
+          useValue: {
+            getAll: vi.fn(() => of([])),
+            getById: vi.fn(() => of(dog)),
+            getImages: vi.fn(() => of([])),
+            create,
+          },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(AnimalForm);
+    if (id) fixture.componentRef.setInput('id', id);
+    fixture.detectChanges();
+    const form = fixture.componentInstance;
+    const iucnSelect = (): HTMLSelectElement =>
+      fixture.nativeElement.querySelector('select[formControlName="iucnStatus"]');
+    return { fixture, form, create, iucnSelect };
+  }
+
+  it('clears and locks the IUCN status when domesticated is ticked', () => {
+    const { fixture, form, iucnSelect } = setup();
+    form.form.controls.iucnStatus.setValue('vulnerable');
+    form.form.controls.isDomesticated.setValue(true);
+    fixture.detectChanges();
+    expect(form.form.controls.iucnStatus.value).toBe('');
+    expect(iucnSelect().disabled).toBe(true);
+  });
+
+  it('unlocks the IUCN status when domesticated is unticked', () => {
+    const { fixture, form, iucnSelect } = setup();
+    form.form.controls.isDomesticated.setValue(true);
+    form.form.controls.isDomesticated.setValue(false);
+    fixture.detectChanges();
+    expect(iucnSelect().disabled).toBe(false);
+  });
+
+  it('saves no IUCN status for a domesticated animal', () => {
+    const { form, create } = setup();
+    form.form.controls.commonName.setValue('Dog');
+    form.form.controls.iucnStatus.setValue('vulnerable');
+    form.form.controls.isDomesticated.setValue(true);
+    form.submit();
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ iucnStatus: null }));
+  });
+
+  it('locks the IUCN status when editing a domesticated animal', () => {
+    const { fixture, iucnSelect } = setup('2');
+    fixture.detectChanges();
+    expect(iucnSelect().disabled).toBe(true);
+  });
+});

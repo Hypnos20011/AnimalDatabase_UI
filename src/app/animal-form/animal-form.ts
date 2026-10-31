@@ -125,6 +125,15 @@ export class AnimalForm {
         if (id) this.loadAnimal(Number(id));
       });
     });
+    this.form.controls.isDomesticated.valueChanges.subscribe((isDomesticated) => {
+      if (isDomesticated) {
+        this.form.controls.iucnStatus.setValue('');
+        this.form.controls.iucnStatus.disable();
+      }
+      else{
+        this.form.controls.iucnStatus.enable();
+      }
+    });
   }
 
   submit(): void {
