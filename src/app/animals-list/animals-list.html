@@ -259,7 +259,7 @@
                 <span class="cls">{{ animal.taxonomicClass }}</span>
               }
             </span>
-            <span class="code" [attr.data-status]="animal.iucnStatus" aria-hidden="true">{{
+            <span class="code" [attr.data-status]="animal.iucnStatus" [attr.title]="iucnLabel(animal.iucnStatus)" aria-hidden="true">{{
               iucnCode(animal.iucnStatus)
             }}</span>
             <span class="visually-hidden">, {{ iucnLabel(animal.iucnStatus) }}</span>
