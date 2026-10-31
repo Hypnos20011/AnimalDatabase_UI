@@ -26,6 +26,7 @@ function shoebill(overrides: Partial<WikipediaImport> = {}): WikipediaImport {
     profile: 'The shoebill is a large long-legged wading bird.',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/a/a1/Shoebill.jpg',
     sourceUrl: 'https://en.wikipedia.org/wiki/Shoebill',
+    warnings: [],
     ...overrides,
   };
 }
@@ -286,5 +287,68 @@ describe('AnimalForm lookup', () => {
     );
     lookUp(form, 'boxer crab');
     expect(form.form.controls.otherImageUrl.value).toBe(boxerCrabPicture);
+  });
+});
+
+describe('AnimalForm source warnings', () => {
+  const lengthWarning = 'Length: AnAge says 50, kept 20 - 30';
+  const weightWarning = 'Weight: EOL says 20 - 25, kept 5 - 8';
+
+  function setup(...results: WikipediaImport[]) {
+    const lookup = vi.fn();
+    for (const result of results) lookup.mockReturnValueOnce(of(result));
+    TestBed.configureTestingModule({
+      imports: [AnimalForm],
+      providers: [
+        provideRouter([]),
+        {
+          provide: AnimalService,
+          useValue: { getAll: vi.fn(() => of([])), importFromWikipedia: lookup },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(AnimalForm);
+    fixture.detectChanges();
+    const element: HTMLElement = fixture.nativeElement;
+    function lookUp(query: string) {
+      fixture.componentInstance.wikiUrl.set(query);
+      fixture.componentInstance.importFromWikipedia();
+      fixture.detectChanges();
+    }
+    function shownWarnings() {
+      return Array.from(element.querySelectorAll('.import-warnings li')).map((item) =>
+        item.textContent?.trim(),
+      );
+    }
+    return { element, lookUp, shownWarnings };
+  }
+
+  it('shows each warning text from the lookup', () => {
+    const { lookUp, shownWarnings } = setup(shoebill({ warnings: [lengthWarning, weightWarning] }));
+    lookUp('Shoebill');
+    expect(shownWarnings()).toEqual([lengthWarning, weightWarning]);
+  });
+
+  it('shows no warning list when the sources agree', () => {
+    const { element, lookUp } = setup(shoebill());
+    lookUp('Shoebill');
+    expect(element.querySelector('.import-warnings')).toBeNull();
+  });
+
+  it('clears old warnings when the next lookup has none', () => {
+    const { element, lookUp } = setup(shoebill({ warnings: [lengthWarning] }), shoebill());
+    lookUp('Shoebill');
+    lookUp('Shoebill');
+    expect(element.querySelector('.import-warnings')).toBeNull();
+  });
+
+  it('replaces old warnings with the new ones', () => {
+    const { lookUp, shownWarnings } = setup(
+      shoebill({ warnings: [lengthWarning] }),
+      shoebill({ warnings: [weightWarning] }),
+    );
+    lookUp('Shoebill');
+    lookUp('Shoebill');
+    expect(shownWarnings()).toEqual([weightWarning]);
   });
 });

@@ -15,4 +15,5 @@ export interface WikipediaImport {
   profile: string | null;
   imageUrl: string | null;
   sourceUrl: string | null;
+  warnings: string[];
 }

@@ -26,6 +26,13 @@
   @if (importMessage()) {
     <p class="hint">{{ importMessage() }}</p>
   }
+  @if (importWarnings().length > 0){
+    <ul class="import-warnings">
+      @for (warning of importWarnings(); track warning) {
+        <li>{{ warning }}</li>
+      }
+    </ul>
+  }
   @if (importError()) {
     <p class="field-error">{{ importError() }}</p>
   }

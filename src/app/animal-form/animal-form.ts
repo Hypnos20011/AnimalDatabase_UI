@@ -62,6 +62,7 @@ export class AnimalForm {
   importing = signal(false);
   importMessage = signal('');
   importError = signal('');
+  importWarnings = signal<string[]>([]);
   private originalCaptions = new Map<string, string | null>();
   private importedImageUrl = '';
   private savedImageUrl = '';
@@ -201,6 +202,7 @@ export class AnimalForm {
     this.importing.set(true);
     this.importMessage.set('');
     this.importError.set('');
+    this.importWarnings.set([]);
     this.animalService.importFromWikipedia(url).subscribe({
       next: (data) => {
         const filled = this.applyImport(data);
@@ -209,6 +211,7 @@ export class AnimalForm {
             ? `Filled in ${formatCount(filled, { one: 'field', other: 'fields' })} from Wikipedia. Check them before saving.`
             : 'Wikipedia had nothing to fill in for this animal.',
         );
+        this.importWarnings.set(data.warnings);
         this.importing.set(false);
       },
       error: (err) => {
