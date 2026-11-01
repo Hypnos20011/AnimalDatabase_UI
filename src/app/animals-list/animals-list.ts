@@ -36,6 +36,7 @@ export class AnimalsList {
   query = this.state.query;
   selectedClasses = this.state.selectedClasses;
   selectedStatuses = this.state.selectedStatuses;
+  selectedHabitats = this.state.selectedHabitats;
   filterType = this.state.filterType;
   lengthFrom = this.state.lengthFrom;
   lengthTo = this.state.lengthTo;
@@ -75,7 +76,8 @@ export class AnimalsList {
       this.selectedStatuses().size +
       (this.filterType() === 'wild' ? 1 : 0) +
       (this.lengthFrom() !== null || this.lengthTo() !== null ? 1 : 0) +
-      (this.weightFrom() !== null || this.weightTo() !== null ? 1 : 0),
+      (this.weightFrom() !== null || this.weightTo() !== null ? 1 : 0) +
+      this.selectedHabitats().size,
   );
 
   searchMatches = computed(() => {
@@ -114,13 +116,20 @@ export class AnimalsList {
     return Array.from(set).sort((a, b) => iucnRank(a) - iucnRank(b));
   });
 
-  showDomesticated = computed(() => this.filterType() === 'all');
+  availableHabitats = computed(() => {
+    const set = new Set<string>();
+    for (const a of this.animals()) {
+      if(a.habitatType) set.add(a.habitatType);
+    }
+    return Array.from(set).sort();
+  })
 
   filteredAnimals = computed(() => {
     const hasQuery = normalizeText(this.query()).length > 0;
     const matches = this.searchMatches();
     const classes = this.selectedClasses();
     const statuses = this.selectedStatuses();
+    const habitats = this.selectedHabitats();
     const type = this.filterType();
     const lengthFrom = this.lengthFrom();
     const lengthTo = this.lengthTo();
@@ -131,6 +140,10 @@ export class AnimalsList {
       if (hasQuery && !matches.has(animal.id)) return false;
 
       if (classes.size > 0 && (!animal.taxonomicClass || !classes.has(animal.taxonomicClass))) {
+        return false;
+      }
+
+      if(habitats.size > 0 && (!animal.habitatType || !habitats.has(animal.habitatType))) {
         return false;
       }
 
@@ -262,8 +275,16 @@ export class AnimalsList {
     return this.selectedStatuses().has(status);
   }
 
+  isHabitatsActive(habitat: string): boolean {
+    return this.selectedHabitats().has(habitat);
+  }
+
   statusCount(status: string): number {
     return this.animals().filter((animal) => animal.iucnStatus === status).length;
+  }
+
+  habitatsCount(habitat: string): number {
+    return this.animals().filter((animal) => animal.habitatType === habitat).length;
   }
 
   toggleStatus(status: string): void {
@@ -271,6 +292,13 @@ export class AnimalsList {
     if (next.has(status)) next.delete(status);
     else next.add(status);
     this.selectedStatuses.set(next);
+  }
+
+  toggleHabitats(habitat: string): void {
+    const next = new Set(this.selectedHabitats());
+    if (next.has(habitat)) next.delete(habitat);
+    else next.add(habitat);
+    this.selectedHabitats.set(next);
   }
 
   toggleType(): void {
@@ -285,6 +313,7 @@ export class AnimalsList {
   clearAll(): void {
     this.selectedClasses.set(new Set());
     this.selectedStatuses.set(new Set());
+    this.selectedHabitats.set(new Set());
     this.filterType.set('all');
     this.lengthFrom.set(null);
     this.lengthTo.set(null);

@@ -112,6 +112,19 @@
             </button>
           }
         </div>
+        <div class="filter-chips">
+          <span class="chip-label">Habitat:</span>
+          @for (habitat of availableHabitats(); track habitat) {
+            <button
+              type="button"
+              class="chip"
+              [class.active]="isHabitatsActive(habitat)"
+              (click)="toggleHabitats(habitat)"
+            >
+              {{ habitat | titlecase }} · {{ habitatsCount(habitat) }}
+            </button>
+          }
+        </div>
 
         <div class="filter-chips">
           <span class="chip-label">Type:</span>

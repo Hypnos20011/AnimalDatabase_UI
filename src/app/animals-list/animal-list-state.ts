@@ -18,6 +18,7 @@ export class AnimalListState {
   query = signal('');
   selectedClasses = signal<Set<string>>(new Set());
   selectedStatuses = signal<Set<string>>(new Set());
+  selectedHabitats = signal<Set<string>>(new Set());
   filterType = signal<FilterType>('all');
   lengthFrom = signal<number | null>(null);
   lengthTo = signal<number | null>(null);
