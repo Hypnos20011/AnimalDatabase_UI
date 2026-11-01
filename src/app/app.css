@@ -78,6 +78,10 @@
 }
 
 .site-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 50;
+  background: var(--color-bg);
   border-top: 1px solid var(--color-border);
 }
 
