@@ -27,6 +27,7 @@ const okapi = {
   lifespanYearsMax: 30,
   iucnStatus: 'endangered',
   habitat: null,
+  habitatType: null,
   rangeRegion: null,
   profile: null,
   thumbnailUrl: null,
@@ -350,5 +351,55 @@ describe('AnimalDetail facts', () => {
     const extra = element.querySelector('.facts.extra')?.textContent;
     expect(extra).toContain('Shoulder height');
     expect(extra).toContain('140');
+  });
+});
+
+describe('AnimalDetail habitat', () => {
+  async function setup(animal: Animal) {
+    TestBed.configureTestingModule({
+      imports: [AnimalDetail],
+      providers: [
+        provideRouter([]),
+        {
+          provide: AnimalService,
+          useValue: { getById: vi.fn(() => of(animal)), getImages: vi.fn(() => of([])) },
+        },
+        { provide: AdminKeyService, useValue: { unlocked: signal(true) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(AnimalDetail);
+    fixture.componentRef.setInput('id', '2');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    const fact = (label: string) =>
+      Array.from(element.querySelectorAll('.facts .fact'))
+        .find((f) => f.querySelector('dt')?.textContent?.trim() === label)
+        ?.querySelector('dd')
+        ?.textContent?.trim();
+    return { fact };
+  }
+
+  it('shows the habitat type and the full habitat text', async () => {
+    const { fact } = await setup({
+      ...okapi,
+      habitatType: 'forest',
+      habitat: 'Dense tropical rainforest',
+    });
+    expect(fact('Habitat type')).toBe('forest');
+    expect(fact('Habitat')).toBe('Dense tropical rainforest');
+  });
+
+  it('keeps the habitat text when there is no habitat type', async () => {
+    const { fact } = await setup({ ...okapi, habitat: 'Dense tropical rainforest' });
+    expect(fact('Habitat type')).toBeUndefined();
+    expect(fact('Habitat')).toBe('Dense tropical rainforest');
+  });
+
+  it('shows the habitat type when there is no habitat text', async () => {
+    const { fact } = await setup({ ...okapi, habitatType: 'deep sea' });
+    expect(fact('Habitat type')).toBe('deep sea');
+    expect(fact('Habitat')).toBeUndefined();
   });
 });

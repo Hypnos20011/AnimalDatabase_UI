@@ -58,7 +58,12 @@
               <dt>Lifespan</dt>
               <dd>{{ lifespan || 'Unknown' }}</dd>
             </div>
-
+            @if (animal()!.habitatType) {
+              <div class="fact">
+                <dt>Habitat type</dt>
+                <dd>{{ animal()!.habitatType }}</dd>
+              </div>
+            }
             @if (animal()!.habitat) {
               <div class="fact">
                 <dt>Habitat</dt>
