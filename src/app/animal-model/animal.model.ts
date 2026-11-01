@@ -15,6 +15,7 @@ export interface Animal {
   lifespanYearsMax: number | null;
   iucnStatus: string | null;
   habitat: string | null;
+  habitatType: string | null;
   rangeRegion: string | null;
   profile: string | null;
   thumbnailUrl: string | null;

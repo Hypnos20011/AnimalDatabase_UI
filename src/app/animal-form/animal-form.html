@@ -128,6 +128,16 @@
   </label>
 
   <label>
+    Habitat Type
+    <select formControlName="habitatType" >
+      <option value="">Unknown</option>
+      @for (type of habitatTypes; track type){
+        <option [value]="type">{{ type }}</option>
+      }
+    </select>
+  </label>
+
+  <label>
     Range / region
     <input type="text" formControlName="rangeRegion" />
   </label>

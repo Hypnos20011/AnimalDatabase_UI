@@ -48,6 +48,18 @@ export class AnimalForm {
     'data deficient',
   ];
 
+  readonly habitatTypes = [
+    'forest',
+    'grassland',
+    'desert',
+    'mountains',
+    'wetland',
+    'freshwater',
+    'ocean',
+    'deep sea',
+    'underground',
+  ];
+
   readonly imageFields = [
     { key: 'maleImageUrl', kind: 'male', label: 'Male' },
     { key: 'femaleImageUrl', kind: 'female', label: 'Female' },
@@ -86,6 +98,7 @@ export class AnimalForm {
     lifespanYearsMax: [null as number | null, Validators.min(0)],
     iucnStatus: [''],
     habitat: ['', Validators.maxLength(255)],
+    habitatType: ['', Validators.maxLength(30)],
     rangeRegion: ['', Validators.maxLength(255)],
     profile: [''],
     maleImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
@@ -159,6 +172,7 @@ export class AnimalForm {
       lifespanYearsMax: v.lifespanYearsMax ?? null,
       iucnStatus: this.text(v.iucnStatus),
       habitat: this.text(v.habitat),
+      habitatType: this.text(v.habitatType),
       rangeRegion: this.text(v.rangeRegion),
       profile: this.text(v.profile),
       images: this.collectImages(),
@@ -317,6 +331,7 @@ export class AnimalForm {
           lifespanYearsMax: animal.lifespanYearsMax,
           iucnStatus: animal.iucnStatus ?? '',
           habitat: animal.habitat ?? '',
+          habitatType: animal.habitatType ?? '',
           rangeRegion: animal.rangeRegion ?? '',
           profile: animal.profile ?? '',
         });

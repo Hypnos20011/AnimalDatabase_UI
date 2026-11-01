@@ -414,3 +414,77 @@ describe('AnimalForm domesticated animals', () => {
     expect(iucnSelect().disabled).toBe(true);
   });
 });
+
+describe('AnimalForm habitat type', () => {
+  const okapi = { id: 3, commonName: 'Okapi', isDomesticated: false, habitatType: 'forest' } as Animal;
+
+  function setup(id?: string) {
+    const create = vi.fn(() => of(okapi));
+    TestBed.configureTestingModule({
+      imports: [AnimalForm],
+      providers: [
+        provideRouter([]),
+        {
+          provide: AnimalService,
+          useValue: {
+            getAll: vi.fn(() => of([])),
+            getById: vi.fn(() => of(okapi)),
+            getImages: vi.fn(() => of([])),
+            create,
+          },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(AnimalForm);
+    if (id) fixture.componentRef.setInput('id', id);
+    fixture.detectChanges();
+    const form = fixture.componentInstance;
+    const habitatSelect = (): HTMLSelectElement =>
+      fixture.nativeElement.querySelector('select[formControlName="habitatType"]');
+    return { fixture, form, create, habitatSelect };
+  }
+
+  it('offers Unknown and every habitat type', () => {
+    const { habitatSelect } = setup();
+    const options = Array.from(habitatSelect().options).map((option) => option.value);
+    expect(options).toEqual([
+      '',
+      'forest',
+      'grassland',
+      'desert',
+      'mountains',
+      'wetland',
+      'freshwater',
+      'ocean',
+      'deep sea',
+      'underground',
+    ]);
+  });
+
+  it('starts as Unknown for a new animal', () => {
+    const { form } = setup();
+    expect(form.form.controls.habitatType.value).toBe('');
+  });
+
+  it('saves the chosen habitat type', () => {
+    const { form, create } = setup();
+    form.form.controls.commonName.setValue('Okapi');
+    form.form.controls.habitatType.setValue('deep sea');
+    form.submit();
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ habitatType: 'deep sea' }));
+  });
+
+  it('saves no habitat type when Unknown is chosen', () => {
+    const { form, create } = setup();
+    form.form.controls.commonName.setValue('Okapi');
+    form.submit();
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ habitatType: null }));
+  });
+
+  it('shows the saved habitat type when editing', () => {
+    const { fixture, form, habitatSelect } = setup('3');
+    fixture.detectChanges();
+    expect(form.form.controls.habitatType.value).toBe('forest');
+    expect(habitatSelect().value).toBe('forest');
+  });
+});

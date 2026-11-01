@@ -193,3 +193,7 @@ form > .field-error {
     width: 100%;
   }
 }
+
+select[formControlName='habitatType'] {
+  text-transform: capitalize;
+}
