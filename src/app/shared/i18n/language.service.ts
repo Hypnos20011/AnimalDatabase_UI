@@ -1,5 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { DEFAULT_LANGUAGE, isLanguage, Language } from './languages';
+import { TranslationKey } from './en';
+import { DICTIONARIES } from './dictionaries';
 
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
@@ -21,5 +23,9 @@ export class LanguageService {
     } else {
       return DEFAULT_LANGUAGE;
     }
+  }
+
+  public t(key: TranslationKey): string {
+    return DICTIONARIES[this.language()][key];
   }
 }
