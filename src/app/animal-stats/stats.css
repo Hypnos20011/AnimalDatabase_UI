@@ -1,0 +1,39 @@
+:host {
+  display: block;
+  max-width: 40rem;
+}
+
+p {
+  display: inline-block;
+  min-width: 11rem;
+  margin: 0 0.75rem 0.75rem 0;
+  padding: 0.75rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-muted);
+}
+
+h3 {
+  margin: 1.5rem 0 0.5rem;
+  color: var(--color-text);
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+li {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  text-transform: capitalize;
+}
+
+li:last-child {
+  border-bottom: none;
+}

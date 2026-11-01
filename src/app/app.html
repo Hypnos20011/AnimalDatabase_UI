@@ -11,14 +11,18 @@
           routerLink="/animals/new"
           routerLinkActive="is-active"
           ariaCurrentWhenActive="page"
-          >Add animal</a
+        >Add animal</a
         >
       }
+      <a class="nav-link"
+         routerLink="/stats"
+         routerLinkActive="is-active"
+         ariaCurrentWhenActive="page">Stats</a>
     </nav>
   </div>
 </header>
 <main class="container site-main">
-  <router-outlet />
+  <router-outlet/>
 </main>
 <footer class="site-footer">
   <div class="container footer-inner">

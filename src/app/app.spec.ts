@@ -45,11 +45,11 @@ describe('App', () => {
     expect(element.querySelector('h1')?.textContent).toContain('Unusual Animals');
   });
 
-  it('shows only Random animal in the top bar while locked', async () => {
+  it('shows Random animal and Stats in the top bar while locked', async () => {
     const { navLinks } = await render();
     const links = navLinks();
 
-    expect(links.map((link) => link.textContent!.trim())).toEqual(['Random animal']);
+    expect(links.map((link) => link.textContent!.trim())).toEqual(['Random animal', 'Stats']);
     links[0].click();
     expect(open).toHaveBeenCalledTimes(1);
   });
@@ -59,7 +59,7 @@ describe('App', () => {
     const { navLinks } = await render();
     const links = navLinks();
 
-    expect(links.map((link) => link.textContent!.trim())).toEqual(['Random animal', 'Add animal']);
+    expect(links.map((link) => link.textContent!.trim())).toEqual(['Random animal', 'Add animal', 'Stats']);
     expect(links[1].getAttribute('href')).toBe('/animals/new');
   });
 

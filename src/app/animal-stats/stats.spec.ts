@@ -37,3 +37,53 @@ describe('Stats', () => {
     expect(component.stats()).toEqual(sampleStats);
   });
 });
+
+describe('Stats page', () => {
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [Stats],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => http.verify());
+
+  function render(stats?: AnimalStats): HTMLElement {
+    const fixture = TestBed.createComponent(Stats);
+    fixture.detectChanges();
+    const request = http.expectOne(`${environment.apiUrl}/stats`);
+    if (stats) {
+      request.flush(stats);
+      fixture.detectChanges();
+    }
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  function lists(page: HTMLElement): string[][] {
+    return Array.from(page.querySelectorAll('ul')).map((list) =>
+      Array.from(list.querySelectorAll('li')).map((item) => item.textContent?.trim() ?? ''),
+    );
+  }
+
+  it('shows nothing while loading', () => {
+    const page = render();
+    expect(page.querySelectorAll('p, ul').length).toBe(0);
+  });
+
+  it('shows the total and domesticated counts', () => {
+    const text = render(sampleStats).textContent ?? '';
+    expect(text).toContain('Total Animals: 18');
+    expect(text).toContain('Domesticated: 2');
+  });
+
+  it('lists every class with its count', () => {
+    expect(lists(render(sampleStats))[0]).toEqual(['fish: 2', 'mammal: 9']);
+  });
+
+  it('lists every IUCN status with its count', () => {
+    expect(lists(render(sampleStats))[1]).toEqual(['LC: 4', 'unknown: 5']);
+  });
+});
