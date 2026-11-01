@@ -10,6 +10,7 @@ const sampleStats: AnimalStats = {
   domesticatedAnimals: 2,
   byClass: { mammal: 9, fish: 2 },
   byIucnStatus: { LC: 4, unknown: 5 },
+  byHabitatType: { 'deep sea': 1, forest: 10, unknown: 7 },
 };
 
 describe('Stats', () => {
@@ -85,5 +86,12 @@ describe('Stats page', () => {
 
   it('lists every IUCN status with its count', () => {
     expect(lists(render(sampleStats))[1]).toEqual(['LC: 4', 'unknown: 5']);
+  });
+
+  it('lists every habitat type with its count under its own heading', () => {
+    const page = render(sampleStats);
+    const headings = Array.from(page.querySelectorAll('h3')).map((h) => h.textContent?.trim());
+    expect(headings[2]).toBe('By Habitat type');
+    expect(lists(page)[2]).toEqual(['deep sea: 1', 'forest: 10', 'unknown: 7']);
   });
 });

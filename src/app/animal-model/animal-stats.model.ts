@@ -3,4 +3,5 @@ export interface AnimalStats {
   domesticatedAnimals: number;
   byClass: Record<string, number>,
   byIucnStatus: Record<string, number>,
+  byHabitatType: Record<string, number>,
 }

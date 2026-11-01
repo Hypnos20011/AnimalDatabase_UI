@@ -32,6 +32,7 @@ describe('StatsService.getStats', () => {
       domesticatedAnimals: 2,
       byClass: { mammal: 9, fish: 2 },
       byIucnStatus: { LC: 4, unknown: 5 },
+      byHabitatType: { forest: 3 },
     };
     let received: AnimalStats | undefined;
     service.getStats().subscribe((result) => (received = result));
