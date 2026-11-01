@@ -25,6 +25,7 @@ function animal(id: number, commonName: string, extra: Partial<Animal> = {}): An
     lifespanYearsMax: null,
     iucnStatus: null,
     habitat: null,
+    habitatType: null,
     rangeRegion: null,
     profile: null,
     thumbnailUrl: null,
@@ -36,7 +37,12 @@ function animal(id: number, commonName: string, extra: Partial<Animal> = {}): An
 
 const animals = [
   animal(1, 'Aardvark', { iucnStatus: 'Least Concern', family: 'Orycteropodidae' }),
-  animal(2, 'Okapi', { iucnStatus: 'Endangered', habitat: 'Rainforest' }),
+  animal(2, 'Okapi', {
+    iucnStatus: 'Endangered',
+    family: 'Giraffidae',
+    habitat: 'Dense tropical rainforest',
+    habitatType: 'forest',
+  }),
   animal(3, 'Tiger'),
 ];
 
@@ -101,12 +107,12 @@ describe('AnimalsList index', () => {
     expect(element.querySelector('.preview-num')!.textContent!.trim()).toBe('03');
   });
 
-  it('shows family and habitat in the preview', async () => {
+  it('shows family and habitat type in the preview, not the habitat text', async () => {
     const { fixture, rows, element } = await render();
     expect(element.querySelector('.preview-extra')!.textContent!.trim()).toBe('Orycteropodidae');
     rows()[1].querySelector('a')!.dispatchEvent(new MouseEvent('mouseenter'));
     fixture.detectChanges();
-    expect(element.querySelector('.preview-extra')!.textContent!.trim()).toBe('Rainforest');
+    expect(element.querySelector('.preview-extra')!.textContent!.trim()).toBe('Giraffidae / forest');
   });
 
   it('shows status codes and a dash without a status', async () => {

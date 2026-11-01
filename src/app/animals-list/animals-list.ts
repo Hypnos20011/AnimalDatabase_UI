@@ -326,7 +326,7 @@ export class AnimalsList {
   }
 
   previewExtra(animal: Animal): string {
-    return [animal.family, animal.habitat].filter((part) => !!part?.trim()).join(' / ');
+    return [animal.family, animal.habitatType].filter((part) => !!part?.trim()).join(' / ');
   }
 
   recordOpen(animal: Animal): void {
