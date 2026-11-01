@@ -14,6 +14,8 @@ describe('App', () => {
     open.mockReset();
     clear.mockReset();
     unlocked.set(false);
+    localStorage.clear();
+    document.documentElement.lang = '';
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
@@ -81,5 +83,60 @@ describe('App', () => {
     expect(element.querySelector('.site-footer .admin')).toBeNull();
     lock.click();
     expect(clear).toHaveBeenCalledTimes(1);
+  });
+
+  describe('language switch', () => {
+    afterEach(() => localStorage.clear());
+
+    function select(element: HTMLElement): HTMLSelectElement {
+      return element.querySelector<HTMLSelectElement>('.site-nav .language-select')!;
+    }
+
+    it('offers every supported language in upper case', async () => {
+      const { element } = await render();
+      const options = Array.from(select(element).options).map((o) => [o.value, o.textContent!.trim()]);
+      expect(options).toEqual([
+        ['en', 'EN'],
+        ['de', 'DE'],
+      ]);
+    });
+
+    it('starts on English with English texts', async () => {
+      const { element, navLinks } = await render();
+      expect(select(element).value).toBe('en');
+      expect(navLinks().map((l) => l.textContent!.trim())).toEqual(['Random animal', 'Stats']);
+      expect(select(element).getAttribute('aria-label')).toBe('Language');
+    });
+
+    it('switches the header and footer to German when DE is picked', async () => {
+      const { fixture, element, navLinks } = await render();
+      const languageSelect = select(element);
+      languageSelect.value = 'de';
+      languageSelect.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+
+      expect(navLinks().map((l) => l.textContent!.trim())).toEqual(['Zufälliges Tier', 'Statistik']);
+      expect(element.querySelector('.site-nav')!.getAttribute('aria-label')).toBe('Schnellzugriff');
+      expect(languageSelect.getAttribute('aria-label')).toBe('Sprache');
+      expect(localStorage.getItem('language')).toBe('de');
+      expect(document.documentElement.lang).toBe('de');
+    });
+
+    it('shows German and selects DE when German was stored', async () => {
+      localStorage.setItem('language', 'de');
+      const { element, navLinks } = await render();
+      expect(select(element).value).toBe('de');
+      expect(navLinks().map((l) => l.textContent!.trim())).toEqual(['Zufälliges Tier', 'Statistik']);
+    });
+
+    it('translates the unlocked footer', async () => {
+      localStorage.setItem('language', 'de');
+      unlocked.set(true);
+      const { element } = await render();
+      expect(element.querySelector('.site-footer .footer-note')!.textContent!.trim()).toBe(
+        'Bearbeiten freigeschaltet',
+      );
+      expect(element.querySelector('.site-footer .lock')!.textContent!.trim()).toBe('Sperren');
+    });
   });
 });

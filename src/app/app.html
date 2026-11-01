@@ -3,21 +3,27 @@
     <a routerLink="/" class="brand">
       <h1>{{ title() }}</h1>
     </a>
-    <nav class="site-nav" aria-label="Quick actions">
-      <button type="button" class="nav-link" (click)="openRandom()">Random animal</button>
+    <nav class="site-nav" [attr.aria-label]="i18n.t('nav.label')">
+      <button type="button" class="nav-link" (click)="openRandom()">{{ i18n.t('nav.random') }}</button>
       @if (admin.unlocked()) {
         <a
           class="nav-link"
           routerLink="/animals/new"
           routerLinkActive="is-active"
           ariaCurrentWhenActive="page"
-        >Add animal</a
+        >{{ i18n.t('nav.add') }}</a
         >
       }
       <a class="nav-link"
          routerLink="/stats"
          routerLinkActive="is-active"
-         ariaCurrentWhenActive="page">Stats</a>
+         ariaCurrentWhenActive="page">{{ i18n.t('nav.stats') }}</a>
+      <select class="language-select" [attr.aria-label]="i18n.t('language.label')"
+              [value]="i18n.language()" (change)="i18n.setLanguage($any($event.target).value)">
+        @for (lang of languages; track lang) {
+          <option [selected]="lang === i18n.language()" [value]="lang">{{ lang | uppercase }}</option>
+        }
+      </select>
     </nav>
   </div>
 </header>
@@ -27,10 +33,10 @@
 <footer class="site-footer">
   <div class="container footer-inner">
     @if (admin.unlocked()) {
-      <span class="footer-note">Editing unlocked</span>
-      <button type="button" class="footer-link lock" (click)="lock()">Lock</button>
+      <span class="footer-note">{{ i18n.t('footer.unlocked') }}</span>
+      <button type="button" class="footer-link lock" (click)="lock()">{{ i18n.t('footer.lock') }}</button>
     } @else {
-      <a class="footer-link admin" routerLink="/admin">Admin</a>
+      <a class="footer-link admin" routerLink="/admin">{{ i18n.t('footer.admin') }}</a>
     }
   </div>
 </footer>
