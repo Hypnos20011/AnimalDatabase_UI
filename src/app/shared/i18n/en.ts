@@ -48,3 +48,4 @@ export const en = {
   'list.top.unavailable': 'Top searches are unavailable right now.',
 } as const;
 export type TranslationKey = keyof typeof en;
+export type PluralBase = { [K in TranslationKey]: K extends `${infer B}.other` ? B : never }[TranslationKey];

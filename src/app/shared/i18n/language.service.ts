@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { DEFAULT_LANGUAGE, isLanguage, Language } from './languages';
-import { TranslationKey } from './en';
+import { PluralBase, TranslationKey } from './en';
 import { DICTIONARIES } from './dictionaries';
 
 @Injectable({ providedIn: 'root' })
@@ -33,5 +33,11 @@ export class LanguageService {
       });
     }
     return text;
+  }
+  public tPlural(base:PluralBase, count:number): string {
+    const category = new Intl.PluralRules(this.language()).select(count);
+    let key = `${base}.${category}`;
+    if (!(key in DICTIONARIES[this.language()])) {key = `${base}.other`;}
+    return this.t(key as TranslationKey, { count });
   }
 }
