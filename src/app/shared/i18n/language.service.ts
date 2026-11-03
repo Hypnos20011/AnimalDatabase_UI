@@ -25,7 +25,13 @@ export class LanguageService {
     }
   }
 
-  public t(key: TranslationKey): string {
-    return DICTIONARIES[this.language()][key];
+  public t(key: TranslationKey, params?: Record<string, string | number>): string {
+    let text = DICTIONARIES[this.language()][key];
+    if (params) {
+      Object.entries(params).forEach(([paramName, paramValue]) => {
+        text = text.replaceAll(`{${paramName}}`, String(paramValue));
+      });
+    }
+    return text;
   }
 }

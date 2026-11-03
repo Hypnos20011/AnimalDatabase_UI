@@ -38,5 +38,13 @@ export const en = {
   'list.top.window.7': 'Last 7 days',
   'list.top.window.30': 'Last 30 days',
   'list.top.window.all': 'All time',
+  'list.count.one': '{count} animal',
+  'list.count.other': '{count} animals',
+  'list.showAnimals.one': 'Show {count} animal',
+  'list.showAnimals.other': 'Show {count} animals',
+  'list.top.empty.all': 'No searches yet.',
+  'list.top.empty.days.one': 'No searches in the last day.',
+  'list.top.empty.days.other': 'No searches in the last {count} days.',
+  'list.top.unavailable': 'Top searches are unavailable right now.',
 } as const;
 export type TranslationKey = keyof typeof en;

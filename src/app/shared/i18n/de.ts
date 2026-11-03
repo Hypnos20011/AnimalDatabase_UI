@@ -40,4 +40,12 @@ export const de: Record<TranslationKey, string> = {
   'list.top.window.7': 'Letzte 7 Tage',
   'list.top.window.30': 'Letzte 30 Tage',
   'list.top.window.all': 'Gesamter Zeitraum',
+  'list.count.one': '{count} Tier',
+  'list.count.other': '{count} Tiere',
+  'list.showAnimals.one': '{count} Tier anzeigen',
+  'list.showAnimals.other': '{count} Tiere anzeigen',
+  'list.top.empty.all': 'Noch keine Suchen.',
+  'list.top.empty.days.one': 'Keine Suchen am letzten Tag.',
+  'list.top.empty.days.other': 'Keine Suchen in den letzten {count} Tagen.',
+  'list.top.unavailable': 'Die Top-Suchen sind gerade nicht verfügbar.',
 };
