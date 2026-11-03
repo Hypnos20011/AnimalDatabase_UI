@@ -42,4 +42,12 @@ export class LanguageService {
     }
     return this.t(key as TranslationKey, { count });
   }
+  public tValue(group: 'class' | 'habitat' | 'iucn', value: string): string {
+    const key = `${group}.${value}`;
+    if (!(key in DICTIONARIES[this.language()])) {
+      return value;
+    } else {
+      return this.t(key as TranslationKey);
+    }
+  }
 }

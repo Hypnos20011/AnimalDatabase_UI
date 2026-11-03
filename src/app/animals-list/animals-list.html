@@ -92,7 +92,7 @@
               [class.active]="isClassActive(cls)"
               (click)="toggleClass(cls)"
             >
-              {{ cls | titlecase }}
+              {{ i18n.tValue('class', cls)}}
             </button>
           }
         </div>
@@ -106,7 +106,7 @@
               [class.active]="isStatusActive(status)"
               (click)="toggleStatus(status)"
             >
-              {{ status | titlecase }} · {{ statusCount(status) }}
+              {{ i18n.tValue('iucn', status)}} · {{ statusCount(status) }}
             </button>
           }
         </div>
@@ -119,7 +119,7 @@
               [class.active]="isHabitatsActive(habitat)"
               (click)="toggleHabitats(habitat)"
             >
-              {{ habitat | titlecase }} · {{ habitatsCount(habitat) }}
+              {{ i18n.tValue('habitat', habitat) }} · {{ habitatsCount(habitat) }}
             </button>
           }
         </div>

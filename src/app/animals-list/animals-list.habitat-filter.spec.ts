@@ -75,10 +75,10 @@ describe('AnimalsList habitat filter', () => {
     expect(fixture.componentInstance.availableHabitats()).toEqual(['deep sea', 'forest', 'grassland']);
   });
 
-  it('renders a chip per habitat with title case and count', async () => {
+  it('renders a chip per habitat with its label and count', async () => {
     const fixture = await setup();
     const chips = habitatChips(fixture.nativeElement as HTMLElement).map(chipText);
-    expect(chips).toEqual(['Deep Sea · 1', 'Forest · 2', 'Grassland · 1']);
+    expect(chips).toEqual(['Deep sea · 1', 'Forest · 2', 'Grassland · 1']);
   });
 
   it('filters the list to the selected habitat', async () => {

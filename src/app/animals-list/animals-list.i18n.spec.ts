@@ -213,4 +213,15 @@ describe('AnimalsList translation', () => {
     list.topSearchDays.set(0);
     expect(list.topEmptyText()).toBe('Noch keine Suchen.');
   });
+
+  it('translates the class, status and habitat chips', async () => {
+    localStorage.setItem('language', 'de');
+    const okapi = { ...animal(1, 'Okapi'), iucnStatus: 'endangered' } as Animal;
+    const { element, openFilters } = await render([okapi]);
+    openFilters();
+    const chips = Array.from(element.querySelectorAll('.modal .chip')).map((chip) => chip.textContent!.trim());
+    expect(chips).toContain('Säugetier');
+    expect(chips).toContain('Stark gefährdet · 1');
+    expect(chips).toContain('Wald · 1');
+  });
 });
