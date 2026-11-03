@@ -163,4 +163,31 @@ describe('AnimalsList translation', () => {
     fixture.detectChanges();
     expect(first()).toBe('Beste Treffer');
   });
+
+  it('translates the animal count with plurals', async () => {
+    localStorage.setItem('language', 'de');
+    const one = await render([animal(1, 'Okapi')]);
+    expect(one.fixture.componentInstance.countText()).toBe('1 Tier');
+    expect(one.fixture.componentInstance.showAnimalsLabel()).toBe('1 Tier anzeigen');
+    TestBed.resetTestingModule();
+    const two = await render([animal(1, 'Okapi'), animal(2, 'Aye-aye')]);
+    expect(two.fixture.componentInstance.countText()).toBe('2 Tiere');
+    expect(two.fixture.componentInstance.showAnimalsLabel()).toBe('2 Tiere anzeigen');
+  });
+
+  it('updates the animal count when the language is switched', async () => {
+    const { fixture } = await render([animal(1, 'Okapi'), animal(2, 'Aye-aye')]);
+    expect(fixture.componentInstance.countText()).toBe('2 animals');
+    expect(fixture.componentInstance.showAnimalsLabel()).toBe('Show 2 animals');
+    TestBed.inject(LanguageService).setLanguage('de');
+    expect(fixture.componentInstance.countText()).toBe('2 Tiere');
+    expect(fixture.componentInstance.showAnimalsLabel()).toBe('2 Tiere anzeigen');
+  });
+
+  it('translates the top searches unavailable text', async () => {
+    localStorage.setItem('language', 'de');
+    const { fixture } = await render();
+    fixture.componentInstance.topError.set(true);
+    expect(fixture.componentInstance.topEmptyText()).toBe('Die Top-Suchen sind gerade nicht verfügbar.');
+  });
 });

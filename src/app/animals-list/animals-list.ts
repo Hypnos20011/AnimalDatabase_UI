@@ -64,11 +64,11 @@ export class AnimalsList {
   topError = signal(false);
   readonly topSearchWindows = TOP_SEARCH_WINDOWS;
   showAnimalsLabel = computed(
-    () => `Show ${formatCount(this.filteredAnimals().length, { one: 'animal', other: 'animals' })}`,
+    () => this.i18n.tPlural('list.showAnimals', this.filteredAnimals().length),
   );
   topEmptyText = computed(() =>
     this.topError()
-      ? 'Top searches are unavailable right now.'
+      ? this.i18n.t('list.top.unavailable')
       : topSearchEmptyText(this.topSearchDays()),
   );
   private topRequest?: Subscription;
@@ -213,7 +213,7 @@ export class AnimalsList {
   active = computed(() => pickActive(this.sortedAnimals(), this.activeId()));
   countDigits = computed(() => String(this.filteredAnimals().length).padStart(2, '0'));
   countText = computed(() =>
-    formatCount(this.filteredAnimals().length, { one: 'animal', other: 'animals' }),
+    this.i18n.tPlural('list.count', this.filteredAnimals().length ),
   );
   readonly indexLabel = indexLabel;
   readonly iucnCode = iucnCode;
