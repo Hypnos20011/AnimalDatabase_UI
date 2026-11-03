@@ -1,0 +1,130 @@
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { of } from 'rxjs';
+import { AnimalsList } from './animals-list';
+import { AnimalService } from '../shared/animal.service';
+import { SearchService } from './search.service';
+import { Animal } from '../animal-model/animal.model';
+import { LanguageService } from '../shared/i18n/language.service';
+
+function animal(id: number, commonName: string): Animal {
+  return {
+    id,
+    commonName,
+    scientificName: null,
+    family: null,
+    taxonomicClass: 'mammal',
+    isDomesticated: false,
+    sizeLengthCmMin: null,
+    sizeLengthCmMax: null,
+    sizeHeightCmMin: null,
+    sizeHeightCmMax: null,
+    weightKgMin: null,
+    weightKgMax: null,
+    lifespanYearsMin: null,
+    lifespanYearsMax: null,
+    iucnStatus: 'Least Concern',
+    habitat: null,
+    habitatType: 'forest',
+    rangeRegion: null,
+    profile: null,
+    thumbnailUrl: null,
+    createdAt: '2026-10-08T10:00:00',
+    updatedAt: '2026-10-08T10:00:00',
+  } as unknown as Animal;
+}
+
+describe('AnimalsList translation', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    document.documentElement.lang = '';
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  async function render(data: Animal[] = [animal(1, 'Okapi')]) {
+    TestBed.configureTestingModule({
+      imports: [AnimalsList],
+      providers: [
+        provideRouter([]),
+        { provide: AnimalService, useValue: { getAll: vi.fn(() => of(data)) } },
+        { provide: SearchService, useValue: { getTop: vi.fn(() => of([])), record: vi.fn(() => of(undefined)) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(AnimalsList);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    const text = (selector: string) => element.querySelector(selector)?.textContent?.trim() ?? '';
+    const search = () => element.querySelector<HTMLInputElement>('input.search')!;
+    const openFilters = () => {
+      element.querySelector<HTMLButtonElement>('.filter-toggle')!.click();
+      fixture.detectChanges();
+    };
+    return { fixture, element, text, search, openFilters };
+  }
+
+  it('shows the English texts by default', async () => {
+    const { text, search, element } = await render();
+    expect(text('.page-head h2')).toContain('Animals');
+    expect(search().getAttribute('aria-label')).toBe('Search animals');
+    expect(search().placeholder).toBe('Search name, habitat or range...');
+    expect(text('.filter-toggle')).toContain('Filters');
+    expect(element.querySelector('.sort .visually-hidden')!.textContent!.trim()).toBe('Sort by');
+  });
+
+  it('shows the German texts when German is stored', async () => {
+    localStorage.setItem('language', 'de');
+    const { text, search, element } = await render();
+    expect(text('.page-head h2')).toContain('Tiere');
+    expect(search().getAttribute('aria-label')).toBe('Tiere durchsuchen');
+    expect(search().placeholder).toBe('Name, Lebensraum oder Verbreitung suchen...');
+    expect(text('.filter-toggle')).toContain('Filter');
+    expect(element.querySelector('.sort .visually-hidden')!.textContent!.trim()).toBe('Sortieren nach');
+  });
+
+  it('updates the texts when the language is switched', async () => {
+    const { fixture, text, search } = await render();
+    TestBed.inject(LanguageService).setLanguage('de');
+    fixture.detectChanges();
+    expect(text('.page-head h2')).toContain('Tiere');
+    expect(search().placeholder).toBe('Name, Lebensraum oder Verbreitung suchen...');
+  });
+
+  it('translates the filter dialog', async () => {
+    localStorage.setItem('language', 'de');
+    const { element, text, openFilters } = await render();
+    openFilters();
+    const labels = Array.from(element.querySelectorAll('.modal .chip-label')).map((label) =>
+      label.textContent!.trim(),
+    );
+    expect(labels).toEqual(['Klasse:', 'Status:', 'Lebensraum:', 'Typ:', 'Länge (cm):', 'Gewicht (kg):']);
+    expect(text('#filters-title')).toBe('Filter');
+    expect(element.querySelector('.modal .close')!.getAttribute('aria-label')).toBe('Schließen');
+    const placeholders = Array.from(
+      element.querySelectorAll<HTMLInputElement>('.filter-ranges input'),
+    ).map((input) => input.placeholder);
+    expect(placeholders).toEqual(['von', 'bis', 'von', 'bis']);
+    const chips = Array.from(element.querySelectorAll('.modal .chip')).map((chip) => chip.textContent!.trim());
+    expect(chips).toContain('Nur Wildtiere');
+    expect(text('.modal-footer .chip')).toBe('Alle zurücksetzen');
+  });
+
+  it('translates the top searches heading and window label', async () => {
+    localStorage.setItem('language', 'de');
+    const { element, text } = await render();
+    expect(text('#top-searches-title')).toBe('Meistgesucht');
+    expect(element.querySelector('.top-head select')!.getAttribute('aria-label')).toBe(
+      'Zeitraum der Top-Suchen',
+    );
+  });
+
+  it('translates the empty state', async () => {
+    localStorage.setItem('language', 'de');
+    const { text } = await render([]);
+    expect(text('.state-message')).toBe('Keine Tiere passen zu deinen Filtern.');
+  });
+});

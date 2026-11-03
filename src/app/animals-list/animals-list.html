@@ -1,6 +1,5 @@
 <div class="page-head">
-  <h2>
-    Animals
+  <h2>{{ i18n.t('list.title') }}
     @if (!loading()) {
       <span class="count" aria-hidden="true">{{ countDigits() }}</span>
       <span class="visually-hidden">({{ countText() }})</span>
@@ -13,8 +12,8 @@
     <input
       type="search"
       class="search"
-      aria-label="Search animals"
-      placeholder="Search name, habitat or range..."
+      [attr.aria-label]="i18n.t('list.search.label')"
+      [placeholder]="i18n.t('list.search.placeholder')"
       [value]="query()"
       (input)="onQueryChange($any($event.target).value)"
     />
@@ -47,17 +46,16 @@
   </div>
 
   <div class="filter-bar">
-    <button type="button" class="filter-toggle btn btn-secondary" (click)="filtersOpen.set(true)">
-      Filters
+    <button type="button" class="filter-toggle btn btn-secondary" (click)="filtersOpen.set(true)">{{ i18n.t('list.filters') }}
       @if (activeFilterCount() > 0) {
         <span class="badge">{{ activeFilterCount() }}</span>
       }
     </button>
     @if (activeFilterCount() > 0) {
-      <button type="button" class="chip clear" (click)="clearAll()">Clear all</button>
+      <button type="button" class="chip clear" (click)="clearAll()">{{ i18n.t('list.clearAll') }}</button>
     }
     <label class="sort">
-      <span class="visually-hidden">Sort by</span>
+      <span class="visually-hidden">{{ i18n.t('list.sortBy') }}</span>
       <select (change)="onSortChange($any($event.target).value)">
         @for (option of sortOptions; track option.value) {
           <option [value]="option.value" [selected]="option.value === sortBy()">
@@ -79,14 +77,14 @@
       (click)="$event.stopPropagation()"
     >
       <div class="modal-header">
-        <h3 id="filters-title">Filters</h3>
-        <button type="button" class="close" aria-label="Close" (click)="filtersOpen.set(false)">
+        <h3 id="filters-title">{{i18n.t('list.filters') }}</h3>
+        <button type="button" class="close" [attr.aria-label]="i18n.t('list.close')" (click)="filtersOpen.set(false)">
           &times;
         </button>
       </div>
       <div class="filters">
         <div class="filter-chips">
-          <span class="chip-label">Class:</span>
+          <span class="chip-label">{{i18n.t('list.filter.class') }}</span>
           @for (cls of availableClasses(); track cls) {
             <button
               type="button"
@@ -100,7 +98,7 @@
         </div>
 
         <div class="filter-chips">
-          <span class="chip-label">Status:</span>
+          <span class="chip-label">{{i18n.t('list.filter.status') }}</span>
           @for (status of availableStatuses(); track status) {
             <button
               type="button"
@@ -113,7 +111,7 @@
           }
         </div>
         <div class="filter-chips">
-          <span class="chip-label">Habitat:</span>
+          <span class="chip-label"> {{i18n.t('list.filter.habitat') }}</span>
           @for (habitat of availableHabitats(); track habitat) {
             <button
               type="button"
@@ -127,24 +125,23 @@
         </div>
 
         <div class="filter-chips">
-          <span class="chip-label">Type:</span>
+          <span class="chip-label"> {{i18n.t('list.filter.type') }}</span>
           <button
             type="button"
             class="chip"
             [class.active]="filterType() === 'wild'"
             (click)="toggleType()"
-          >
-            Wild only
+          >{{i18n.t('list.filter.wildOnly') }}
           </button>
         </div>
 
         <div class="filter-ranges">
-          <span class="chip-label">Length (cm):</span>
+          <span class="chip-label">{{i18n.t('list.filter.length') }}</span>
           <input
             type="number"
             min="0"
             step="0.1"
-            placeholder="from"
+            [placeholder]="i18n.t('list.filter.from')"
             [value]="lengthFrom() ?? ''"
             (input)="lengthFrom.set(toNumber($any($event.target).value))"
           />
@@ -152,19 +149,19 @@
             type="number"
             min="0"
             step="0.1"
-            placeholder="to"
+            [placeholder]="i18n.t('list.filter.to')"
             [value]="lengthTo() ?? ''"
             (input)="lengthTo.set(toNumber($any($event.target).value))"
           />
         </div>
 
         <div class="filter-ranges">
-          <span class="chip-label">Weight (kg):</span>
+          <span class="chip-label">{{i18n.t('list.filter.weight') }}</span>
           <input
             type="number"
             min="0"
             step="0.1"
-            placeholder="from"
+            [placeholder]="i18n.t('list.filter.from')"
             [value]="weightFrom() ?? ''"
             (input)="weightFrom.set(toNumber($any($event.target).value))"
           />
@@ -172,14 +169,14 @@
             type="number"
             min="0"
             step="0.1"
-            placeholder="to"
+            [placeholder]="i18n.t('list.filter.to')"
             [value]="weightTo() ?? ''"
             (input)="weightTo.set(toNumber($any($event.target).value))"
           />
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="chip" (click)="clearAll()">Clear all</button>
+        <button type="button" class="chip" (click)="clearAll()">{{i18n.t('list.clearAll') }}</button>
         <button type="button" class="apply btn btn-primary" (click)="filtersOpen.set(false)">
           {{ showAnimalsLabel() }}
         </button>
@@ -191,9 +188,9 @@
 @if (topLoaded()) {
   <section class="top-searches" aria-labelledby="top-searches-title">
     <div class="top-head">
-      <h3 id="top-searches-title">Top searches</h3>
+      <h3 id="top-searches-title">{{i18n.t('list.top.title') }}</h3>
       <select
-        aria-label="Top searches time window"
+        [attr.aria-label]="i18n.t('list.top.windowLabel')"
         (change)="onTopSearchDaysChange($any($event.target).value)"
       >
         @for (window of topSearchWindows; track window.days) {
@@ -221,7 +218,7 @@
 }
 
 @if (loading()) {
-  <p class="state-message">Loading...</p>
+  <p class="state-message">{{i18n.t('list.loading') }}</p>
 }
 
 @if (error()) {
@@ -229,7 +226,7 @@
 }
 
 @if (!loading() && !error() && filteredAnimals().length === 0) {
-  <p class="state-message">No animals match your filters.</p>
+  <p class="state-message">{{i18n.t('list.empty') }}</p>
 }
 
 @if (filteredAnimals().length > 0) {
@@ -272,9 +269,10 @@
                 <span class="cls">{{ animal.taxonomicClass }}</span>
               }
             </span>
-            <span class="code" [attr.data-status]="animal.iucnStatus" [attr.title]="iucnLabel(animal.iucnStatus)" aria-hidden="true">{{
-              iucnCode(animal.iucnStatus)
-            }}</span>
+            <span class="code" [attr.data-status]="animal.iucnStatus" [attr.title]="iucnLabel(animal.iucnStatus)"
+                  aria-hidden="true">{{
+                iucnCode(animal.iucnStatus)
+              }}</span>
             <span class="visually-hidden">, {{ iucnLabel(animal.iucnStatus) }}</span>
           </a>
         </li>

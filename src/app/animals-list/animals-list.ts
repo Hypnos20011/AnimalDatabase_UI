@@ -13,6 +13,7 @@ import { wikimediaSrcset } from '../shared/wikimedia-image';
 import { parseTopSearchDays, TOP_SEARCH_WINDOWS, topSearchEmptyText } from './top-search-window';
 import { indexLabel, pickActive } from './active-animal';
 import { iucnCode, iucnLabel, iucnRank } from '../shared/iucn';
+import { LanguageService } from '../shared/i18n/language.service';
 
 @Component({
   selector: 'app-animals-list',
@@ -28,6 +29,7 @@ export class AnimalsList {
   private router = inject(Router);
   private state = inject(AnimalListState);
   private searchService = inject(SearchService);
+  protected i18n = inject(LanguageService);
 
   animals = signal<Animal[]>([]);
   loading = signal(true);
@@ -119,10 +121,10 @@ export class AnimalsList {
   availableHabitats = computed(() => {
     const set = new Set<string>();
     for (const a of this.animals()) {
-      if(a.habitatType) set.add(a.habitatType);
+      if (a.habitatType) set.add(a.habitatType);
     }
     return Array.from(set).sort();
-  })
+  });
 
   filteredAnimals = computed(() => {
     const hasQuery = normalizeText(this.query()).length > 0;
@@ -143,7 +145,7 @@ export class AnimalsList {
         return false;
       }
 
-      if(habitats.size > 0 && (!animal.habitatType || !habitats.has(animal.habitatType))) {
+      if (habitats.size > 0 && (!animal.habitatType || !habitats.has(animal.habitatType))) {
         return false;
       }
 
@@ -337,7 +339,6 @@ export class AnimalsList {
     if (low === null || high === null) return false;
     if (from !== null && high < from) return false;
     return !(to !== null && low > to);
-
   }
 
   matchHint(animal: Animal): string {
