@@ -14,6 +14,7 @@ import { parseTopSearchDays, TOP_SEARCH_WINDOWS, topSearchEmptyText } from './to
 import { indexLabel, pickActive } from './active-animal';
 import { iucnCode, iucnLabel, iucnRank } from '../shared/iucn';
 import { LanguageService } from '../shared/i18n/language.service';
+import {TranslationKey} from '../shared/i18n/en';
 
 @Component({
   selector: 'app-animals-list',
@@ -47,15 +48,15 @@ export class AnimalsList {
   sortBy = this.state.sortBy;
   filtersOpen = signal(false);
 
-  readonly sortOptions: { value: SortOption; label: string }[] = [
-    { value: 'relevance', label: 'Best match' },
-    { value: 'name-asc', label: 'Name (A to Z)' },
-    { value: 'name-desc', label: 'Name (Z to A)' },
-    { value: 'length-desc', label: 'Longest first' },
-    { value: 'length-asc', label: 'Shortest first' },
-    { value: 'weight-desc', label: 'Heaviest first' },
-    { value: 'weight-asc', label: 'Lightest first' },
-    { value: 'newest', label: 'Newest first' },
+  readonly sortOptions: { value: SortOption; labelKey: TranslationKey }[] = [
+    { value: 'relevance', labelKey: 'list.sort.relevance' },
+    { value: 'name-asc', labelKey: 'list.sort.nameAsc' },
+    { value: 'name-desc', labelKey: 'list.sort.nameDesc' },
+    { value: 'length-desc', labelKey: 'list.sort.lengthDesc' },
+    { value: 'length-asc', labelKey: 'list.sort.lengthAsc' },
+    { value: 'weight-desc', labelKey: 'list.sort.weightDesc' },
+    { value: 'weight-asc', labelKey: 'list.sort.weightAsc' },
+    { value: 'newest', labelKey: 'list.sort.newest' },
   ];
   topSearches = signal<TopSearch[]>([]);
   topSearchDays = this.state.topSearchDays;

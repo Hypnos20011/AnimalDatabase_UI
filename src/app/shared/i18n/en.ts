@@ -27,5 +27,16 @@ export const en = {
   'list.top.windowLabel': 'Top searches time window',
   'list.loading': 'Loading...',
   'list.empty': 'No animals match your filters.',
+  'list.sort.relevance': 'Best match',
+  'list.sort.nameAsc': 'Name (A to Z)',
+  'list.sort.nameDesc': 'Name (Z to A)',
+  'list.sort.lengthDesc': 'Longest first',
+  'list.sort.lengthAsc': 'Shortest first',
+  'list.sort.weightDesc': 'Heaviest first',
+  'list.sort.weightAsc': 'Lightest first',
+  'list.sort.newest': 'Newest first',
+  'list.top.window.7': 'Last 7 days',
+  'list.top.window.30': 'Last 30 days',
+  'list.top.window.all': 'All time',
 } as const;
 export type TranslationKey = keyof typeof en;

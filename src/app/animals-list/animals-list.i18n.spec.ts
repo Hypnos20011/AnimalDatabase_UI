@@ -127,4 +127,40 @@ describe('AnimalsList translation', () => {
     const { text } = await render([]);
     expect(text('.state-message')).toBe('Keine Tiere passen zu deinen Filtern.');
   });
+
+  it('translates the sort options', async () => {
+    localStorage.setItem('language', 'de');
+    const { element } = await render();
+    const options = Array.from(element.querySelectorAll('.sort option')).map((option) =>
+      option.textContent!.trim(),
+    );
+    expect(options).toEqual([
+      'Beste Treffer',
+      'Name (A bis Z)',
+      'Name (Z bis A)',
+      'Längste zuerst',
+      'Kürzeste zuerst',
+      'Schwerste zuerst',
+      'Leichteste zuerst',
+      'Neueste zuerst',
+    ]);
+  });
+
+  it('translates the top searches time windows', async () => {
+    localStorage.setItem('language', 'de');
+    const { element } = await render();
+    const options = Array.from(element.querySelectorAll('.top-head option')).map((option) =>
+      option.textContent!.trim(),
+    );
+    expect(options).toEqual(['Letzte 7 Tage', 'Letzte 30 Tage', 'Gesamter Zeitraum']);
+  });
+
+  it('updates the sort options when the language is switched', async () => {
+    const { fixture, element } = await render();
+    const first = () => element.querySelector('.sort option')!.textContent!.trim();
+    expect(first()).toBe('Best match');
+    TestBed.inject(LanguageService).setLanguage('de');
+    fixture.detectChanges();
+    expect(first()).toBe('Beste Treffer');
+  });
 });

@@ -8,10 +8,10 @@ import {
 describe('top search window', () => {
   it('offers 7 days, 30 days and all time with 30 days as default', () => {
     expect(TOP_SEARCH_WINDOWS.map((window) => window.days)).toEqual([7, 30, 0]);
-    expect(TOP_SEARCH_WINDOWS.map((window) => window.label)).toEqual([
-      'Last 7 days',
-      'Last 30 days',
-      'All time',
+    expect(TOP_SEARCH_WINDOWS.map((window) => window.labelKey)).toEqual([
+      'list.top.window.7',
+      'list.top.window.30',
+      'list.top.window.all',
     ]);
     expect(DEFAULT_TOP_SEARCH_DAYS).toBe(30);
   });

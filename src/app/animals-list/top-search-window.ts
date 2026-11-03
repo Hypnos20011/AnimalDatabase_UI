@@ -1,16 +1,18 @@
+import { TranslationKey } from '../shared/i18n/en';
+
 export type TopSearchDays = 7 | 30 | 0;
 
 export interface TopSearchWindow {
   days: TopSearchDays;
-  label: string;
+  labelKey: TranslationKey;
 }
 
 export const DEFAULT_TOP_SEARCH_DAYS: TopSearchDays = 30;
 
 export const TOP_SEARCH_WINDOWS: readonly TopSearchWindow[] = [
-  { days: 7, label: 'Last 7 days' },
-  { days: 30, label: 'Last 30 days' },
-  { days: 0, label: 'All time' },
+  { days: 7, labelKey: 'list.top.window.7' },
+  { days: 30, labelKey: 'list.top.window.30' },
+  { days: 0, labelKey: 'list.top.window.all' },
 ];
 
 export function parseTopSearchDays(value: unknown): TopSearchDays {

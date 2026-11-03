@@ -59,7 +59,7 @@
       <select (change)="onSortChange($any($event.target).value)">
         @for (option of sortOptions; track option.value) {
           <option [value]="option.value" [selected]="option.value === sortBy()">
-            {{ option.label }}
+            {{ i18n.t(option.labelKey) }}
           </option>
         }
       </select>
@@ -195,7 +195,7 @@
       >
         @for (window of topSearchWindows; track window.days) {
           <option [value]="window.days" [selected]="window.days === topSearchDays()">
-            {{ window.label }}
+            {{ i18n.t(window.labelKey) }}
           </option>
         }
       </select>
