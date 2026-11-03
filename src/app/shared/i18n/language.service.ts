@@ -34,10 +34,12 @@ export class LanguageService {
     }
     return text;
   }
-  public tPlural(base:PluralBase, count:number): string {
+  public tPlural(base: PluralBase, count: number): string {
     const category = new Intl.PluralRules(this.language()).select(count);
     let key = `${base}.${category}`;
-    if (!(key in DICTIONARIES[this.language()])) {key = `${base}.other`;}
+    if (!(key in DICTIONARIES[this.language()])) {
+      key = `${base}.other`;
+    }
     return this.t(key as TranslationKey, { count });
   }
 }

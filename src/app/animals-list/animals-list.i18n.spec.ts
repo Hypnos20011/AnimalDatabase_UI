@@ -190,4 +190,27 @@ describe('AnimalsList translation', () => {
     fixture.componentInstance.topError.set(true);
     expect(fixture.componentInstance.topEmptyText()).toBe('Die Top-Suchen sind gerade nicht verfügbar.');
   });
+
+  it('words the top searches empty text for each window in English', async () => {
+    const { fixture } = await render();
+    const list = fixture.componentInstance;
+    list.topSearchDays.set(30);
+    expect(list.topEmptyText()).toBe('No searches in the last 30 days.');
+    list.topSearchDays.set(7);
+    expect(list.topEmptyText()).toBe('No searches in the last 7 days.');
+    list.topSearchDays.set(0);
+    expect(list.topEmptyText()).toBe('No searches yet.');
+  });
+
+  it('words the top searches empty text for each window in German', async () => {
+    localStorage.setItem('language', 'de');
+    const { fixture } = await render();
+    const list = fixture.componentInstance;
+    list.topSearchDays.set(30);
+    expect(list.topEmptyText()).toBe('Keine Suchen in den letzten 30 Tagen.');
+    list.topSearchDays.set(7);
+    expect(list.topEmptyText()).toBe('Keine Suchen in den letzten 7 Tagen.');
+    list.topSearchDays.set(0);
+    expect(list.topEmptyText()).toBe('Noch keine Suchen.');
+  });
 });

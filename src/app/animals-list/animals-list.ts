@@ -8,13 +8,12 @@ import { SearchService } from './search.service';
 import { TopSearch } from '../animal-model/top-search.model';
 import { matchAnimal, matchHint, matchRank, normalizeText, SearchMatch } from './animal-search';
 import { Subscription } from 'rxjs';
-import { formatCount } from '../shared/plural';
 import { wikimediaSrcset } from '../shared/wikimedia-image';
-import { parseTopSearchDays, TOP_SEARCH_WINDOWS, topSearchEmptyText } from './top-search-window';
+import { parseTopSearchDays, TOP_SEARCH_WINDOWS } from './top-search-window';
 import { indexLabel, pickActive } from './active-animal';
 import { iucnCode, iucnLabel, iucnRank } from '../shared/iucn';
 import { LanguageService } from '../shared/i18n/language.service';
-import {TranslationKey} from '../shared/i18n/en';
+import { TranslationKey } from '../shared/i18n/en';
 
 @Component({
   selector: 'app-animals-list',
@@ -63,13 +62,15 @@ export class AnimalsList {
   topLoaded = signal(false);
   topError = signal(false);
   readonly topSearchWindows = TOP_SEARCH_WINDOWS;
-  showAnimalsLabel = computed(
-    () => this.i18n.tPlural('list.showAnimals', this.filteredAnimals().length),
+  showAnimalsLabel = computed(() =>
+    this.i18n.tPlural('list.showAnimals', this.filteredAnimals().length),
   );
   topEmptyText = computed(() =>
     this.topError()
       ? this.i18n.t('list.top.unavailable')
-      : topSearchEmptyText(this.topSearchDays()),
+      : this.topSearchDays() <= 0
+        ? this.i18n.t('list.top.empty.all')
+        : this.i18n.tPlural('list.top.empty.days', this.topSearchDays()),
   );
   private topRequest?: Subscription;
 
@@ -212,9 +213,7 @@ export class AnimalsList {
   activeId = signal<number | null>(null);
   active = computed(() => pickActive(this.sortedAnimals(), this.activeId()));
   countDigits = computed(() => String(this.filteredAnimals().length).padStart(2, '0'));
-  countText = computed(() =>
-    this.i18n.tPlural('list.count', this.filteredAnimals().length ),
-  );
+  countText = computed(() => this.i18n.tPlural('list.count', this.filteredAnimals().length));
   readonly indexLabel = indexLabel;
   readonly iucnCode = iucnCode;
   readonly iucnLabel = iucnLabel;

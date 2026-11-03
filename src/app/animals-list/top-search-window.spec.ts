@@ -2,7 +2,6 @@ import {
   DEFAULT_TOP_SEARCH_DAYS,
   TOP_SEARCH_WINDOWS,
   parseTopSearchDays,
-  topSearchEmptyText,
 } from './top-search-window';
 
 describe('top search window', () => {
@@ -31,10 +30,4 @@ describe('top search window', () => {
     expect(parseTopSearchDays('')).toBe(30);
   });
 
-  it('words the empty state for the window', () => {
-    expect(topSearchEmptyText(30)).toBe('No searches in the last 30 days.');
-    expect(topSearchEmptyText(7)).toBe('No searches in the last 7 days.');
-    expect(topSearchEmptyText(1)).toBe('No searches in the last day.');
-    expect(topSearchEmptyText(0)).toBe('No searches yet.');
-  });
 });

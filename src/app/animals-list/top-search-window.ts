@@ -20,8 +20,3 @@ export function parseTopSearchDays(value: unknown): TopSearchDays {
   const days = Number(value);
   return TOP_SEARCH_WINDOWS.find((window) => window.days === days)?.days ?? DEFAULT_TOP_SEARCH_DAYS;
 }
-
-export function topSearchEmptyText(days: number): string {
-  if (days <= 0) return 'No searches yet.';
-  return days === 1 ? 'No searches in the last day.' : `No searches in the last ${days} days.`;
-}
