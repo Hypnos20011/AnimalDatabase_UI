@@ -239,4 +239,11 @@ describe('AnimalsList translation', () => {
     expect(rows[1].querySelector('.code')!.getAttribute('title')).toBe('Status unbekannt');
     expect(rows[1].querySelector('.visually-hidden')!.textContent).toContain('Status unbekannt');
   });
+
+  it('translates the habitat type in the preview', async () => {
+    localStorage.setItem('language', 'de');
+    const okapi = { ...animal(1, 'Okapi'), family: 'Giraffidae' } as Animal;
+    const { text } = await render([okapi]);
+    expect(text('.preview-extra')).toBe('Giraffidae / Wald');
+  });
 });

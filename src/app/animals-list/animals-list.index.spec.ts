@@ -112,7 +112,7 @@ describe('AnimalsList index', () => {
     expect(element.querySelector('.preview-extra')!.textContent!.trim()).toBe('Orycteropodidae');
     rows()[1].querySelector('a')!.dispatchEvent(new MouseEvent('mouseenter'));
     fixture.detectChanges();
-    expect(element.querySelector('.preview-extra')!.textContent!.trim()).toBe('Giraffidae / forest');
+    expect(element.querySelector('.preview-extra')!.textContent!.trim()).toBe('Giraffidae / Forest');
   });
 
   it('shows status codes and a dash without a status', async () => {
