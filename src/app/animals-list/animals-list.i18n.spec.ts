@@ -246,4 +246,21 @@ describe('AnimalsList translation', () => {
     const { text } = await render([okapi]);
     expect(text('.preview-extra')).toBe('Giraffidae / Wald');
   });
+
+  it('translates the match hints', async () => {
+    const okapi = { ...animal(1, 'Okapi'), habitat: 'rainforest canopy', rangeRegion: 'Congo' } as Animal;
+    const { fixture, element, search } = await render([okapi]);
+    const hint = () => element.querySelector('.match-hint')?.textContent?.trim();
+    search().value = 'canopy';
+    search().dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(hint()).toBe('Matches habitat');
+    TestBed.inject(LanguageService).setLanguage('de');
+    fixture.detectChanges();
+    expect(hint()).toBe('Treffer im Lebensraum');
+    search().value = 'congo';
+    search().dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(hint()).toBe('Treffer in der Verbreitung');
+  });
 });

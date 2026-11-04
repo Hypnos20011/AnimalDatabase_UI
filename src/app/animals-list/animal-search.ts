@@ -1,4 +1,5 @@
 import { Animal } from '../animal-model/animal.model';
+import {TranslationKey} from '../shared/i18n/en';
 
 export type SearchableAnimal = Pick<
   Animal,
@@ -36,10 +37,10 @@ export function matchRank(match: SearchMatch | null | undefined): number {
   return 3;
 }
 
-export function matchHint(match: SearchMatch | null | undefined): string {
-  if (!match || match.name) return '';
-  if (match.habitat && match.range) return 'Matches habitat and range';
-  if (match.habitat) return 'Matches habitat';
-  if (match.range) return 'Matches range';
-  return '';
+export function matchHint(match: SearchMatch | null | undefined): TranslationKey | null {
+  if (!match || match.name) return null;
+  if (match.habitat && match.range) return 'list.match.habitatRange';
+  if (match.habitat) return 'list.match.habitat';
+  if (match.range) return 'list.match.range';
+  return null;
 }

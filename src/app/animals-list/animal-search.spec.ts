@@ -134,19 +134,19 @@ describe('ranking', () => {
 
 describe('matchHint', () => {
   it('shows no hint for name matches', () => {
-    expect(matchHint(matchAnimal({ ...okapi, habitat: 'okapi forest' }, 'okapi'))).toBe('');
+    expect(matchHint(matchAnimal({ ...okapi, habitat: 'okapi forest' }, 'okapi'))).toBeNull();
   });
 
   it('names the habitat, the range or both', () => {
-    expect(matchHint(matchAnimal(okapi, 'canopy'))).toBe('Matches habitat');
-    expect(matchHint(matchAnimal(okapi, 'congo'))).toBe('Matches range');
+    expect(matchHint(matchAnimal(okapi, 'canopy'))).toBe('list.match.habitat');
+    expect(matchHint(matchAnimal(okapi, 'congo'))).toBe('list.match.range');
     expect(matchHint(matchAnimal({ ...okapi, rangeRegion: 'canopy of the Congo' }, 'canopy'))).toBe(
-      'Matches habitat and range',
+      'list.match.habitatRange',
     );
   });
 
   it('shows no hint for description-only matches or no query', () => {
-    expect(matchHint(matchAnimal(okapi, 'zebra'))).toBe('');
-    expect(matchHint(null)).toBe('');
+    expect(matchHint(matchAnimal(okapi, 'zebra'))).toBeNull();
+    expect(matchHint(null)).toBeNull();
   });
 });

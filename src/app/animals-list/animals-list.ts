@@ -342,7 +342,8 @@ export class AnimalsList {
   }
 
   matchHint(animal: Animal): string {
-    return matchHint(this.searchMatches().get(animal.id));
+    const key = matchHint(this.searchMatches().get(animal.id));
+    return key ? this.i18n.t(key) : '';
   }
 
   readonly srcset = wikimediaSrcset;
