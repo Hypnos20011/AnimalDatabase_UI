@@ -119,7 +119,7 @@ describe('AnimalsList index', () => {
     const { rows } = await render();
     const codes = rows().map((row) => row.querySelector('.code')!.textContent!.trim());
     expect(codes).toEqual(['LC', 'EN', '\u2014']);
-    expect(rows()[2].querySelector('.visually-hidden')!.textContent).toContain('status unknown');
+    expect(rows()[2].querySelector('.visually-hidden')!.textContent).toContain('Status unknown');
   });
 
   it('records the search when a row is opened', async () => {

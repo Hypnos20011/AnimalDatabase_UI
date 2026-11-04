@@ -30,6 +30,6 @@ describe('iucnCode', () => {
 describe('iucnLabel', () => {
   it('spells the status out for screen readers', () => {
     expect(iucnLabel('Endangered')).toBe('endangered');
-    expect(iucnLabel(null)).toBe('status unknown');
+    expect(iucnLabel(null)).toBe('unknown');
   });
 });

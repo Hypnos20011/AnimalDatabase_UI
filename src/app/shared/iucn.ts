@@ -28,5 +28,5 @@ export function iucnCode(status: string | null | undefined): string {
 }
 
 export function iucnLabel(status: string | null | undefined): string {
-  return status?.trim() ? status.trim().toLowerCase() : 'status unknown';
+  return status?.trim() ? status.trim().toLowerCase() : 'unknown';
 }

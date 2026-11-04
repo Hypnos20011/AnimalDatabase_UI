@@ -224,4 +224,19 @@ describe('AnimalsList translation', () => {
     expect(chips).toContain('Stark gefährdet · 1');
     expect(chips).toContain('Wald · 1');
   });
+
+  it('translates the class and status in each row', async () => {
+    localStorage.setItem('language', 'de');
+    const okapi = { ...animal(1, 'Okapi'), iucnStatus: 'endangered' } as Animal;
+    const dog = { ...animal(2, 'Dog'), iucnStatus: null } as unknown as Animal;
+    const { element } = await render([okapi, dog]);
+    const all = Array.from(element.querySelectorAll('li a'));
+    const rows = [all.find((row) => row.textContent!.includes('Okapi'))!, all.find((row) => row.textContent!.includes('Dog'))!];
+    expect(rows[0].querySelector('.cls')!.textContent!.trim()).toBe('S\u00e4ugetier');
+    expect(rows[0].querySelector('.code')!.getAttribute('title')).toBe('Stark gef\u00e4hrdet');
+    expect(rows[0].querySelector('.code')!.textContent!.trim()).toBe('EN');
+    expect(rows[0].querySelector('.visually-hidden')!.textContent).toContain('Stark gef\u00e4hrdet');
+    expect(rows[1].querySelector('.code')!.getAttribute('title')).toBe('Status unbekannt');
+    expect(rows[1].querySelector('.visually-hidden')!.textContent).toContain('Status unbekannt');
+  });
 });

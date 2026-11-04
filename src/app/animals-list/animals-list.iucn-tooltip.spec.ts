@@ -29,10 +29,10 @@ describe('AnimalsList IUCN tooltip', () => {
   }
 
   it('explains the code with the full status', async () => {
-    expect(await tooltips([animal(1, 'Okapi', 'endangered')])).toEqual(['endangered']);
+    expect(await tooltips([animal(1, 'Okapi', 'endangered')])).toEqual(['Endangered']);
   });
 
   it('says status unknown when there is no status', async () => {
-    expect(await tooltips([animal(1, 'Dog', null)])).toEqual(['status unknown']);
+    expect(await tooltips([animal(1, 'Dog', null)])).toEqual(['Status unknown']);
   });
 });
