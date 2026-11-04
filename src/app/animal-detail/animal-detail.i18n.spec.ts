@@ -164,4 +164,24 @@ describe('AnimalDetail translation', () => {
     expect(labels()[1]).toBe('Gewicht');
     expect(text('.more')).toBe('Mehr Details');
   });
+
+  it('translates the status, habitat type and class values', async () => {
+    localStorage.setItem('language', 'de');
+    const { element, text, openDetails } = await render();
+    expect(text('.status')).toBe('Stark gef\u00e4hrdet');
+    expect(element.querySelector('.status')!.getAttribute('data-status')).toBe('endangered');
+    expect(text('.habitat-type')).toBe('Wald');
+    openDetails();
+    const values = Array.from(element.querySelectorAll('.extra dd')).map((dd) => dd.textContent!.trim());
+    expect(values).toContain('S\u00e4ugetier');
+  });
+
+  it('shows the English values by default', async () => {
+    const { text, element, openDetails } = await render();
+    expect(text('.status')).toBe('Endangered');
+    expect(text('.habitat-type')).toBe('Forest');
+    openDetails();
+    const values = Array.from(element.querySelectorAll('.extra dd')).map((dd) => dd.textContent!.trim());
+    expect(values).toContain('Mammal');
+  });
 });

@@ -387,7 +387,7 @@ describe('AnimalDetail habitat', () => {
       habitatType: 'forest',
       habitat: 'Dense tropical rainforest',
     });
-    expect(fact('Habitat type')).toBe('forest');
+    expect(fact('Habitat type')).toBe('Forest');
     expect(fact('Habitat')).toBe('Dense tropical rainforest');
   });
 
@@ -399,7 +399,7 @@ describe('AnimalDetail habitat', () => {
 
   it('shows the habitat type when there is no habitat text', async () => {
     const { fact } = await setup({ ...okapi, habitatType: 'deep sea' });
-    expect(fact('Habitat type')).toBe('deep sea');
+    expect(fact('Habitat type')).toBe('Deep sea');
     expect(fact('Habitat')).toBeUndefined();
   });
 });
