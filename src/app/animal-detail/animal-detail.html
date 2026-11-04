@@ -124,7 +124,7 @@
               @if (animal()!.updatedAt > animal()!.createdAt) {
                 <div class="fact">
                   <dt>{{ i18n.t('detail.lastUpdated') }}</dt>
-                  <dd>{{ animal()!.updatedAt | date:'d MMM y' }}</dd>
+                  <dd>{{ animal()!.updatedAt | date:'longDate' : undefined : i18n.language() }}</dd>
                 </div>
               }
             </dl>

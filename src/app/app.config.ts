@@ -3,6 +3,10 @@ import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from 
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { routes } from './app.routes';
 import { adminKeyInterceptor } from './admin/admin-key.interceptor';
+import { registerLocaleData } from '@angular/common';
+import localeDe from '@angular/common/locales/de';
+
+registerLocaleData(localeDe);
 
 export const appConfig: ApplicationConfig = {
   providers: [

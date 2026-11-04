@@ -2,6 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { signal } from '@angular/core';
+import { registerLocaleData } from '@angular/common';
+import localeDe from '@angular/common/locales/de';
 import { AnimalDetail } from './animal-detail';
 import { AnimalService } from '../shared/animal.service';
 import { Animal } from '../animal-model/animal.model';
@@ -40,6 +42,10 @@ const pictures = [
 ] as unknown as AnimalImage[];
 
 describe('AnimalDetail translation', () => {
+  beforeAll(() => {
+    registerLocaleData(localeDe);
+  });
+
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.lang = '';
@@ -183,5 +189,16 @@ describe('AnimalDetail translation', () => {
     openDetails();
     const values = Array.from(element.querySelectorAll('.extra dd')).map((dd) => dd.textContent!.trim());
     expect(values).toContain('Mammal');
+  });
+
+  it('formats the last updated date in the chosen language', async () => {
+    const updated = { ...okapi, updatedAt: '2026-10-20T10:00:00' } as Animal;
+    const { fixture, element, openDetails } = await render({ animal: updated });
+    openDetails();
+    const date = () => element.querySelector('.extra .fact:last-child dd')!.textContent!.trim();
+    expect(date()).toBe('October 20, 2026');
+    TestBed.inject(LanguageService).setLanguage('de');
+    fixture.detectChanges();
+    expect(date()).toBe('20. Oktober 2026');
   });
 });
