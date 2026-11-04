@@ -52,7 +52,8 @@
               </div>
             }
 
-            @let lifespan = animal()!.lifespanYearsMin | range: animal()!.lifespanYearsMax : years() : 0 : i18n.language();
+            @let lifespan = animal()!.lifespanYearsMin | range: animal()!.lifespanYearsMax : years() : 0 :
+            i18n.language();
 
             <div class="fact">
               <dt>{{ i18n.t('detail.lifespan') }}</dt>
@@ -92,8 +93,9 @@
               }
               @if (animal()!.taxonomicClass; as taxonomicClass) {
                 <div class="fact">
-                  <dd>{{ i18n.tValue('class', taxonomicClass) }}</dd>
                   <dt>{{ i18n.t('detail.class') }}</dt>
+                  <dd>{{ i18n.tValue('class', taxonomicClass) }}</dd>
+
                 </div>
               }
               @if (animal()!.isDomesticated) {

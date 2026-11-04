@@ -233,6 +233,27 @@ describe('AnimalDetail translation', () => {
     expect(values).toContain('140\u2013170 cm');
   });
 
+  it('puts the label before the value in every fact', async () => {
+    const { element, openDetails } = await render();
+    openDetails();
+    const facts = Array.from(element.querySelectorAll('.fact'));
+    expect(facts.length).toBeGreaterThan(6);
+    for (const fact of facts) {
+      expect(fact.firstElementChild!.tagName).toBe('DT');
+      expect(fact.lastElementChild!.tagName).toBe('DD');
+    }
+  });
+
+  it('shows the class label before the class value', async () => {
+    const { element, openDetails } = await render();
+    openDetails();
+    const classFact = Array.from(element.querySelectorAll('.extra .fact')).find(
+      (fact) => fact.querySelector('dt')?.textContent?.trim() === 'Class',
+    )!;
+    expect(classFact.firstElementChild!.textContent!.trim()).toBe('Class');
+    expect(classFact.lastElementChild!.textContent!.trim()).toBe('Mammal');
+  });
+
   it('updates the ranges when the language is switched', async () => {
     const { fixture, element } = await render({
       animal: { ...okapi, weightKgMin: null, weightKgMax: 0.5 } as unknown as Animal,
