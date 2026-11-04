@@ -201,4 +201,48 @@ describe('AnimalDetail translation', () => {
     fixture.detectChanges();
     expect(date()).toBe('20. Oktober 2026');
   });
+
+  it('translates the weight and lifespan ranges', async () => {
+    localStorage.setItem('language', 'de');
+    const { element } = await render({
+      animal: { ...okapi, weightKgMin: null, weightKgMax: 0.5, lifespanYearsMin: null, lifespanYearsMax: 30 } as unknown as Animal,
+    });
+    const values = Array.from(element.querySelectorAll('.facts dd')).map((dd) => dd.textContent!.trim());
+    expect(values).toContain('bis zu 0,5 kg');
+    expect(values).toContain('bis zu 30 Jahre');
+  });
+
+  it('uses the singular year and at least in German', async () => {
+    localStorage.setItem('language', 'de');
+    const { element } = await render({
+      animal: { ...okapi, weightKgMin: 2, weightKgMax: null, lifespanYearsMin: 1, lifespanYearsMax: 1 } as unknown as Animal,
+    });
+    const values = Array.from(element.querySelectorAll('.facts dd')).map((dd) => dd.textContent!.trim());
+    expect(values).toContain('mindestens 2 kg');
+    expect(values).toContain('1 Jahr');
+  });
+
+  it('uses German decimals in the size ranges', async () => {
+    localStorage.setItem('language', 'de');
+    const { element, openDetails } = await render({
+      animal: { ...okapi, sizeLengthCmMin: 0.5, sizeLengthCmMax: 1.5 } as Animal,
+    });
+    openDetails();
+    const values = Array.from(element.querySelectorAll('.extra dd')).map((dd) => dd.textContent!.trim());
+    expect(values).toContain('0,5\u20131,5 cm');
+    expect(values).toContain('140\u2013170 cm');
+  });
+
+  it('updates the ranges when the language is switched', async () => {
+    const { fixture, element } = await render({
+      animal: { ...okapi, weightKgMin: null, weightKgMax: 0.5 } as unknown as Animal,
+    });
+    const values = () => Array.from(element.querySelectorAll('.facts dd')).map((dd) => dd.textContent!.trim());
+    expect(values()).toContain('up to 0.5 kg');
+    expect(values()).toContain('20\u201330 years');
+    TestBed.inject(LanguageService).setLanguage('de');
+    fixture.detectChanges();
+    expect(values()).toContain('bis zu 0,5 kg');
+    expect(values()).toContain('20\u201330 Jahre');
+  });
 });

@@ -6,7 +6,6 @@ import { Animal } from '../animal-model/animal.model';
 import { AnimalService } from '../shared/animal.service';
 import { AnimalImage } from '../animal-model/animal-image.model';
 import { RangePipe } from '../shared/range.pipe';
-import { YEARS } from '../shared/format-range';
 import { ConfirmDialog } from '../shared/confirm-dialog/confirm-dialog';
 import { sameName, wikimediaSrcset } from '../shared/wikimedia-image';
 import { AdminKeyService } from '../admin/admin-key.service';
@@ -19,7 +18,10 @@ import { LanguageService } from '../shared/i18n/language.service';
   styleUrl: './animal-detail.css',
 })
 export class AnimalDetail {
-  readonly years = YEARS;
+  readonly years = computed(() => ({
+    one: this.i18n.t('unit.year'),
+    other: this.i18n.t('unit.years'),
+  }));
   readonly srcset = wikimediaSrcset;
 
   showCaption(img: AnimalImage): boolean {
