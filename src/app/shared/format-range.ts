@@ -4,10 +4,8 @@ export type RangeUnit = string | WordUnit;
 
 export const YEARS: WordUnit = { one: 'year', other: 'years' };
 
-export function formatNumber(value: number, decimals: number): string {
-  const factor = 10 ** decimals;
-  const rounded = Math.round(Math.abs(value) * factor) / factor;
-  return String(Math.sign(value) < 0 ? -rounded : rounded);
+export function formatNumber(value: number, decimals: number, language: string = 'en'): string {
+  return new Intl.NumberFormat(language, { maximumFractionDigits: decimals }).format(value);
 }
 
 function unitFor(unit: RangeUnit, shown: string | null): string {

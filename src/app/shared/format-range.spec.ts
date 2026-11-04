@@ -64,3 +64,20 @@ describe('RangePipe', () => {
     expect(pipe.transform(null, null, 'cm')).toBe('');
   });
 });
+
+describe('formatNumber with a language', () => {
+  it('uses a decimal comma in German', () => {
+    expect(formatNumber(0.5, 2, 'de')).toBe('0,5');
+    expect(formatNumber(2.25, 1, 'de')).toBe('2,3');
+  });
+
+  it('keeps the decimal point in English and by default', () => {
+    expect(formatNumber(0.5, 2, 'en')).toBe('0.5');
+    expect(formatNumber(0.5, 2)).toBe('0.5');
+  });
+
+  it('drops trailing zeros and rounds whole numbers', () => {
+    expect(formatNumber(2.5, 2, 'de')).toBe('2,5');
+    expect(formatNumber(20, 0, 'de')).toBe('20');
+  });
+});
