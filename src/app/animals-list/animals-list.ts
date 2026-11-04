@@ -6,6 +6,7 @@ import {
   inject,
   Injector,
   signal,
+  untracked,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavigationStart, Router, RouterLink } from '@angular/router';
@@ -23,6 +24,7 @@ import { iucnCode, iucnLabel, iucnRank } from '../shared/iucn';
 import { LanguageService } from '../shared/i18n/language.service';
 import { TranslationKey } from '../shared/i18n/en';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Language } from '../shared/i18n/languages';
 
 @Component({
   selector: 'app-animals-list',
@@ -243,7 +245,14 @@ export class AnimalsList {
       this.state.randomPool.set(pool.map((animal) => animal.id));
     });
     this.loadTopSearches();
-    this.animalService.getAll().subscribe({
+    effect(() => {
+      const language = this.i18n.language();
+      untracked(() => this.loadAnimals(language));
+    });
+  }
+
+  private loadAnimals(language: Language): void {
+    this.animalService.getAll(language).subscribe({
       next: (data) => {
         this.animals.set(data);
         this.loading.set(false);
