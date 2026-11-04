@@ -1,20 +1,20 @@
 @if (stats(); as s) {
-  <p>Total Animals: {{ s.totalAnimals }}</p>
-  <p>Domesticated: {{ s.domesticatedAnimals }}</p>
-  <h3>By Class</h3>
+  <p>{{ i18n.t('stats.total') }}: {{ s.totalAnimals }}</p>
+  <p>{{ i18n.t('stats.domesticated') }}: {{ s.domesticatedAnimals }}</p>
+  <h3>{{ i18n.t('stats.byClass') }}</h3>
   <ul>
     @for (entry of s.byClass | keyvalue; track entry.key) {
 
       <li>{{ entry.key }}: {{ entry.value }}</li>
     }
   </ul>
-  <h3>By IUCN status</h3>
+  <h3>{{ i18n.t('stats.byIucn') }}</h3>
   <ul>
     @for (entry of s.byIucnStatus | keyvalue; track entry.key) {
       <li>{{ entry.key }}: {{ entry.value }}</li>
     }
   </ul>
-  <h3>By Habitat type</h3>
+  <h3>{{ i18n.t('stats.byHabitat') }}</h3>
   <ul>
     @for (entry of s.byHabitatType | keyvalue; track entry.key) {
       <li>{{ entry.key }}: {{ entry.value }}</li>

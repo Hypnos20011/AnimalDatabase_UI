@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { Stats } from './stats';
 import { AnimalStats } from '../animal-model/animal-stats.model';
 import { environment } from '../../environments/environment';
+import { LanguageService } from '../shared/i18n/language.service';
 
 const sampleStats: AnimalStats = {
   totalAnimals: 18,
@@ -76,7 +77,7 @@ describe('Stats page', () => {
 
   it('shows the total and domesticated counts', () => {
     const text = render(sampleStats).textContent ?? '';
-    expect(text).toContain('Total Animals: 18');
+    expect(text).toContain('Total animals: 18');
     expect(text).toContain('Domesticated: 2');
   });
 
@@ -91,7 +92,57 @@ describe('Stats page', () => {
   it('lists every habitat type with its count under its own heading', () => {
     const page = render(sampleStats);
     const headings = Array.from(page.querySelectorAll('h3')).map((h) => h.textContent?.trim());
-    expect(headings[2]).toBe('By Habitat type');
+    expect(headings[2]).toBe('By habitat type');
     expect(lists(page)[2]).toEqual(['deep sea: 1', 'forest: 10', 'unknown: 7']);
+  });
+});
+
+describe('Stats page translation', () => {
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({
+      imports: [Stats],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    http.verify();
+    localStorage.clear();
+  });
+
+  function render() {
+    const fixture = TestBed.createComponent(Stats);
+    fixture.detectChanges();
+    http.expectOne(`${environment.apiUrl}/stats`).flush(sampleStats);
+    fixture.detectChanges();
+    const page = fixture.nativeElement as HTMLElement;
+    const headings = () => Array.from(page.querySelectorAll('h3')).map((h) => h.textContent?.trim());
+    const counts = () => Array.from(page.querySelectorAll('p')).map((p) => p.textContent?.trim());
+    return { fixture, headings, counts };
+  }
+
+  it('shows the English labels by default', () => {
+    const { headings, counts } = render();
+    expect(counts()).toEqual(['Total animals: 18', 'Domesticated: 2']);
+    expect(headings()).toEqual(['By class', 'By IUCN status', 'By habitat type']);
+  });
+
+  it('shows the German labels when German is stored', () => {
+    localStorage.setItem('language', 'de');
+    const { headings, counts } = render();
+    expect(counts()).toEqual(['Tiere insgesamt: 18', 'Haustiere: 2']);
+    expect(headings()).toEqual(['Nach Klasse', 'Nach IUCN-Status', 'Nach Lebensraumtyp']);
+  });
+
+  it('updates the labels when the language is switched', () => {
+    const { fixture, headings, counts } = render();
+    TestBed.inject(LanguageService).setLanguage('de');
+    fixture.detectChanges();
+    expect(counts()[0]).toBe('Tiere insgesamt: 18');
+    expect(headings()[0]).toBe('Nach Klasse');
   });
 });
