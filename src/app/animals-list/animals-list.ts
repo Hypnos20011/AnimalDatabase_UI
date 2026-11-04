@@ -1,19 +1,28 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  effect,
+  inject,
+  Injector,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { NavigationStart, Router, RouterLink } from '@angular/router';
 import { AnimalService } from '../shared/animal.service';
 import { Animal } from '../animal-model/animal.model';
 import { AnimalListState, SortOption } from './animal-list-state';
 import { SearchService } from './search.service';
 import { TopSearch } from '../animal-model/top-search.model';
 import { matchAnimal, matchHint, matchRank, normalizeText, SearchMatch } from './animal-search';
-import { Subscription } from 'rxjs';
+import { filter, Subscription } from 'rxjs';
 import { wikimediaSrcset } from '../shared/wikimedia-image';
 import { parseTopSearchDays, TOP_SEARCH_WINDOWS } from './top-search-window';
 import { indexLabel, pickActive } from './active-animal';
 import { iucnCode, iucnLabel, iucnRank } from '../shared/iucn';
 import { LanguageService } from '../shared/i18n/language.service';
 import { TranslationKey } from '../shared/i18n/en';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-animals-list',
@@ -30,6 +39,7 @@ export class AnimalsList {
   private state = inject(AnimalListState);
   private searchService = inject(SearchService);
   protected i18n = inject(LanguageService);
+  private injector = inject(Injector);
 
   animals = signal<Animal[]>([]);
   loading = signal(true);
@@ -219,6 +229,14 @@ export class AnimalsList {
   readonly iucnLabel = iucnLabel;
 
   constructor() {
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationStart),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => {
+        this.state.scrollY.set(window.scrollY);
+      });
     effect(() => {
       const visible = this.filteredAnimals();
       const pool = visible.length > 0 ? visible : this.animals();
@@ -229,6 +247,9 @@ export class AnimalsList {
       next: (data) => {
         this.animals.set(data);
         this.loading.set(false);
+        afterNextRender(() => window.scrollTo(0, this.state.scrollY()), {
+          injector: this.injector,
+        });
       },
       error: () => {
         this.error.set(true);
