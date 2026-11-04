@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { AnimalsList } from './animals-list';
 import { AnimalService } from '../shared/animal.service';
 import { SearchService } from './search.service';
@@ -262,5 +262,31 @@ describe('AnimalsList translation', () => {
     search().dispatchEvent(new Event('input'));
     fixture.detectChanges();
     expect(hint()).toBe('Treffer in der Verbreitung');
+  });
+
+  it('shows a translated error when the animals cannot be loaded', async () => {
+    localStorage.setItem('language', 'de');
+    TestBed.configureTestingModule({
+      imports: [AnimalsList],
+      providers: [
+        provideRouter([]),
+        {
+          provide: AnimalService,
+          useValue: { getAll: vi.fn(() => throwError(() => new Error('Http failure response'))) },
+        },
+        { provide: SearchService, useValue: { getTop: vi.fn(() => of([])), record: vi.fn(() => of(undefined)) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(AnimalsList);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    const message = () => element.querySelector('.error-message')!.textContent!.trim();
+    expect(message()).toBe('Die Tiere konnten nicht geladen werden. Bitte versuche es sp\u00e4ter noch einmal.');
+    expect(message()).not.toContain('Http failure');
+    TestBed.inject(LanguageService).setLanguage('en');
+    fixture.detectChanges();
+    expect(message()).toBe('Could not load the animals. Please try again later.');
   });
 });

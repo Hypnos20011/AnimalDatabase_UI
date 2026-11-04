@@ -33,7 +33,7 @@ export class AnimalsList {
 
   animals = signal<Animal[]>([]);
   loading = signal(true);
-  error = signal('');
+  error = signal(false);
 
   query = this.state.query;
   selectedClasses = this.state.selectedClasses;
@@ -230,8 +230,8 @@ export class AnimalsList {
         this.animals.set(data);
         this.loading.set(false);
       },
-      error: (err) => {
-        this.error.set(err.message ?? 'Could not load animals');
+      error: () => {
+        this.error.set(true);
         this.loading.set(false);
       },
     });

@@ -29,6 +29,7 @@ export const de: Record<TranslationKey, string> = {
   'list.top.windowLabel': 'Zeitraum der Top-Suchen',
   'list.loading': 'Wird geladen...',
   'list.empty': 'Keine Tiere passen zu deinen Filtern.',
+  'list.loadError': 'Die Tiere konnten nicht geladen werden. Bitte versuche es später noch einmal.',
   'list.sort.relevance': 'Beste Treffer',
   'list.sort.nameAsc': 'Name (A bis Z)',
   'list.sort.nameDesc': 'Name (Z bis A)',

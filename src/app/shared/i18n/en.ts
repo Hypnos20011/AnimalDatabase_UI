@@ -27,6 +27,7 @@ export const en = {
   'list.top.windowLabel': 'Top searches time window',
   'list.loading': 'Loading...',
   'list.empty': 'No animals match your filters.',
+  'list.loadError': 'Could not load the animals. Please try again later.',
   'list.sort.relevance': 'Best match',
   'list.sort.nameAsc': 'Name (A to Z)',
   'list.sort.nameDesc': 'Name (Z to A)',

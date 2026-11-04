@@ -223,7 +223,7 @@
 }
 
 @if (error()) {
-  <p class="error-message" role="alert">{{ error() }}</p>
+  <p class="error-message" role="alert">{{ i18n.t('list.loadError') }}</p>
 }
 
 @if (!loading() && !error() && filteredAnimals().length === 0) {
