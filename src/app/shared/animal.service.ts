@@ -5,18 +5,21 @@ import { Animal, NewAnimal } from '../animal-model/animal.model';
 import { AnimalImage } from '../animal-model/animal-image.model';
 import { WikipediaImport } from '../animal-model/wikipedia-import.model';
 import { environment } from '../../environments/environment';
+import { Language } from './i18n/languages';
 
 @Injectable({ providedIn: 'root' })
 export class AnimalService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/animals`;
 
-  getAll(): Observable<Animal[]> {
-    return this.http.get<Animal[]>(this.apiUrl);
+  getAll(language?: Language): Observable<Animal[]> {
+    return this.http.get<Animal[]>(this.apiUrl, { params: language ? { lang: language } : {} });
   }
 
-  getById(id: number): Observable<Animal> {
-    return this.http.get<Animal>(`${this.apiUrl}/${id}`);
+  getById(id: number, language?: Language): Observable<Animal> {
+    return this.http.get<Animal>(`${this.apiUrl}/${id}`, {
+      params: language ? { lang: language } : {},
+    });
   }
 
   getImages(animalId: number): Observable<AnimalImage[]> {
