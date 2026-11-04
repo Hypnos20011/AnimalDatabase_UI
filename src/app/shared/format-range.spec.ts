@@ -1,4 +1,4 @@
-import { formatNumber, formatRange } from './format-range';
+import { formatNumber, formatRange, RangeWords } from './format-range';
 import { RangePipe } from './range.pipe';
 
 describe('formatRange', () => {
@@ -79,5 +79,30 @@ describe('formatNumber with a language', () => {
   it('drops trailing zeros and rounds whole numbers', () => {
     expect(formatNumber(2.5, 2, 'de')).toBe('2,5');
     expect(formatNumber(20, 0, 'de')).toBe('20');
+  });
+});
+
+describe('formatRange with a language and words', () => {
+  const german: RangeWords = { upTo: 'bis zu', atLeast: 'mindestens' };
+  const jahre = { one: 'Jahr', other: 'Jahre' };
+
+  it('uses the given words for up to and at least', () => {
+    expect(formatRange(null, 30, jahre, 0, 'de', german)).toBe('bis zu 30 Jahre');
+    expect(formatRange(2, null, 'kg', 2, 'de', german)).toBe('mindestens 2 kg');
+  });
+
+  it('formats both ends with German decimals', () => {
+    expect(formatRange(0.5, 1.25, 'kg', 2, 'de', german)).toBe('0,5\u20131,25 kg');
+    expect(formatRange(null, 0.17, 'kg', 2, 'de', german)).toBe('bis zu 0,17 kg');
+  });
+
+  it('picks the singular unit for one', () => {
+    expect(formatRange(1, 1, jahre, 0, 'de', german)).toBe('1 Jahr');
+    expect(formatRange(null, 1, jahre, 0, 'de', german)).toBe('bis zu 1 Jahr');
+  });
+
+  it('falls back to English words when none are given', () => {
+    expect(formatRange(null, 5, 'cm', 1, 'en')).toBe('up to 5 cm');
+    expect(formatRange(2, null, 'cm', 1, 'de')).toBe('at least 2 cm');
   });
 });
