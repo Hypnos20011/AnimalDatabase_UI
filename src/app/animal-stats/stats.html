@@ -5,19 +5,19 @@
   <ul>
     @for (entry of s.byClass | keyvalue; track entry.key) {
 
-      <li>{{ entry.key }}: {{ entry.value }}</li>
+      <li>{{ i18n.tValue('class', entry.key) }}: {{ entry.value }}</li>
     }
   </ul>
   <h3>{{ i18n.t('stats.byIucn') }}</h3>
   <ul>
     @for (entry of s.byIucnStatus | keyvalue; track entry.key) {
-      <li>{{ entry.key }}: {{ entry.value }}</li>
+      <li>{{ i18n.tValue('iucn', entry.key) }}: {{ entry.value }}</li>
     }
   </ul>
   <h3>{{ i18n.t('stats.byHabitat') }}</h3>
   <ul>
     @for (entry of s.byHabitatType | keyvalue; track entry.key) {
-      <li>{{ entry.key }}: {{ entry.value }}</li>
+      <li>{{ i18n.tValue('habitat', entry.key) }}: {{ entry.value }}</li>
     }
   </ul>
 }

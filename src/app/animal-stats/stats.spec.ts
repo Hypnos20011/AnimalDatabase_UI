@@ -10,7 +10,7 @@ const sampleStats: AnimalStats = {
   totalAnimals: 18,
   domesticatedAnimals: 2,
   byClass: { mammal: 9, fish: 2 },
-  byIucnStatus: { LC: 4, unknown: 5 },
+  byIucnStatus: { 'least concern': 4, unknown: 5 },
   byHabitatType: { 'deep sea': 1, forest: 10, unknown: 7 },
 };
 
@@ -82,18 +82,18 @@ describe('Stats page', () => {
   });
 
   it('lists every class with its count', () => {
-    expect(lists(render(sampleStats))[0]).toEqual(['fish: 2', 'mammal: 9']);
+    expect(lists(render(sampleStats))[0]).toEqual(['Fish: 2', 'Mammal: 9']);
   });
 
   it('lists every IUCN status with its count', () => {
-    expect(lists(render(sampleStats))[1]).toEqual(['LC: 4', 'unknown: 5']);
+    expect(lists(render(sampleStats))[1]).toEqual(['Least concern: 4', 'Status unknown: 5']);
   });
 
   it('lists every habitat type with its count under its own heading', () => {
     const page = render(sampleStats);
     const headings = Array.from(page.querySelectorAll('h3')).map((h) => h.textContent?.trim());
     expect(headings[2]).toBe('By habitat type');
-    expect(lists(page)[2]).toEqual(['deep sea: 1', 'forest: 10', 'unknown: 7']);
+    expect(lists(page)[2]).toEqual(['Deep sea: 1', 'Forest: 10', 'Unknown: 7']);
   });
 });
 
@@ -136,6 +136,28 @@ describe('Stats page translation', () => {
     const { headings, counts } = render();
     expect(counts()).toEqual(['Tiere insgesamt: 18', 'Haustiere: 2']);
     expect(headings()).toEqual(['Nach Klasse', 'Nach IUCN-Status', 'Nach Lebensraumtyp']);
+  });
+
+  it('translates the class, IUCN and habitat values in German', () => {
+    localStorage.setItem('language', 'de');
+    const { fixture } = render();
+    const page = fixture.nativeElement as HTMLElement;
+    const lists = Array.from(page.querySelectorAll('ul')).map((list) =>
+      Array.from(list.querySelectorAll('li')).map((item) => item.textContent?.trim()),
+    );
+    expect(lists[0]).toEqual(['Fisch: 2', 'S\u00e4ugetier: 9']);
+    expect(lists[1]).toEqual(['Nicht gef\u00e4hrdet: 4', 'Status unbekannt: 5']);
+    expect(lists[2]).toEqual(['Tiefsee: 1', 'Wald: 10', 'Unbekannt: 7']);
+  });
+
+  it('updates the values when the language is switched', () => {
+    const { fixture } = render();
+    const page = fixture.nativeElement as HTMLElement;
+    const firstClass = () => page.querySelector('ul li')?.textContent?.trim();
+    expect(firstClass()).toBe('Fish: 2');
+    TestBed.inject(LanguageService).setLanguage('de');
+    fixture.detectChanges();
+    expect(firstClass()).toBe('Fisch: 2');
   });
 
   it('updates the labels when the language is switched', () => {
