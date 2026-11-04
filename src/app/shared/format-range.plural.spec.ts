@@ -1,3 +1,4 @@
+import { TestBed } from '@angular/core/testing';
 import { YEARS, formatRange } from './format-range';
 import { RangePipe } from './range.pipe';
 
@@ -32,7 +33,7 @@ describe('formatRange with word units', () => {
   });
 
   it('works through the pipe', () => {
-    const pipe = new RangePipe();
+    const pipe = TestBed.runInInjectionContext(() => new RangePipe());
     expect(pipe.transform(1, 1, YEARS, 0)).toBe('1 year');
     expect(pipe.transform(1, 3, YEARS, 0)).toBe('1–3 years');
   });
