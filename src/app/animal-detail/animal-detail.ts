@@ -9,6 +9,7 @@ import { RangePipe } from '../shared/range.pipe';
 import { ConfirmDialog } from '../shared/confirm-dialog/confirm-dialog';
 import { sameName, wikimediaSrcset } from '../shared/wikimedia-image';
 import { AdminKeyService } from '../admin/admin-key.service';
+import { Language } from '../shared/i18n/languages';
 import { LanguageService } from '../shared/i18n/language.service';
 
 @Component({
@@ -69,15 +70,20 @@ export class AnimalDetail {
   constructor() {
     effect(() => {
       const id = Number(this.id());
-      untracked(() => this.load(id));
+      const language = this.i18n.language();
+      untracked(() => this.load(id, language));
     });
   }
 
-  load(id: number): void {
-    this.loading.set(true);
-    this.animal.set(null);
-    this.showDetails.set(false);
-    this.animalService.getById(id).subscribe({
+  load(id: number, language: Language): void {
+    const sameAnimal = this.animal()?.id === id;
+    if (!sameAnimal) {
+      this.loading.set(true);
+      this.animal.set(null);
+      this.showDetails.set(false);
+      this.loadImages(id);
+    }
+    this.animalService.getById(id, language).subscribe({
       next: (data) => {
         this.animal.set(data);
         this.title.setTitle(`${data.commonName} · Unusual Animals`);
@@ -88,7 +94,6 @@ export class AnimalDetail {
         this.loading.set(false);
       },
     });
-    this.loadImages(id);
   }
 
   loadImages(animalId: number): void {
