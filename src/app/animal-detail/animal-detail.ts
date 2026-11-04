@@ -10,6 +10,7 @@ import { YEARS } from '../shared/format-range';
 import { ConfirmDialog } from '../shared/confirm-dialog/confirm-dialog';
 import { sameName, wikimediaSrcset } from '../shared/wikimedia-image';
 import { AdminKeyService } from '../admin/admin-key.service';
+import { LanguageService } from '../shared/i18n/language.service';
 
 @Component({
   selector: 'app-animal-detail',
@@ -33,6 +34,7 @@ export class AnimalDetail {
   private router = inject(Router);
   private title = inject(Title);
   protected admin = inject(AdminKeyService);
+  protected i18n = inject(LanguageService);
 
   animal = signal<Animal | null>(null);
   loading = signal(true);

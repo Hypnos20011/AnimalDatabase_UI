@@ -30,14 +30,14 @@
           }
         </header>
         @if (!imagesLoading() && images().length === 0) {
-          <p class="no-images">No images uploaded yet.</p>
+          <p class="no-images">{{ i18n.t('detail.noImages') }}</p>
         }
 
         <div class="intro-facts">
           <dl class="facts">
             @if (animal()!.iucnStatus) {
               <div class="fact">
-                <dt>IUCN status</dt>
+                <dt>{{ i18n.t('detail.iucnStatus') }}</dt>
                 <dd>
                   <span class="status" [attr.data-status]="animal()!.iucnStatus">{{
                       animal()!.iucnStatus
@@ -47,7 +47,7 @@
             }
             @if (animal()!.weightKgMin | range: animal()!.weightKgMax : 'kg' : 2; as weight) {
               <div class="fact">
-                <dt>Weight</dt>
+                <dt>{{ i18n.t('detail.weight') }}</dt>
                 <dd>{{ weight }}</dd>
               </div>
             }
@@ -55,75 +55,75 @@
             @let lifespan = animal()!.lifespanYearsMin | range: animal()!.lifespanYearsMax : years : 0;
 
             <div class="fact">
-              <dt>Lifespan</dt>
-              <dd>{{ lifespan || 'Unknown' }}</dd>
+              <dt>{{ i18n.t('detail.lifespan') }}</dt>
+              <dd>{{ lifespan || i18n.t('detail.unknown') }}</dd>
             </div>
             @if (animal()!.habitatType) {
               <div class="fact">
-                <dt>Habitat type</dt>
+                <dt>{{ i18n.t('detail.habitatType') }}</dt>
                 <dd class="habitat-type">{{ animal()!.habitatType }}</dd>
               </div>
             }
             @if (animal()!.habitat) {
               <div class="fact">
-                <dt>Habitat</dt>
+                <dt>{{ i18n.t('detail.habitat') }}</dt>
                 <dd>{{ animal()!.habitat }}</dd>
               </div>
             }
             @if (animal()!.rangeRegion) {
               <div class="fact">
-                <dt>Range</dt>
+                <dt>{{ i18n.t('detail.range') }}</dt>
                 <dd>{{ animal()!.rangeRegion }}</dd>
               </div>
             }
           </dl>
 
           <button type="button" class="more btn btn-secondary btn-sm" (click)="toggleDetails()">
-            {{ showDetails() ? 'Hide details' : 'More details' }}
+            {{ showDetails() ? i18n.t('detail.hideDetails') : i18n.t('detail.moreDetails') }}
           </button>
 
           @if (showDetails()) {
             <dl class="facts extra">
               @if (animal()!.family) {
                 <div class="fact">
-                  <dt>Family</dt>
+                  <dt>{{ i18n.t('detail.family') }}</dt>
                   <dd>{{ animal()!.family }}</dd>
                 </div>
               }
               @if (animal()!.taxonomicClass) {
                 <div class="fact">
-                  <dt>Class</dt>
+                  <dt>{{ i18n.t('detail.class') }}</dt>
                   <dd>{{ animal()!.taxonomicClass }}</dd>
                 </div>
               }
               @if (animal()!.isDomesticated) {
                 <div class="fact">
-                  <dt>Type</dt>
-                  <dd>Domesticated</dd>
+                  <dt>{{ i18n.t('detail.type') }}</dt>
+                  <dd>{{ i18n.t('detail.domesticated') }}</dd>
                 </div>
               } @else {
                 <div class="fact">
-                  <dt>Type</dt>
-                  <dd>Wild</dd>
+                  <dt>{{ i18n.t('detail.type') }}</dt>
+                  <dd>{{ i18n.t('detail.wild') }}</dd>
                 </div>
               }
               @if (animal()!.sizeLengthCmMin | range: animal()!.sizeLengthCmMax : 'cm' : 1;
                 as bodyLength) {
                 <div class="fact">
-                  <dt>Body length</dt>
+                  <dt>{{ i18n.t('detail.bodyLength') }}</dt>
                   <dd>{{ bodyLength }}</dd>
                 </div>
               }
               @if (animal()!.sizeHeightCmMin | range: animal()!.sizeHeightCmMax : 'cm' : 1;
                 as shoulderHeight) {
                 <div class="fact">
-                  <dt>Shoulder height</dt>
+                  <dt>{{ i18n.t('detail.shoulderHeight') }}</dt>
                   <dd>{{ shoulderHeight }}</dd>
                 </div>
               }
               @if (animal()!.updatedAt > animal()!.createdAt) {
                 <div class="fact">
-                  <dt>Last updated</dt>
+                  <dt>{{ i18n.t('detail.lastUpdated') }}</dt>
                   <dd>{{ animal()!.updatedAt | date:'d MMM y' }}</dd>
                 </div>
               }
@@ -135,20 +135,20 @@
 
     @if (funFact()) {
       <aside class="fun-fact">
-        <span class="fun-fact-label">Fun fact</span>
+        <span class="fun-fact-label">{{ i18n.t('detail.funFact') }}</span>
         <p>{{ funFact() }}</p>
       </aside>
     }
 
     @if (profileText()) {
       <section class="profile">
-        <h3>Profile</h3>
+        <h3>{{ i18n.t('detail.profile') }}</h3>
         <p>{{ profileText() }}</p>
       </section>
     }
 
     @if (moreImages().length > 0) {
-      <section class="gallery" aria-label="More pictures">
+      <section class="gallery" [attr.aria-label]="i18n.t('detail.morePictures')">
         @for (img of moreImages(); track img.id) {
           <figure>
             <img
@@ -169,7 +169,7 @@
     }
 
     <div class="actions">
-      <button type="button" class="back btn btn-secondary" (click)="onClose()">Back to list</button>
+      <button type="button" class="back btn btn-secondary" (click)="onClose()">{{ i18n.t('detail.back') }}</button>
       @if (admin.unlocked()) {
         <a class="edit btn btn-primary" [routerLink]="['/animals', animal()!.id, 'edit']">Edit</a>
         <button
@@ -196,9 +196,9 @@
   </article>
 } @else {
   @if (loading()) {
-    <p class="state-message">Loading...</p>
+    <p class="state-message">{{ i18n.t('detail.loading') }}</p>
   } @else {
-    <p class="state-message">Animal not found.</p>
-    <button type="button" class="back btn btn-secondary" (click)="onClose()">Back to list</button>
+    <p class="state-message">{{ i18n.t('detail.notFound') }}</p>
+    <button type="button" class="back btn btn-secondary" (click)="onClose()">{{ i18n.t('detail.back') }}</button>
   }
 }
