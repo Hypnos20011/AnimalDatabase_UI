@@ -14,6 +14,7 @@ import { Language } from '../shared/i18n/languages';
 import { LanguageService } from '../shared/i18n/language.service';
 import { RecentlyViewedService } from '../animals-list/recently-viewed.service';
 import { FavoritesService } from '../animals-list/favorites.service';
+import { iucnRedListSearchUrl } from '../shared/iucn';
 
 @Component({
   selector: 'app-animal-detail',
@@ -74,6 +75,7 @@ export class AnimalDetail {
       name: this.animal()?.commonName ?? '',
     }),
   );
+  iucnRedListUrl = computed(() => iucnRedListSearchUrl(this.animal()?.scientificName));
   imagesLoading = signal(true);
   showDetails = signal(false);
   confirmOpen = signal(false);

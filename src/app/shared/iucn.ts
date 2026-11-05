@@ -30,3 +30,12 @@ export function iucnCode(status: string | null | undefined): string {
 export function iucnLabel(status: string | null | undefined): string {
   return status?.trim() ? status.trim().toLowerCase() : 'unknown';
 }
+
+const IUCN_SEARCH_BASE = 'https://www.iucnredlist.org/search';
+
+/** Official IUCN Red List search URL for a scientific name, or null when none. */
+export function iucnRedListSearchUrl(scientificName: string | null | undefined): string | null {
+  const query = scientificName?.trim();
+  if (!query) return null;
+  return `${IUCN_SEARCH_BASE}?query=${encodeURIComponent(query)}`;
+}

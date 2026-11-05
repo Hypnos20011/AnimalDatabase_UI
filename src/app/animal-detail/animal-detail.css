@@ -125,6 +125,15 @@
   font-size: 0.85rem;
 }
 
+a.status {
+  text-decoration: none;
+}
+
+a.status:hover,
+a.status:focus-visible {
+  text-decoration: underline;
+}
+
 .extra {
   margin: 1.25rem 0 0;
 }

@@ -1,4 +1,4 @@
-import { NO_STATUS_CODE, iucnCode, iucnLabel } from './iucn';
+import { NO_STATUS_CODE, iucnCode, iucnLabel, iucnRedListSearchUrl } from './iucn';
 
 describe('iucnCode', () => {
   it('maps every IUCN status to its two-letter code', () => {
@@ -31,5 +31,32 @@ describe('iucnLabel', () => {
   it('spells the status out for screen readers', () => {
     expect(iucnLabel('Endangered')).toBe('endangered');
     expect(iucnLabel(null)).toBe('unknown');
+  });
+});
+
+describe('iucnRedListSearchUrl', () => {
+  it('builds the official search URL from a scientific name', () => {
+    expect(iucnRedListSearchUrl('Okapia johnstoni')).toBe(
+      'https://www.iucnredlist.org/search?query=Okapia%20johnstoni',
+    );
+  });
+
+  it('encodes special characters in the query', () => {
+    expect(iucnRedListSearchUrl('Panthera leo & friends')).toBe(
+      'https://www.iucnredlist.org/search?query=Panthera%20leo%20%26%20friends',
+    );
+  });
+
+  it('trims surrounding spaces', () => {
+    expect(iucnRedListSearchUrl('  Ambystoma mexicanum  ')).toBe(
+      'https://www.iucnredlist.org/search?query=Ambystoma%20mexicanum',
+    );
+  });
+
+  it('returns null when there is no usable scientific name', () => {
+    expect(iucnRedListSearchUrl(null)).toBeNull();
+    expect(iucnRedListSearchUrl(undefined)).toBeNull();
+    expect(iucnRedListSearchUrl('')).toBeNull();
+    expect(iucnRedListSearchUrl('   ')).toBeNull();
   });
 });

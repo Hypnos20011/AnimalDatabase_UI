@@ -62,6 +62,7 @@ export const de: Record<TranslationKey, string> = {
   'list.match.range': 'Treffer in der Verbreitung',
   'detail.noImages': 'Noch keine Bilder hochgeladen.',
   'detail.iucnStatus': 'IUCN-Status',
+  'detail.iucnRedListLink': 'IUCN-Rote-Liste-Suche für diese Art öffnen',
   'detail.weight': 'Gewicht',
   'detail.lifespan': 'Lebensdauer',
   'detail.unknown': 'Unbekannt',

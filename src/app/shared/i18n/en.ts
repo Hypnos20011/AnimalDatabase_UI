@@ -60,6 +60,7 @@ export const en = {
   'list.match.range': 'Matches range',
   'detail.noImages': 'No images uploaded yet.',
   'detail.iucnStatus': 'IUCN status',
+  'detail.iucnRedListLink': 'Open IUCN Red List search for this species',
   'detail.weight': 'Weight',
   'detail.lifespan': 'Lifespan',
   'detail.unknown': 'Unknown',
