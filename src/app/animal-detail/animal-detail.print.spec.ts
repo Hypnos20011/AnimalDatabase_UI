@@ -72,17 +72,18 @@ describe('AnimalDetail print button', () => {
     expect(button().getAttribute('title')).toBe('Print Okapi');
   });
 
-  it('groups favorite, share and print in one labelled toolbar', async () => {
+  it('groups favorite, share, print and compare in one labelled toolbar', async () => {
     const { element, button } = await setup();
 
     const toolbar = element.querySelector('.title-row .detail-toolbar')!;
     expect(toolbar.getAttribute('role')).toBe('group');
     expect(toolbar.getAttribute('aria-label')).toBe('Actions');
     const buttons = toolbar.querySelectorAll('button');
-    expect(buttons.length).toBe(3);
+    expect(buttons.length).toBe(4);
     expect(buttons[0].classList).toContain('favorite-toggle');
     expect(buttons[1].classList).toContain('share-toggle');
     expect(buttons[2]).toBe(button());
+    expect(buttons[3].classList).toContain('compare-toggle');
     expect(element.querySelector('.title-row > h2 + .detail-toolbar')).toBe(toolbar);
   });
 

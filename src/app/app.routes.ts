@@ -5,6 +5,7 @@ import { AnimalDetail } from './animal-detail/animal-detail';
 import { AdminUnlock } from './admin/admin-unlock';
 import { adminGuard } from './admin/admin.guard';
 import { Stats } from './animal-stats/stats';
+import { Compare } from './compare/compare';
 
 export const routes: Routes = [
   { path: '', component: AnimalsList, title: 'Unusual Animals' },
@@ -23,5 +24,6 @@ export const routes: Routes = [
   },
   { path: 'animals/:id', component: AnimalDetail, title: 'Unusual Animals' },
   { path: 'stats', component: Stats, title: 'Stats - Unusual Animals' },
+  { path: 'compare', component: Compare, title: 'Compare · Unusual Animals' },
   { path: '**', redirectTo: '' },
 ];

@@ -34,6 +34,7 @@ Tests use Vitest with jsdom, so no browser is needed. The production build goes 
 | `src/app/animal-detail`| Detail page for one animal                            |
 | `src/app/animal-form`  | Admin form with Wikipedia lookup                      |
 | `src/app/animal-stats` | Stats page                                            |
+| `src/app/compare`      | Compare two animals side by side                      |
 | `src/app/admin`        | Admin key unlock, guard and HTTP interceptor          |
 | `src/app/shared`       | Shared services, formatting and `i18n` dictionaries   |
 

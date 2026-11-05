@@ -15,6 +15,8 @@ import { LanguageService } from '../shared/i18n/language.service';
 import { RecentlyViewedService } from '../animals-list/recently-viewed.service';
 import { FavoritesService } from '../animals-list/favorites.service';
 import { iucnRedListSearchUrl } from '../shared/iucn';
+import { splitProfile } from '../shared/profile';
+import { CompareService } from '../compare/compare.service';
 
 export const SHARE_STATUS_MS = 3000;
 
@@ -48,6 +50,7 @@ export class AnimalDetail {
   protected i18n = inject(LanguageService);
   private recentlyViewed = inject(RecentlyViewedService);
   private favorites = inject(FavoritesService);
+  protected compare = inject(CompareService);
 
   animal = signal<Animal | null>(null);
   loading = signal(true);
@@ -57,15 +60,7 @@ export class AnimalDetail {
   heroFailed = signal(false);
   noPhoto = computed(() => !this.imagesLoading() && (!this.heroImage() || this.heroFailed()));
 
-  private profileParts = computed(() => {
-    const profile = this.animal()?.profile ?? '';
-    const match = profile.match(/\s*Fun fact:\s*/i);
-    if (!match || match.index === undefined) return { text: profile.trim(), funFact: '' };
-    return {
-      text: profile.slice(0, match.index).trim(),
-      funFact: profile.slice(match.index + match[0].length).trim(),
-    };
-  });
+  private profileParts = computed(() => splitProfile(this.animal()?.profile));
   profileText = computed(() => this.profileParts().text);
   funFact = computed(() => this.profileParts().funFact);
   isFavorite = computed(() => {
@@ -77,6 +72,29 @@ export class AnimalDetail {
       name: this.animal()?.commonName ?? '',
     }),
   );
+  isCompared = computed(() => {
+    const animal = this.animal();
+    return !!animal && this.compare.ids().includes(animal.id);
+  });
+  compareLabel = computed(() =>
+    this.i18n.t(this.isCompared() ? 'compare.remove' : 'compare.add', {
+      name: this.animal()?.commonName ?? '',
+    }),
+  );
+  compareHint = computed(() => {
+    if (!this.isCompared()) return null;
+    const selection = this.compare.selection();
+    if (this.compare.ready()) {
+      return {
+        ready: true,
+        text: this.i18n.t('compare.ready', {
+          a: selection[0].commonName,
+          b: selection[1].commonName,
+        }),
+      };
+    }
+    return { ready: false, text: this.i18n.t('compare.selected', { count: selection.length }) };
+  });
   shareLabel = computed(() => this.i18n.t('detail.share', { name: this.animal()?.commonName ?? '' }));
   printLabel = computed(() => this.i18n.t('detail.print', { name: this.animal()?.commonName ?? '' }));
   shareStatus = signal<'copied' | 'error' | null>(null);
@@ -119,6 +137,7 @@ export class AnimalDetail {
       next: (data) => {
         this.animal.set(data);
         this.recentlyViewed.record(data.id, data.commonName);
+        this.compare.rename(data.id, data.commonName);
         this.title.setTitle(`${data.commonName} · Unusual Animals`);
         this.loading.set(false);
       },
@@ -153,6 +172,12 @@ export class AnimalDetail {
     const animal = this.animal();
     if (!animal) return;
     this.favorites.toggle(animal.id, animal.commonName);
+  }
+
+  toggleCompare(): void {
+    const animal = this.animal();
+    if (!animal) return;
+    this.compare.toggle(animal.id, animal.commonName);
   }
 
   async share(): Promise<void> {

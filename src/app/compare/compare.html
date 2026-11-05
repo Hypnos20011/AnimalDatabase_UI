@@ -1,0 +1,99 @@
+<section class="compare" aria-labelledby="compare-title">
+  <div class="compare-head">
+    <h2 id="compare-title">{{ i18n.t('compare.title') }}</h2>
+    @if (selection().length > 0) {
+      <div class="compare-controls">
+        @if (ready()) {
+          <button type="button" class="swap btn btn-secondary btn-sm" (click)="swap()">
+            {{ i18n.t('compare.swap') }}
+          </button>
+        }
+        <button type="button" class="clear btn btn-secondary btn-sm" (click)="clear()">
+          {{ i18n.t('compare.clear') }}
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (!ready()) {
+    <div class="compare-empty">
+      @if (pending(); as first) {
+        <p class="state-message">{{ i18n.t('compare.needOne', { name: first.commonName }) }}</p>
+      } @else {
+        <p class="state-message">{{ i18n.t('compare.empty') }}</p>
+      }
+      <a class="browse btn btn-primary" routerLink="/">{{ i18n.t('compare.browse') }}</a>
+    </div>
+  } @else if (error()) {
+    <p class="error-message" role="alert">{{ i18n.t('compare.loadError') }}</p>
+  } @else if (animals().length === 0) {
+    <p class="state-message">{{ i18n.t('detail.loading') }}</p>
+  } @else {
+    <div class="table-wrap">
+      <table class="compare-table">
+        <caption class="visually-hidden">
+          {{
+            i18n.t('compare.caption', { a: animals()[0].commonName, b: animals()[1].commonName })
+          }}
+        </caption>
+        <thead>
+          <tr>
+            <td></td>
+            @for (animal of animals(); track animal.id) {
+              <th scope="col" class="animal-head">
+                <span class="thumb" aria-hidden="true">
+                  @if (animal.thumbnailUrl; as thumb) {
+                    <img
+                      [src]="thumb"
+                      [attr.srcset]="srcset(thumb)"
+                      sizes="160px"
+                      alt=""
+                      decoding="async"
+                      (error)="$any($event.target).style.visibility = 'hidden'"
+                    />
+                  }
+                </span>
+                <a class="animal-name" [routerLink]="['/animals', animal.id]">{{
+                  animal.commonName
+                }}</a>
+                <button
+                  type="button"
+                  class="remove"
+                  [attr.aria-label]="removeLabel(animal)"
+                  [attr.title]="removeLabel(animal)"
+                  (click)="remove(animal.id)"
+                >
+                  {{ i18n.t('compare.removeShort') }}
+                </button>
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.key) {
+            <tr [class.is-same]="row.same" [attr.data-row]="row.key">
+              <th scope="row">{{ row.label }}</th>
+              @for (value of row.values; track $index) {
+                <td>{{ value }}</td>
+              }
+            </tr>
+          }
+          <tr data-row="highlight">
+            <th scope="row">{{ i18n.t('compare.highlight') }}</th>
+            @for (highlight of highlights(); track $index) {
+              <td class="snippet">
+                @if (highlight) {
+                  <span class="snippet-label">{{ highlightLabel(highlight.kind) }}</span>
+                  {{ highlight.text }}
+                } @else {
+                  {{ i18n.t('detail.unknown') }}
+                }
+              </td>
+            }
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="same-note">{{ i18n.t('compare.sameNote') }}</p>
+  }
+</section>

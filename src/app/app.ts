@@ -5,6 +5,7 @@ import { AdminKeyService } from './admin/admin-key.service';
 import { LanguageService } from './shared/i18n/language.service';
 import { SUPPORTED_LANGUAGES } from './shared/i18n/languages';
 import { UpperCasePipe } from '@angular/common';
+import { CompareService } from './compare/compare.service';
 
 @Component({
   selector: 'app-root',
@@ -16,6 +17,7 @@ export class App {
   private random = inject(RandomAnimalService);
   protected admin = inject(AdminKeyService);
   protected i18n = inject(LanguageService);
+  protected compare = inject(CompareService);
   protected readonly languages = SUPPORTED_LANGUAGES;
   protected readonly title = signal('Unusual Animals');
 

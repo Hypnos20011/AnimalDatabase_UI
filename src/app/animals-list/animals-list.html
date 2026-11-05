@@ -242,6 +242,23 @@
   </section>
 }
 
+@if (compare.count() > 0) {
+  <section class="strip compare-strip" aria-labelledby="compare-strip-title">
+    <h3 id="compare-strip-title">{{ i18n.t('compare.strip') }}</h3>
+    <ul>
+      @for (item of compare.selection(); track item.id) {
+        <li>
+          <a class="compare-link" [routerLink]="['/animals', item.id]">{{ item.commonName }}</a>
+        </li>
+      }
+    </ul>
+    @if (compare.ready()) {
+      <a class="compare-now" routerLink="/compare">{{ i18n.t('compare.now') }}</a>
+    }
+    <button type="button" class="chip compare-clear" (click)="compare.clear()">{{ i18n.t('compare.clear') }}</button>
+  </section>
+}
+
 @if (recent().length > 0) {
   <section class="strip recently-viewed" aria-labelledby="recently-viewed-title">
     <h3 id="recently-viewed-title">{{ i18n.t('list.recentlyViewed') }}</h3>
@@ -323,6 +340,22 @@
             (click)="toggleFavorite(animal)"
           >
             <span aria-hidden="true">{{ isFavorite(animal.id) ? '★' : '☆' }}</span>
+          </button>
+          <button
+            type="button"
+            class="compare-toggle"
+            [class.is-compared]="isCompared(animal.id)"
+            [attr.aria-pressed]="isCompared(animal.id)"
+            [attr.aria-label]="compareLabel(animal)"
+            [attr.title]="compareLabel(animal)"
+            (click)="toggleCompare(animal)"
+          >
+            <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7 4L3 8l4 4" />
+              <path d="M3 8h14" />
+              <path d="M17 12l4 4-4 4" />
+              <path d="M21 16H7" />
+            </svg>
           </button>
         </li>
       }

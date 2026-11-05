@@ -74,10 +74,35 @@
                   <path d="M7 14h10v7H7z" />
                 </svg>
               </button>
+              <button
+                type="button"
+                class="compare-toggle"
+                [class.is-compared]="isCompared()"
+                [attr.aria-pressed]="isCompared()"
+                [attr.aria-label]="compareLabel()"
+                [attr.title]="compareLabel()"
+                (click)="toggleCompare()"
+              >
+                <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M7 4L3 8l4 4" />
+                  <path d="M3 8h14" />
+                  <path d="M17 12l4 4-4 4" />
+                  <path d="M21 16H7" />
+                </svg>
+              </button>
             </div>
           </div>
           @if (animal()!.scientificName) {
             <em class="sci">{{ animal()!.scientificName }}</em>
+          }
+          @if (compareHint(); as hint) {
+            <p class="compare-hint">
+              @if (hint.ready) {
+                <a routerLink="/compare">{{ hint.text }}</a>
+              } @else {
+                {{ hint.text }}
+              }
+            </p>
           }
           <p class="share-status" [class.is-error]="shareStatus() === 'error'" role="status" aria-live="polite">{{ shareMessage() }}</p>
         </header>

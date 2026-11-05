@@ -27,6 +27,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Language } from '../shared/i18n/languages';
 import { RecentlyViewedService } from './recently-viewed.service';
 import { FavoritesService } from './favorites.service';
+import { CompareService } from '../compare/compare.service';
 
 @Component({
   selector: 'app-animals-list',
@@ -45,6 +46,7 @@ export class AnimalsList {
   protected i18n = inject(LanguageService);
   private recentlyViewed = inject(RecentlyViewedService);
   private favoritesService = inject(FavoritesService);
+  protected compare = inject(CompareService);
   private injector = inject(Injector);
 
   animals = signal<Animal[]>([]);
@@ -370,6 +372,20 @@ export class AnimalsList {
 
   favoriteLabel(animal: Animal): string {
     return this.i18n.t(this.isFavorite(animal.id) ? 'favorites.remove' : 'favorites.add', {
+      name: animal.commonName,
+    });
+  }
+
+  isCompared(id: number): boolean {
+    return this.compare.has(id);
+  }
+
+  toggleCompare(animal: Animal): void {
+    this.compare.toggle(animal.id, animal.commonName);
+  }
+
+  compareLabel(animal: Animal): string {
+    return this.i18n.t(this.isCompared(animal.id) ? 'compare.remove' : 'compare.add', {
       name: animal.commonName,
     });
   }
