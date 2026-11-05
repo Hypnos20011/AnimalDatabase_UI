@@ -5,8 +5,10 @@ import { routes } from './app.routes';
 import { adminKeyInterceptor } from './admin/admin-key.interceptor';
 import { registerLocaleData } from '@angular/common';
 import localeDe from '@angular/common/locales/de';
+import localeFr from '@angular/common/locales/fr';
 
 registerLocaleData(localeDe);
+registerLocaleData(localeFr);
 
 export const appConfig: ApplicationConfig = {
   providers: [

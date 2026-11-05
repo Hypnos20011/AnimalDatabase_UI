@@ -98,6 +98,7 @@ describe('App', () => {
       expect(options).toEqual([
         ['en', 'EN'],
         ['de', 'DE'],
+        ['fr', 'FR'],
       ]);
     });
 

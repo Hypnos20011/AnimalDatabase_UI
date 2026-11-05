@@ -10,7 +10,8 @@ describe('isLanguage', () => {
   });
 
   it('rejects unknown codes, wrong casing and null', () => {
-    expect(isLanguage('fr')).toBe(false);
+    expect(isLanguage('it')).toBe(false);
+    expect(isLanguage('FR')).toBe(false);
     expect(isLanguage('DE')).toBe(false);
     expect(isLanguage('')).toBe(false);
     expect(isLanguage(null)).toBe(false);
