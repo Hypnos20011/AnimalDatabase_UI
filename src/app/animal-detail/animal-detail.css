@@ -48,7 +48,8 @@
 }
 
 .favorite-toggle,
-.share-toggle {
+.share-toggle,
+.print-toggle {
   flex: 0 0 auto;
   margin-top: 0.25rem;
   padding: 0.25rem 0.5rem;
@@ -65,12 +66,15 @@
 .favorite-toggle:focus-visible,
 .favorite-toggle.is-favorite,
 .share-toggle:hover,
-.share-toggle:focus-visible {
+.share-toggle:focus-visible,
+.print-toggle:hover,
+.print-toggle:focus-visible {
   color: var(--color-accent);
   border-color: var(--color-accent);
 }
 
-.share-toggle svg {
+.share-toggle svg,
+.print-toggle svg {
   display: block;
 }
 
@@ -283,4 +287,48 @@ a.status:focus-visible {
 
 .image-credit a {
   color: inherit;
+}
+
+@media print {
+  .favorite-toggle,
+  .share-toggle,
+  .print-toggle,
+  .share-status,
+  .more,
+  .gallery,
+  .actions {
+    display: none;
+  }
+
+  .intro {
+    display: block;
+  }
+
+  .hero-image {
+    width: auto;
+    max-height: 9cm;
+    margin: 0 auto;
+  }
+
+  .detail-header h2 {
+    font-size: 2.25rem;
+  }
+
+  .detail-header .sci,
+  .profile p {
+    color: var(--color-text);
+  }
+
+  .fact,
+  .fun-fact {
+    break-inside: avoid;
+  }
+
+  .fun-fact {
+    background: none;
+  }
+
+  .source a::after {
+    content: ' (' attr(href) ')';
+  }
 }

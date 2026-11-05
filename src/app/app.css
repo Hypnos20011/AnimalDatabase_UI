@@ -156,3 +156,22 @@
     padding-top: 1.5rem;
   }
 }
+
+@media print {
+  :host {
+    min-height: 0;
+  }
+
+  .site-header,
+  .site-footer {
+    display: none;
+  }
+
+  .site-main {
+    padding: 0;
+  }
+
+  .site-credits {
+    margin-top: 1.5rem;
+  }
+}

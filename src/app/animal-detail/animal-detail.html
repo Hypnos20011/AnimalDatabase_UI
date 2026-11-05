@@ -60,6 +60,19 @@
                 <path d="M7 8l5-5 5 5" />
               </svg>
             </button>
+            <button
+              type="button"
+              class="print-toggle"
+              [attr.aria-label]="printLabel()"
+              [attr.title]="printLabel()"
+              (click)="print()"
+            >
+              <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M7 9V3h10v6" />
+                <path d="M7 17H5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2" />
+                <path d="M7 14h10v7H7z" />
+              </svg>
+            </button>
           </div>
           @if (animal()!.scientificName) {
             <em class="sci">{{ animal()!.scientificName }}</em>

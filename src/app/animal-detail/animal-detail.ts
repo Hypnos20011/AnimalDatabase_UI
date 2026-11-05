@@ -78,6 +78,7 @@ export class AnimalDetail {
     }),
   );
   shareLabel = computed(() => this.i18n.t('detail.share', { name: this.animal()?.commonName ?? '' }));
+  printLabel = computed(() => this.i18n.t('detail.print', { name: this.animal()?.commonName ?? '' }));
   shareStatus = signal<'copied' | 'error' | null>(null);
   shareMessage = computed(() => {
     const status = this.shareStatus();
@@ -178,6 +179,10 @@ export class AnimalDetail {
     } catch {
       this.setShareStatus('error');
     }
+  }
+
+  print(): void {
+    window.print();
   }
 
   private setShareStatus(status: 'copied' | 'error' | null): void {

@@ -84,6 +84,7 @@ export const en = {
   'detail.share.text': 'Check out the {name} on Unusual Animals',
   'detail.share.copied': 'Link copied to clipboard',
   'detail.share.error': 'Could not share or copy the link',
+  'detail.print': 'Print {name}',
   'detail.imageCredit': 'Credit',
   'detail.morePictures': 'More pictures',
   'detail.back': 'Back to list',

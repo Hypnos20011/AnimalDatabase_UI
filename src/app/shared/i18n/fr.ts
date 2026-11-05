@@ -86,6 +86,7 @@ export const fr: Record<TranslationKey, string> = {
   'detail.share.text': 'Découvre {name} sur Unusual Animals',
   'detail.share.copied': 'Lien copié dans le presse-papiers',
   'detail.share.error': 'Impossible de partager ou de copier le lien',
+  'detail.print': 'Imprimer {name}',
   'detail.imageCredit': 'Crédit',
   'detail.morePictures': 'Plus de photos',
   'detail.back': 'Retour à la liste',

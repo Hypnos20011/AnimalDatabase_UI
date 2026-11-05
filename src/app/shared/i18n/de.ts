@@ -86,6 +86,7 @@ export const de: Record<TranslationKey, string> = {
   'detail.share.text': 'Entdecke {name} bei Unusual Animals',
   'detail.share.copied': 'Link in die Zwischenablage kopiert',
   'detail.share.error': 'Link konnte nicht geteilt oder kopiert werden',
+  'detail.print': '{name} drucken',
   'detail.imageCredit': 'Bildnachweis',
   'detail.morePictures': 'Weitere Bilder',
   'detail.back': 'Zurück zur Liste',
