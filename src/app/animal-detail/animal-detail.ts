@@ -12,6 +12,7 @@ import { sameName, wikimediaSrcset } from '../shared/wikimedia-image';
 import { AdminKeyService } from '../admin/admin-key.service';
 import { Language } from '../shared/i18n/languages';
 import { LanguageService } from '../shared/i18n/language.service';
+import { RecentlyViewedService } from '../animals-list/recently-viewed.service';
 
 @Component({
   selector: 'app-animal-detail',
@@ -41,6 +42,7 @@ export class AnimalDetail {
   private imagesRequest?: Subscription;
   protected admin = inject(AdminKeyService);
   protected i18n = inject(LanguageService);
+  private recentlyViewed = inject(RecentlyViewedService);
 
   animal = signal<Animal | null>(null);
   loading = signal(true);
@@ -90,6 +92,7 @@ export class AnimalDetail {
     this.animalRequest = this.animalService.getById(id, language).subscribe({
       next: (data) => {
         this.animal.set(data);
+        this.recentlyViewed.record(data.id, data.commonName);
         this.title.setTitle(`${data.commonName} · Unusual Animals`);
         this.loading.set(false);
       },

@@ -218,6 +218,18 @@
   </section>
 }
 
+@if (recent().length > 0) {
+  <section class="recently-viewed" aria-labelledby="recently-viewed-title">
+    <h3 id="recently-viewed-title">{{ i18n.t('list.recentlyViewed') }}</h3>
+    <ul>
+      @for (item of recent(); track item.id) {
+        <li>
+          <a class="recent-link" [routerLink]="['/animals', item.id]">{{ item.commonName }}</a>
+        </li>
+      }
+    </ul>
+  </section>
+}
 @if (loading()) {
   <p class="state-message">{{ i18n.t('list.loading') }}</p>
 }

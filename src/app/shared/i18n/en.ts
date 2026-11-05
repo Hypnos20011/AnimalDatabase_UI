@@ -25,6 +25,7 @@ export const en = {
   'list.filter.weight': 'Weight (kg):',
   'list.filter.from': 'from',
   'list.filter.to': 'to',
+  'list.recentlyViewed': 'Recently viewed',
   'list.top.title': 'Top searches',
   'list.top.windowLabel': 'Top searches time window',
   'list.loading': 'Loading...',

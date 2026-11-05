@@ -27,6 +27,7 @@ export const de: Record<TranslationKey, string> = {
   'list.filter.weight': 'Gewicht (kg):',
   'list.filter.from': 'von',
   'list.filter.to': 'bis',
+  'list.recentlyViewed': 'Zuletzt angesehen',
   'list.top.title': 'Meistgesucht',
   'list.top.windowLabel': 'Zeitraum der Top-Suchen',
   'list.loading': 'Wird geladen...',

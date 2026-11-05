@@ -25,6 +25,7 @@ import { LanguageService } from '../shared/i18n/language.service';
 import { TranslationKey } from '../shared/i18n/en';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Language } from '../shared/i18n/languages';
+import { RecentlyViewedService } from './recently-viewed.service';
 
 @Component({
   selector: 'app-animals-list',
@@ -41,6 +42,7 @@ export class AnimalsList {
   private state = inject(AnimalListState);
   private searchService = inject(SearchService);
   protected i18n = inject(LanguageService);
+  private recentlyViewed = inject(RecentlyViewedService);
   private injector = inject(Injector);
 
   animals = signal<Animal[]>([]);
@@ -69,6 +71,7 @@ export class AnimalsList {
     { value: 'weight-asc', labelKey: 'list.sort.weightAsc' },
     { value: 'newest', labelKey: 'list.sort.newest' },
   ];
+  recent = this.recentlyViewed.recent;
   topSearches = signal<TopSearch[]>([]);
   topSearchDays = this.state.topSearchDays;
   topLoaded = signal(false);
