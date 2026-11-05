@@ -47,10 +47,24 @@
             >
               <span aria-hidden="true">{{ isFavorite() ? '★' : '☆' }}</span>
             </button>
+            <button
+              type="button"
+              class="share-toggle"
+              [attr.aria-label]="shareLabel()"
+              [attr.title]="shareLabel()"
+              (click)="share()"
+            >
+              <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+                <path d="M12 3v12" />
+                <path d="M7 8l5-5 5 5" />
+              </svg>
+            </button>
           </div>
           @if (animal()!.scientificName) {
             <em class="sci">{{ animal()!.scientificName }}</em>
           }
+          <p class="share-status" [class.is-error]="shareStatus() === 'error'" role="status" aria-live="polite">{{ shareMessage() }}</p>
         </header>
         @if (!imagesLoading() && images().length === 0) {
           <p class="no-images">{{ i18n.t('detail.noImages') }}</p>

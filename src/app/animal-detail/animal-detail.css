@@ -47,7 +47,8 @@
   min-width: 0;
 }
 
-.favorite-toggle {
+.favorite-toggle,
+.share-toggle {
   flex: 0 0 auto;
   margin-top: 0.25rem;
   padding: 0.25rem 0.5rem;
@@ -62,9 +63,29 @@
 
 .favorite-toggle:hover,
 .favorite-toggle:focus-visible,
-.favorite-toggle.is-favorite {
+.favorite-toggle.is-favorite,
+.share-toggle:hover,
+.share-toggle:focus-visible {
   color: var(--color-accent);
   border-color: var(--color-accent);
+}
+
+.share-toggle svg {
+  display: block;
+}
+
+.share-status {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-muted);
+}
+
+.share-status:empty {
+  display: none;
+}
+
+.share-status.is-error {
+  color: var(--color-danger);
 }
 
 .detail-header h2 {

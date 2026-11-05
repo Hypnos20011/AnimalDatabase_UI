@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
@@ -15,6 +15,8 @@ import { LanguageService } from '../shared/i18n/language.service';
 import { RecentlyViewedService } from '../animals-list/recently-viewed.service';
 import { FavoritesService } from '../animals-list/favorites.service';
 import { iucnRedListSearchUrl } from '../shared/iucn';
+
+export const SHARE_STATUS_MS = 3000;
 
 @Component({
   selector: 'app-animal-detail',
@@ -75,6 +77,15 @@ export class AnimalDetail {
       name: this.animal()?.commonName ?? '',
     }),
   );
+  shareLabel = computed(() => this.i18n.t('detail.share', { name: this.animal()?.commonName ?? '' }));
+  shareStatus = signal<'copied' | 'error' | null>(null);
+  shareMessage = computed(() => {
+    const status = this.shareStatus();
+    if (status === 'copied') return this.i18n.t('detail.share.copied');
+    if (status === 'error') return this.i18n.t('detail.share.error');
+    return '';
+  });
+  private shareStatusTimer?: ReturnType<typeof setTimeout>;
   iucnRedListUrl = computed(() => iucnRedListSearchUrl(this.animal()?.scientificName));
   imagesLoading = signal(true);
   showDetails = signal(false);
@@ -86,6 +97,7 @@ export class AnimalDetail {
     "This removes the animal and its pictures for good, and it drops out of Top searches. This can't be undone.";
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => clearTimeout(this.shareStatusTimer));
     effect(() => {
       const id = Number(this.id());
       const language = this.i18n.language();
@@ -140,6 +152,41 @@ export class AnimalDetail {
     const animal = this.animal();
     if (!animal) return;
     this.favorites.toggle(animal.id, animal.commonName);
+  }
+
+  async share(): Promise<void> {
+    const animal = this.animal();
+    if (!animal) return;
+    const url = window.location.href;
+    const data: ShareData = {
+      title: animal.commonName,
+      text: this.i18n.t('detail.share.text', { name: animal.commonName }),
+      url,
+    };
+    let cancelled = false;
+    if (typeof navigator.share === 'function' && (!navigator.canShare || navigator.canShare(data))) {
+      try {
+        await navigator.share(data);
+        this.setShareStatus(null);
+        return;
+      } catch (error) {
+        cancelled = (error as Error | undefined)?.name === 'AbortError';
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      this.setShareStatus('copied');
+    } catch {
+      this.setShareStatus(cancelled ? null : 'error');
+    }
+  }
+
+  private setShareStatus(status: 'copied' | 'error' | null): void {
+    clearTimeout(this.shareStatusTimer);
+    this.shareStatus.set(status);
+    if (status) {
+      this.shareStatusTimer = setTimeout(() => this.shareStatus.set(null), SHARE_STATUS_MS);
+    }
   }
 
   toggleDetails(): void {
