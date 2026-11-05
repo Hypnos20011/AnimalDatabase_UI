@@ -36,43 +36,45 @@
         <header class="detail-header">
           <div class="title-row">
             <h2>{{ animal()!.commonName }}</h2>
-            <button
-              type="button"
-              class="favorite-toggle"
-              [class.is-favorite]="isFavorite()"
-              [attr.aria-pressed]="isFavorite()"
-              [attr.aria-label]="favoriteLabel()"
-              [attr.title]="favoriteLabel()"
-              (click)="toggleFavorite()"
-            >
-              <span aria-hidden="true">{{ isFavorite() ? '★' : '☆' }}</span>
-            </button>
-            <button
-              type="button"
-              class="share-toggle"
-              [attr.aria-label]="shareLabel()"
-              [attr.title]="shareLabel()"
-              (click)="share()"
-            >
-              <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
-                <path d="M12 3v12" />
-                <path d="M7 8l5-5 5 5" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              class="print-toggle"
-              [attr.aria-label]="printLabel()"
-              [attr.title]="printLabel()"
-              (click)="print()"
-            >
-              <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M7 9V3h10v6" />
-                <path d="M7 17H5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2" />
-                <path d="M7 14h10v7H7z" />
-              </svg>
-            </button>
+            <div class="detail-toolbar" role="group" [attr.aria-label]="i18n.t('detail.toolbar')">
+              <button
+                type="button"
+                class="favorite-toggle"
+                [class.is-favorite]="isFavorite()"
+                [attr.aria-pressed]="isFavorite()"
+                [attr.aria-label]="favoriteLabel()"
+                [attr.title]="favoriteLabel()"
+                (click)="toggleFavorite()"
+              >
+                <span aria-hidden="true">{{ isFavorite() ? '★' : '☆' }}</span>
+              </button>
+              <button
+                type="button"
+                class="share-toggle"
+                [attr.aria-label]="shareLabel()"
+                [attr.title]="shareLabel()"
+                (click)="share()"
+              >
+                <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+                  <path d="M12 3v12" />
+                  <path d="M7 8l5-5 5 5" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="print-toggle"
+                [attr.aria-label]="printLabel()"
+                [attr.title]="printLabel()"
+                (click)="print()"
+              >
+                <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M7 9V3h10v6" />
+                  <path d="M7 17H5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2" />
+                  <path d="M7 14h10v7H7z" />
+                </svg>
+              </button>
+            </div>
           </div>
           @if (animal()!.scientificName) {
             <em class="sci">{{ animal()!.scientificName }}</em>

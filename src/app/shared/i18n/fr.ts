@@ -87,6 +87,7 @@ export const fr: Record<TranslationKey, string> = {
   'detail.share.copied': 'Lien copié dans le presse-papiers',
   'detail.share.error': 'Impossible de partager ou de copier le lien',
   'detail.print': 'Imprimer {name}',
+  'detail.toolbar': 'Actions',
   'detail.imageCredit': 'Crédit',
   'detail.morePictures': 'Plus de photos',
   'detail.back': 'Retour à la liste',

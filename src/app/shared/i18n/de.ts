@@ -87,6 +87,7 @@ export const de: Record<TranslationKey, string> = {
   'detail.share.copied': 'Link in die Zwischenablage kopiert',
   'detail.share.error': 'Link konnte nicht geteilt oder kopiert werden',
   'detail.print': '{name} drucken',
+  'detail.toolbar': 'Aktionen',
   'detail.imageCredit': 'Bildnachweis',
   'detail.morePictures': 'Weitere Bilder',
   'detail.back': 'Zurück zur Liste',

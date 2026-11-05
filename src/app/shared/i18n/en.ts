@@ -85,6 +85,7 @@ export const en = {
   'detail.share.copied': 'Link copied to clipboard',
   'detail.share.error': 'Could not share or copy the link',
   'detail.print': 'Print {name}',
+  'detail.toolbar': 'Actions',
   'detail.imageCredit': 'Credit',
   'detail.morePictures': 'More pictures',
   'detail.back': 'Back to list',

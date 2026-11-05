@@ -39,7 +39,7 @@
 .title-row {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
+  gap: 1rem;
 }
 
 .title-row h2 {
@@ -47,35 +47,39 @@
   min-width: 0;
 }
 
-.favorite-toggle,
-.share-toggle,
-.print-toggle {
-  flex: 0 0 auto;
+.detail-toolbar {
+  display: flex;
+  flex: none;
+  gap: 0.125rem;
   margin-top: 0.25rem;
-  padding: 0.25rem 0.5rem;
+  padding: 0.1875rem;
   border: 1px solid var(--color-border);
   border-radius: 999px;
+}
+
+.detail-toolbar button {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
   background: none;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   line-height: 1;
   color: var(--color-muted);
   cursor: pointer;
 }
 
-.favorite-toggle:hover,
-.favorite-toggle:focus-visible,
-.favorite-toggle.is-favorite,
-.share-toggle:hover,
-.share-toggle:focus-visible,
-.print-toggle:hover,
-.print-toggle:focus-visible {
+.detail-toolbar button:hover,
+.detail-toolbar button:focus-visible {
+  background: var(--color-accent-soft);
   color: var(--color-accent);
-  border-color: var(--color-accent);
 }
 
-.share-toggle svg,
-.print-toggle svg {
-  display: block;
+.detail-toolbar .is-favorite {
+  color: var(--color-accent);
 }
 
 .share-status {
@@ -290,9 +294,7 @@ a.status:focus-visible {
 }
 
 @media print {
-  .favorite-toggle,
-  .share-toggle,
-  .print-toggle,
+  .detail-toolbar,
   .share-status,
   .more,
   .gallery,

@@ -194,7 +194,7 @@
 }
 
 @if (topLoaded()) {
-  <section class="top-searches" aria-labelledby="top-searches-title">
+  <section class="strip top-searches" aria-labelledby="top-searches-title">
     <div class="top-head">
       <h3 id="top-searches-title">{{ i18n.t('list.top.title') }}</h3>
       <select
@@ -226,7 +226,7 @@
 }
 
 @if (!loading() && !error()) {
-  <section class="favorites" aria-labelledby="favorites-title">
+  <section class="strip favorites" aria-labelledby="favorites-title">
     <h3 id="favorites-title">{{ i18n.t('list.favorites') }}</h3>
     @if (favoriteItems().length > 0) {
       <ul>
@@ -243,7 +243,7 @@
 }
 
 @if (recent().length > 0) {
-  <section class="recently-viewed" aria-labelledby="recently-viewed-title">
+  <section class="strip recently-viewed" aria-labelledby="recently-viewed-title">
     <h3 id="recently-viewed-title">{{ i18n.t('list.recentlyViewed') }}</h3>
     <ul>
       @for (item of recent(); track item.id) {

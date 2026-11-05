@@ -72,6 +72,20 @@ describe('AnimalDetail print button', () => {
     expect(button().getAttribute('title')).toBe('Print Okapi');
   });
 
+  it('groups favorite, share and print in one labelled toolbar', async () => {
+    const { element, button } = await setup();
+
+    const toolbar = element.querySelector('.title-row .detail-toolbar')!;
+    expect(toolbar.getAttribute('role')).toBe('group');
+    expect(toolbar.getAttribute('aria-label')).toBe('Actions');
+    const buttons = toolbar.querySelectorAll('button');
+    expect(buttons.length).toBe(3);
+    expect(buttons[0].classList).toContain('favorite-toggle');
+    expect(buttons[1].classList).toContain('share-toggle');
+    expect(buttons[2]).toBe(button());
+    expect(element.querySelector('.title-row > h2 + .detail-toolbar')).toBe(toolbar);
+  });
+
   it('opens the browser print dialog when clicked', async () => {
     const print = vi.spyOn(window, 'print').mockImplementation(() => undefined);
     const { button } = await setup();
