@@ -4,11 +4,39 @@ import { of, throwError } from 'rxjs';
 import { Animal } from '../animal-model/animal.model';
 import { AnimalService } from '../shared/animal.service';
 import { LanguageService } from '../shared/i18n/language.service';
-import { buildRound, Quiz, QUIZ_RANDOM, shuffle } from './quiz';
+import {
+  buildRound,
+  matchesFilter,
+  Quiz,
+  QUIZ_BEST_STORAGE,
+  QUIZ_RANDOM,
+  readBestStreak,
+  shuffle,
+} from './quiz';
 
 function animal(id: number, commonName: string, thumbnailUrl: string | null = null): Animal {
   return { id, commonName, thumbnailUrl } as Animal;
 }
+
+function classed(
+  id: number,
+  commonName: string,
+  taxonomicClass: string,
+  habitatType: string,
+  thumbnailUrl: string | null = null,
+): Animal {
+  return { ...animal(id, commonName, thumbnailUrl), taxonomicClass, habitatType };
+}
+
+const wild = [
+  classed(1, 'Okapi', 'mammal', 'forest', 'https://example.org/okapi.jpg'),
+  classed(2, 'Axolotl', 'amphibian', 'freshwater', 'https://example.org/axolotl.jpg'),
+  classed(3, 'Aye-aye', 'mammal', 'forest'),
+  classed(4, 'Shoebill', 'bird', 'wetland', 'https://example.org/shoebill.jpg'),
+  classed(5, 'Tapir', 'mammal', 'forest'),
+  classed(6, 'Lion', 'mammal', 'grassland', 'https://example.org/lion.jpg'),
+  classed(7, 'Wolf', 'mammal', 'forest'),
+];
 
 const zoo = [
   animal(1, 'Okapi', 'https://example.org/okapi.jpg'),
@@ -58,6 +86,29 @@ describe('buildRound', () => {
   it('shuffles without losing items', () => {
     expect(shuffle([1, 2, 3, 4], () => 0)).toEqual([2, 3, 4, 1]);
     expect(shuffle([1, 2, 3, 4], () => 0.999)).toEqual([1, 2, 3, 4]);
+  });
+});
+
+describe('quiz helpers', () => {
+  afterEach(() => localStorage.clear());
+
+  it('matches animals by class and habitat', () => {
+    const okapi = wild[0];
+    expect(matchesFilter(okapi, { taxonomicClass: '', habitatType: '' })).toBe(true);
+    expect(matchesFilter(okapi, { taxonomicClass: 'mammal', habitatType: '' })).toBe(true);
+    expect(matchesFilter(okapi, { taxonomicClass: 'mammal', habitatType: 'forest' })).toBe(true);
+    expect(matchesFilter(okapi, { taxonomicClass: 'bird', habitatType: '' })).toBe(false);
+    expect(matchesFilter(okapi, { taxonomicClass: '', habitatType: 'ocean' })).toBe(false);
+  });
+
+  it('reads only a positive whole best streak', () => {
+    expect(readBestStreak()).toBe(0);
+    localStorage.setItem(QUIZ_BEST_STORAGE, '5');
+    expect(readBestStreak()).toBe(5);
+    for (const bad of ['abc', '-2', '1.5', '']) {
+      localStorage.setItem(QUIZ_BEST_STORAGE, bad);
+      expect(readBestStreak()).toBe(0);
+    }
   });
 });
 
@@ -245,5 +296,145 @@ describe('Quiz', () => {
     choice('Okapi').click();
     await refresh();
     expect(element.querySelector('button.next')!.textContent!.trim()).toBe('Animal suivant');
+  });
+
+  describe('best streak', () => {
+    it('restores the saved best streak', async () => {
+      localStorage.setItem(QUIZ_BEST_STORAGE, '7');
+      const { choice, stat, refresh } = await setup();
+
+      expect(stat('best')).toBe('7');
+      choice('Okapi').click();
+      await refresh();
+
+      expect(stat('streak')).toBe('1');
+      expect(stat('best')).toBe('7');
+      expect(localStorage.getItem(QUIZ_BEST_STORAGE)).toBe('7');
+    });
+
+    it('saves a new best streak and keeps it after a restart', async () => {
+      localStorage.setItem(QUIZ_BEST_STORAGE, '1');
+      const { element, choice, stat, refresh } = await setup();
+      choice('Okapi').click();
+      await refresh();
+      expect(localStorage.getItem(QUIZ_BEST_STORAGE)).toBe('1');
+
+      element.querySelector<HTMLButtonElement>('button.next')!.click();
+      await refresh();
+      choice('Axolotl').click();
+      await refresh();
+
+      expect(stat('best')).toBe('2');
+      expect(localStorage.getItem(QUIZ_BEST_STORAGE)).toBe('2');
+
+      element.querySelector<HTMLButtonElement>('button.restart')!.click();
+      await refresh();
+      expect(stat('best')).toBe('2');
+    });
+
+    it('starts at zero when nothing is saved', async () => {
+      const { choices, stat, refresh } = await setup();
+      expect(stat('best')).toBe('0');
+
+      choices().find((b) => !b.textContent!.includes('Okapi'))!.click();
+      await refresh();
+
+      expect(stat('best')).toBe('0');
+      expect(localStorage.getItem(QUIZ_BEST_STORAGE)).toBeNull();
+    });
+  });
+
+  describe('filters', () => {
+    const select = (element: HTMLElement, name: 'class' | 'habitat') =>
+      element.querySelector<HTMLSelectElement>(`select.filter-${name}`)!;
+    const options = (el: HTMLSelectElement) =>
+      Array.from(el.options).map((o) => o.textContent!.trim());
+    const change = async (el: HTMLSelectElement, value: string, refresh: () => Promise<void>) => {
+      el.value = value;
+      el.dispatchEvent(new Event('change'));
+      await refresh();
+    };
+
+    it('lists classes and habitats with translated labels', async () => {
+      const { element } = await setup(vi.fn(() => of(wild)));
+
+      expect(options(select(element, 'class'))).toEqual(['All', 'Amphibian', 'Bird', 'Mammal']);
+      expect(options(select(element, 'habitat'))).toEqual([
+        'All',
+        'Forest',
+        'Freshwater',
+        'Grassland',
+        'Wetland',
+      ]);
+      expect(select(element, 'class').value).toBe('');
+    });
+
+    it('uses German and French labels', async () => {
+      localStorage.setItem('language', 'de');
+      const de = await setup(vi.fn(() => of(wild)));
+      expect(options(select(de.element, 'class'))).toEqual([
+        'Alle',
+        'Amphibie',
+        'S\u00e4ugetier',
+        'Vogel',
+      ]);
+      expect(de.element.querySelector('.quiz-filters')!.textContent).toContain('Lebensraum');
+
+      TestBed.inject(LanguageService).setLanguage('fr');
+      await de.refresh();
+      expect(options(select(de.element, 'class'))).toEqual([
+        'Tous',
+        'Amphibien',
+        'Mammif\u00e8re',
+        'Oiseau',
+      ]);
+    });
+
+    it('only asks about animals of the chosen class and habitat', async () => {
+      const { element, choices, refresh } = await setup(vi.fn(() => of(wild)));
+      const names = () => choices().map((b) => b.querySelector('.choice-name')!.textContent);
+
+      await change(select(element, 'class'), 'mammal', refresh);
+      expect(choices()).toHaveLength(4);
+      for (const name of names()) {
+        expect(['Okapi', 'Aye-aye', 'Tapir', 'Lion', 'Wolf']).toContain(name);
+      }
+
+      await change(select(element, 'habitat'), 'forest', refresh);
+      expect([...names()].sort()).toEqual(['Aye-aye', 'Okapi', 'Tapir', 'Wolf']);
+      expect(select(element, 'class').value).toBe('mammal');
+      expect(select(element, 'habitat').value).toBe('forest');
+    });
+
+    it('explains when a filter has too few animals and can reset it', async () => {
+      const { element, choices, refresh } = await setup(vi.fn(() => of(wild)));
+
+      await change(select(element, 'class'), 'bird', refresh);
+
+      expect(choices()).toHaveLength(0);
+      expect(element.querySelector('.quiz-photo')).toBeNull();
+      expect(element.querySelector('.state-message')!.textContent).toContain(
+        'Not enough animals with photos for this filter',
+      );
+
+      element.querySelector<HTMLButtonElement>('button.reset-filters')!.click();
+      await refresh();
+
+      expect(choices()).toHaveLength(4);
+      expect(select(element, 'class').value).toBe('');
+      expect(element.querySelector('button.reset-filters')).toBeNull();
+    });
+
+    it('keeps the streak when the filter changes', async () => {
+      const { element, choice, stat, refresh } = await setup(vi.fn(() => of(wild)));
+      choice('Okapi').click();
+      await refresh();
+
+      await change(select(element, 'class'), 'mammal', refresh);
+
+      expect(stat('streak')).toBe('1');
+      expect(stat('score')).toBe('1/1');
+      expect(element.querySelector('.result')).toBeNull();
+    });
   });
 });

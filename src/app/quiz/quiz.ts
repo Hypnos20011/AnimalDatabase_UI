@@ -23,6 +23,8 @@ import { wikimediaSrcset } from '../shared/wikimedia-image';
 
 export const QUIZ_CHOICES = 4;
 
+export const QUIZ_BEST_STORAGE = 'animaldb.quiz.bestStreak';
+
 export const QUIZ_RANDOM = new InjectionToken<() => number>('QUIZ_RANDOM', {
   providedIn: 'root',
   factory: () => Math.random,
@@ -31,6 +33,37 @@ export const QUIZ_RANDOM = new InjectionToken<() => number>('QUIZ_RANDOM', {
 export interface QuizRound {
   answer: Animal;
   choices: Animal[];
+}
+
+export interface QuizFilter {
+  taxonomicClass: string;
+  habitatType: string;
+}
+
+export function matchesFilter(animal: Animal, filter: QuizFilter): boolean {
+  return (
+    (!filter.taxonomicClass || animal.taxonomicClass === filter.taxonomicClass) &&
+    (!filter.habitatType || animal.habitatType === filter.habitatType)
+  );
+}
+
+export function readBestStreak(): number {
+  try {
+    const stored = Number(localStorage.getItem(QUIZ_BEST_STORAGE));
+    return Number.isSafeInteger(stored) && stored > 0 ? stored : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveBestStreak(best: number): void {
+  try {
+    localStorage.setItem(QUIZ_BEST_STORAGE, String(best));
+  } catch {}
+}
+
+function distinctValues(values: (string | null)[]): string[] {
+  return [...new Set(values.filter((value): value is string => !!value?.trim()))];
 }
 
 function nameKey(animal: Animal): string {
@@ -89,7 +122,7 @@ export class Quiz {
   readonly srcset = wikimediaSrcset;
 
   private request?: Subscription;
-  private animals: Animal[] = [];
+  private animals = signal<Animal[]>([]);
   private brokenPhotos = new Set<number>();
   private nextButton = viewChild<ElementRef<HTMLButtonElement>>('nextButton');
   private choiceButtons = viewChildren<ElementRef<HTMLButtonElement>>('choiceButton');
@@ -101,7 +134,13 @@ export class Quiz {
   score = signal(0);
   played = signal(0);
   streak = signal(0);
-  best = signal(0);
+  best = signal(readBestStreak());
+  classFilter = signal('');
+  habitatFilter = signal('');
+
+  filterActive = computed(() => !!this.classFilter() || !!this.habitatFilter());
+  classes = computed(() => this.sortedLabels('class', this.animals().map((a) => a.taxonomicClass)));
+  habitats = computed(() => this.sortedLabels('habitat', this.animals().map((a) => a.habitatType)));
 
   answered = computed(() => this.picked() !== null);
   correct = computed(() => this.picked() !== null && this.picked() === this.round()?.answer.id);
@@ -121,7 +160,8 @@ export class Quiz {
     this.request = this.animalService.getAll(language).subscribe({
       next: (animals) => {
         this.loading.set(false);
-        this.animals = animals;
+        this.animals.set(animals);
+        this.dropMissingFilters();
         if (!this.keepRound()) this.startRound();
       },
       error: () => {
@@ -134,7 +174,7 @@ export class Quiz {
   private keepRound(): boolean {
     const current = this.round();
     if (!current) return false;
-    const byId = new Map(this.playable().map((animal) => [animal.id, animal]));
+    const byId = new Map(this.pool().map((animal) => [animal.id, animal]));
     const answer = byId.get(current.answer.id);
     const choices = current.choices.map((choice) => byId.get(choice.id));
     if (!answer || !hasPhoto(answer) || choices.some((choice) => !choice)) return false;
@@ -142,16 +182,51 @@ export class Quiz {
     return true;
   }
 
-  private playable(): Animal[] {
-    return this.animals.map((animal) =>
-      this.brokenPhotos.has(animal.id) ? { ...animal, thumbnailUrl: null } : animal,
+  private pool(): Animal[] {
+    const filter = { taxonomicClass: this.classFilter(), habitatType: this.habitatFilter() };
+    return this.animals()
+      .filter((animal) => matchesFilter(animal, filter))
+      .map((animal) =>
+        this.brokenPhotos.has(animal.id) ? { ...animal, thumbnailUrl: null } : animal,
+      );
+  }
+
+  private sortedLabels(group: 'class' | 'habitat', values: (string | null)[]): string[] {
+    const language = this.i18n.language();
+    return distinctValues(values).sort((a, b) =>
+      this.i18n.tValue(group, a).localeCompare(this.i18n.tValue(group, b), language),
     );
+  }
+
+  private dropMissingFilters(): void {
+    if (this.classFilter() && !this.classes().includes(this.classFilter())) this.classFilter.set('');
+    if (this.habitatFilter() && !this.habitats().includes(this.habitatFilter())) {
+      this.habitatFilter.set('');
+    }
+  }
+
+  setClassFilter(value: string): void {
+    if (value === this.classFilter()) return;
+    this.classFilter.set(value);
+    this.startRound();
+  }
+
+  setHabitatFilter(value: string): void {
+    if (value === this.habitatFilter()) return;
+    this.habitatFilter.set(value);
+    this.startRound();
+  }
+
+  clearFilters(): void {
+    this.classFilter.set('');
+    this.habitatFilter.set('');
+    this.next();
   }
 
   private startRound(): void {
     const previous = this.round()?.answer.id;
     const avoid = new Set(previous === undefined ? [] : [previous]);
-    this.round.set(buildRound(this.playable(), this.random, avoid));
+    this.round.set(buildRound(this.pool(), this.random, avoid));
     this.picked.set(null);
   }
 
@@ -167,7 +242,10 @@ export class Quiz {
     if (choice.id === round.answer.id) {
       this.score.update((n) => n + 1);
       this.streak.update((n) => n + 1);
-      this.best.update((n) => Math.max(n, this.streak()));
+      if (this.streak() > this.best()) {
+        this.best.set(this.streak());
+        saveBestStreak(this.best());
+      }
     } else {
       this.streak.set(0);
     }

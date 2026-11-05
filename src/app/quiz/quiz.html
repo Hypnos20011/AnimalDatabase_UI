@@ -17,6 +17,45 @@
     </dl>
   </div>
 
+  @if (classes().length > 0 || habitats().length > 0) {
+    <div class="quiz-filters">
+      @if (classes().length > 0) {
+        <label>
+          <span>{{ i18n.t('quiz.filter.class') }}</span>
+          <select
+            #classSelect
+            class="filter-class"
+            (change)="setClassFilter(classSelect.value)"
+          >
+            <option value="" [selected]="!classFilter()">{{ i18n.t('quiz.filter.all') }}</option>
+            @for (cls of classes(); track cls) {
+              <option [value]="cls" [selected]="cls === classFilter()">
+                {{ i18n.tValue('class', cls) }}
+              </option>
+            }
+          </select>
+        </label>
+      }
+      @if (habitats().length > 0) {
+        <label>
+          <span>{{ i18n.t('quiz.filter.habitat') }}</span>
+          <select
+            #habitatSelect
+            class="filter-habitat"
+            (change)="setHabitatFilter(habitatSelect.value)"
+          >
+            <option value="" [selected]="!habitatFilter()">{{ i18n.t('quiz.filter.all') }}</option>
+            @for (habitat of habitats(); track habitat) {
+              <option [value]="habitat" [selected]="habitat === habitatFilter()">
+                {{ i18n.tValue('habitat', habitat) }}
+              </option>
+            }
+          </select>
+        </label>
+      }
+    </div>
+  }
+
   @if (error()) {
     <p class="error-message" role="alert">{{ i18n.t('quiz.loadError') }}</p>
   } @else if (round(); as r) {
@@ -68,6 +107,13 @@
     </div>
   } @else if (loading()) {
     <p class="state-message">{{ i18n.t('quiz.loading') }}</p>
+  } @else if (filterActive()) {
+    <div class="quiz-empty">
+      <p class="state-message">{{ i18n.t('quiz.filter.empty') }}</p>
+      <button type="button" class="reset-filters btn btn-secondary btn-sm" (click)="clearFilters()">
+        {{ i18n.t('quiz.filter.reset') }}
+      </button>
+    </div>
   } @else {
     <p class="state-message">{{ i18n.t('quiz.notEnough') }}</p>
   }

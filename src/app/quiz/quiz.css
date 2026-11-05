@@ -38,6 +38,31 @@
   font-variant-numeric: tabular-nums;
 }
 
+.quiz-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.quiz-filters label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.quiz-filters span {
+  color: var(--color-muted);
+}
+
+.quiz-empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
 .quiz-photo {
   margin: 0;
   aspect-ratio: 4 / 3;
