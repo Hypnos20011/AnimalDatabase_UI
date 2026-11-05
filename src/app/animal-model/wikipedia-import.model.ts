@@ -14,6 +14,8 @@ export interface WikipediaImport {
   rangeRegion: string | null;
   profile: string | null;
   imageUrl: string | null;
+  attribution: string | null;
+  sourcePageUrl: string | null;
   sourceUrl: string | null;
   warnings: string[];
 }

@@ -25,6 +25,8 @@ function shoebill(overrides: Partial<WikipediaImport> = {}): WikipediaImport {
     rangeRegion: 'Central tropical Africa',
     profile: 'The shoebill is a large long-legged wading bird.',
     imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/a/a1/Shoebill.jpg',
+    attribution: 'Charles J. Sharp / CC BY-SA 4.0',
+    sourcePageUrl: 'https://commons.wikimedia.org/wiki/File:Shoebill.jpg',
     sourceUrl: 'https://en.wikipedia.org/wiki/Shoebill',
     warnings: [],
     ...overrides,
@@ -57,7 +59,19 @@ describe('AnimalForm Wikipedia lookup', () => {
     form.importFromWikipedia();
     expect(form.form.controls.habitat.value).toBe('Freshwater swamps');
     expect(form.form.controls.rangeRegion.value).toBe('Central tropical Africa');
-    expect(form.importMessage()).toContain('Filled in 13 fields');
+    expect(form.importMessage()).toContain('Filled in 15 fields');
+  });
+  it('fills image credit fields from the lookup', () => {
+    const form = setup(shoebill());
+    form.wikiUrl.set('Shoebill');
+    form.importFromWikipedia();
+    expect(form.form.controls.otherImageUrl.value).toBe(
+      'https://upload.wikimedia.org/wikipedia/commons/a/a1/Shoebill.jpg',
+    );
+    expect(form.form.controls.otherImageAttribution.value).toBe('Charles J. Sharp / CC BY-SA 4.0');
+    expect(form.form.controls.otherImageSourcePageUrl.value).toBe(
+      'https://commons.wikimedia.org/wiki/File:Shoebill.jpg',
+    );
   });
 
   it('keeps typed habitat and range when the lookup has none', () => {
@@ -68,7 +82,7 @@ describe('AnimalForm Wikipedia lookup', () => {
     form.importFromWikipedia();
     expect(form.form.controls.habitat.value).toBe('Papyrus marshes');
     expect(form.form.controls.rangeRegion.value).toBe('South Sudan');
-    expect(form.importMessage()).toContain('Filled in 11 fields');
+    expect(form.importMessage()).toContain('Filled in 13 fields');
   });
 });
 
@@ -120,6 +134,8 @@ describe('AnimalForm repeated Wikipedia lookups', () => {
     lookUp(form, 'cat');
     lookUp(form, 'blue-ringed octopus');
     expect(form.form.controls.otherImageUrl.value).toBe('');
+    expect(form.form.controls.otherImageAttribution.value).toBe('');
+    expect(form.form.controls.otherImageSourcePageUrl.value).toBe('');
   });
 
   it('keeps a picture the user entered', () => {
@@ -129,10 +145,16 @@ describe('AnimalForm repeated Wikipedia lookups', () => {
       shoebill({ imageUrl: octopusPicture }),
     );
     form.form.controls.otherImageUrl.setValue(own);
+    form.form.controls.otherImageAttribution.setValue('My credit');
+    form.form.controls.otherImageSourcePageUrl.setValue('https://example.com/own');
     lookUp(form, 'cat');
     expect(form.form.controls.otherImageUrl.value).toBe(own);
+    expect(form.form.controls.otherImageAttribution.value).toBe('My credit');
+    expect(form.form.controls.otherImageSourcePageUrl.value).toBe('https://example.com/own');
     lookUp(form, 'blue-ringed octopus');
     expect(form.form.controls.otherImageUrl.value).toBe(own);
+    expect(form.form.controls.otherImageAttribution.value).toBe('My credit');
+    expect(form.form.controls.otherImageSourcePageUrl.value).toBe('https://example.com/own');
   });
 
   it('clears values left over from the earlier lookup', () => {

@@ -429,7 +429,18 @@ export class AnimalForm {
         });
       }
       this.importedImageUrl = next;
-      if (next) filled++;
+      if (next) {
+        filled++;
+        const attribution = (data.attribution ?? '').trim();
+        const sourcePageUrl = (data.sourcePageUrl ?? '').trim();
+        this.form.controls.otherImageAttribution.setValue(attribution);
+        this.form.controls.otherImageSourcePageUrl.setValue(sourcePageUrl);
+        if (attribution) filled++;
+        if (sourcePageUrl) filled++;
+      } else {
+        this.form.controls.otherImageAttribution.setValue('');
+        this.form.controls.otherImageSourcePageUrl.setValue('');
+      }
     }
     return filled;
   }
