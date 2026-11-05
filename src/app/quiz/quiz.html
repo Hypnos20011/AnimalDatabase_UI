@@ -12,10 +12,48 @@
       </div>
       <div>
         <dt>{{ i18n.t('quiz.best') }}</dt>
-        <dd data-stat="best">{{ best() }}</dd>
+        <dd data-stat="best">
+          <span>{{ best() }}</span>
+          @if (best() > 0) {
+            <button
+              type="button"
+              class="share-best"
+              [attr.aria-label]="i18n.t('quiz.share.best')"
+              [attr.title]="i18n.t('quiz.share.best')"
+              (click)="shareBest()"
+            >
+              <svg
+                aria-hidden="true"
+                focusable="false"
+                viewBox="0 0 24 24"
+                width="1em"
+                height="1em"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+                <path d="M12 3v12" />
+                <path d="M7 8l5-5 5 5" />
+              </svg>
+            </button>
+          }
+        </dd>
       </div>
     </dl>
   </div>
+  <p
+    class="share-status"
+    data-share-status="best"
+    [class.is-error]="bestShareStatus() === 'error'"
+    [hidden]="!bestShareMessage()"
+    role="status"
+    aria-live="polite"
+  >
+    {{ bestShareMessage() }}
+  </p>
 
   <div class="quiz-modes">
     <button
@@ -44,11 +82,7 @@
       @if (classes().length > 0) {
         <label>
           <span>{{ i18n.t('quiz.filter.class') }}</span>
-          <select
-            #classSelect
-            class="filter-class"
-            (change)="setClassFilter(classSelect.value)"
-          >
+          <select #classSelect class="filter-class" (change)="setClassFilter(classSelect.value)">
             <option value="" [selected]="!classFilter()">{{ i18n.t('quiz.filter.all') }}</option>
             @for (cls of classes(); track cls) {
               <option [value]="cls" [selected]="cls === classFilter()">
@@ -94,6 +128,59 @@
   } @else if (dailyMode() && dailyFinished()) {
     <div class="quiz-daily-done">
       <p class="state-message" data-daily="done">{{ dailyDoneText() }}</p>
+      <article
+        #resultCard
+        class="result-card"
+        data-share="card"
+        tabindex="-1"
+        aria-labelledby="daily-card-title"
+      >
+        <p class="kicker" id="daily-card-title">{{ i18n.t('quiz.share.cardTitle') }}</p>
+        <p class="date" data-share="date">{{ dailyDateLabel() }}</p>
+        <p class="stat" data-share="score">
+          <span class="value">{{ score() }}/{{ dailyTotal }}</span>
+          <span class="label">{{ i18n.t('quiz.score') }}</span>
+        </p>
+        <p class="stat" data-share="streak">
+          <span class="value">{{ runBestStreak() }}</span>
+          <span class="label">{{ i18n.t('quiz.streak') }}</span>
+        </p>
+        <a class="link" data-share="link" routerLink="/quiz">{{ quizLink() }}</a>
+        <button
+          type="button"
+          class="share-result btn btn-secondary btn-sm"
+          [attr.aria-label]="i18n.t('quiz.share.result')"
+          (click)="shareDaily()"
+        >
+          <svg
+            aria-hidden="true"
+            focusable="false"
+            viewBox="0 0 24 24"
+            width="1em"
+            height="1em"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+            <path d="M12 3v12" />
+            <path d="M7 8l5-5 5 5" />
+          </svg>
+          {{ i18n.t('quiz.share.result') }}
+        </button>
+        <p
+          class="share-status"
+          data-share-status="daily"
+          [class.is-error]="dailyShareStatus() === 'error'"
+          [hidden]="!dailyShareMessage()"
+          role="status"
+          aria-live="polite"
+        >
+          {{ dailyShareMessage() }}
+        </p>
+      </article>
       @if (dailyBest(); as best) {
         <p class="daily-best" data-daily="best">{{ dailyBestText() }}</p>
       }
@@ -101,7 +188,11 @@
         <button type="button" class="daily-again btn btn-primary" (click)="restart()">
           {{ i18n.t('quiz.daily.again') }}
         </button>
-        <button type="button" class="daily-exit btn btn-secondary btn-sm" (click)="setDailyMode(false)">
+        <button
+          type="button"
+          class="daily-exit btn btn-secondary btn-sm"
+          (click)="setDailyMode(false)"
+        >
           {{ i18n.t('quiz.daily.exit') }}
         </button>
       </div>
@@ -158,7 +249,11 @@
   } @else if (dailyMode()) {
     <div class="quiz-empty">
       <p class="state-message">{{ i18n.t('quiz.daily.empty') }}</p>
-      <button type="button" class="daily-exit btn btn-secondary btn-sm" (click)="setDailyMode(false)">
+      <button
+        type="button"
+        class="daily-exit btn btn-secondary btn-sm"
+        (click)="setDailyMode(false)"
+      >
         {{ i18n.t('quiz.daily.exit') }}
       </button>
     </div>
@@ -175,7 +270,11 @@
         </button>
       }
       @if (filterActive()) {
-        <button type="button" class="reset-filters btn btn-secondary btn-sm" (click)="clearFilters()">
+        <button
+          type="button"
+          class="reset-filters btn btn-secondary btn-sm"
+          (click)="clearFilters()"
+        >
           {{ i18n.t('quiz.filter.reset') }}
         </button>
       }

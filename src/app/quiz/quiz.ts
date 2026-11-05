@@ -20,6 +20,14 @@ import { AnimalService } from '../shared/animal.service';
 import { LanguageService } from '../shared/i18n/language.service';
 import { Language } from '../shared/i18n/languages';
 import { wikimediaSrcset } from '../shared/wikimedia-image';
+import {
+  formatQuizDate,
+  QUIZ_CARD_FILE,
+  QUIZ_SHARE_STATUS_MS,
+  QuizShareCard,
+  quizShareUrl,
+  shareQuizCard,
+} from './quiz-share';
 
 export const QUIZ_CHOICES = 4;
 
@@ -84,7 +92,9 @@ export function readMissedIds(): number[] {
     if (!Array.isArray(parsed)) return [];
     return [
       ...new Set(
-        parsed.filter((id): id is number => typeof id === 'number' && Number.isSafeInteger(id) && id > 0),
+        parsed.filter(
+          (id): id is number => typeof id === 'number' && Number.isSafeInteger(id) && id > 0,
+        ),
       ),
     ];
   } catch {
@@ -233,6 +243,7 @@ export class Quiz {
   private animalService = inject(AnimalService);
   private random = inject(QUIZ_RANDOM);
   private injector = inject(Injector);
+  private cardFile = inject(QUIZ_CARD_FILE);
   protected i18n = inject(LanguageService);
   readonly srcset = wikimediaSrcset;
   readonly dailyTotal = QUIZ_DAILY_ROUNDS;
@@ -242,6 +253,9 @@ export class Quiz {
   private brokenPhotos = new Set<number>();
   private nextButton = viewChild<ElementRef<HTMLButtonElement>>('nextButton');
   private choiceButtons = viewChildren<ElementRef<HTMLButtonElement>>('choiceButton');
+  private resultCard = viewChild<ElementRef<HTMLElement>>('resultCard');
+  private shareTimers = new Map<'daily' | 'best', ReturnType<typeof setTimeout>>();
+  private shareLock: 'daily' | 'best' | null = null;
 
   round = signal<QuizRound | null>(null);
   picked = signal<number | null>(null);
@@ -261,14 +275,26 @@ export class Quiz {
   runBestStreak = signal(0);
   classFilter = signal('');
   habitatFilter = signal('');
+  dailyShareStatus = signal<'copied' | 'error' | null>(null);
+  bestShareStatus = signal<'copied' | 'error' | null>(null);
 
   missedCount = computed(() => this.missedIds().length);
   filterActive = computed(() => !!this.classFilter() || !!this.habitatFilter());
   poolRestricted = computed(
     () => !this.dailyMode() && (this.practiceMode() || this.filterActive()),
   );
-  classes = computed(() => this.sortedLabels('class', this.animals().map((a) => a.taxonomicClass)));
-  habitats = computed(() => this.sortedLabels('habitat', this.animals().map((a) => a.habitatType)));
+  classes = computed(() =>
+    this.sortedLabels(
+      'class',
+      this.animals().map((a) => a.taxonomicClass),
+    ),
+  );
+  habitats = computed(() =>
+    this.sortedLabels(
+      'habitat',
+      this.animals().map((a) => a.habitatType),
+    ),
+  );
   dailyQuestion = computed(() => this.dailyIndex() + 1);
   showFilters = computed(
     () =>
@@ -281,13 +307,18 @@ export class Quiz {
   dailyLast = computed(
     () => this.dailyMode() && this.dailyIndex() >= (this.dailyPlan()?.length ?? 0) - 1,
   );
+  dailyShareMessage = computed(() => this.shareMessage(this.dailyShareStatus()));
+  bestShareMessage = computed(() => this.shareMessage(this.bestShareStatus()));
 
   constructor() {
     effect(() => {
       const language = this.i18n.language();
       untracked(() => this.load(language));
     });
-    inject(DestroyRef).onDestroy(() => this.request?.unsubscribe());
+    inject(DestroyRef).onDestroy(() => {
+      this.request?.unsubscribe();
+      for (const timer of this.shareTimers.values()) clearTimeout(timer);
+    });
   }
 
   private load(language: Language): void {
@@ -337,7 +368,8 @@ export class Quiz {
 
   private refreshDailyPlan(): boolean {
     const current = this.dailyPlan();
-    if (!current || this.dailyFinished()) return false;
+    if (!current) return false;
+    if (this.dailyFinished()) return true;
     const byId = new Map(this.withBroken(this.animals()).map((animal) => [animal.id, animal]));
     const remapped: QuizRound[] = [];
     for (const round of current) {
@@ -369,7 +401,8 @@ export class Quiz {
   }
 
   private dropMissingFilters(): void {
-    if (this.classFilter() && !this.classes().includes(this.classFilter())) this.classFilter.set('');
+    if (this.classFilter() && !this.classes().includes(this.classFilter()))
+      this.classFilter.set('');
     if (this.habitatFilter() && !this.habitats().includes(this.habitatFilter())) {
       this.habitatFilter.set('');
     }
@@ -463,6 +496,7 @@ export class Quiz {
     } else {
       this.dailyBest.set(readDailyBest(date));
     }
+    this.focusLater(() => this.resultCard()?.nativeElement);
   }
 
   private startRound(): void {
@@ -558,7 +592,9 @@ export class Quiz {
       return;
     }
     const target = event.target instanceof Element ? event.target : null;
-    if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+    if (target?.closest('input, textarea, select, button.share-best, [contenteditable="true"]')) {
+      return;
+    }
     const choice = this.round()?.choices[Number(event.key) - 1];
     if (!choice) return;
     event.preventDefault();
@@ -589,5 +625,100 @@ export class Quiz {
   nextLabel(): string {
     if (this.dailyMode() && this.dailyLast()) return this.i18n.t('quiz.daily.finish');
     return this.i18n.t('quiz.next');
+  }
+
+  quizLink(): string {
+    return quizShareUrl();
+  }
+
+  dailyDateLabel(): string {
+    return formatQuizDate(quizDateKey(), this.i18n.language());
+  }
+
+  async shareDaily(): Promise<void> {
+    if (this.shareLock || !this.dailyFinished()) return;
+    await this.share(this.dailyShareCard(), 'daily');
+  }
+
+  async shareBest(): Promise<void> {
+    if (this.shareLock || this.best() <= 0) return;
+    await this.share(this.bestShareCard(), 'best');
+  }
+
+  private dailyShareCard(): QuizShareCard {
+    const date = this.dailyDateLabel();
+    const score = this.score();
+    const streak = this.runBestStreak();
+    return {
+      title: this.i18n.t('quiz.share.cardTitle'),
+      text: this.i18n.t('quiz.share.daily.text', {
+        date,
+        score,
+        total: this.dailyTotal,
+        streak,
+      }),
+      url: this.quizLink(),
+      kicker: this.i18n.t('quiz.share.cardTitle'),
+      date,
+      scoreLabel: this.i18n.t('quiz.score'),
+      score: `${score}/${this.dailyTotal}`,
+      streakLabel: this.i18n.t('quiz.streak'),
+      streak: String(streak),
+      filename: 'unusual-animals-daily.png',
+    };
+  }
+
+  private bestShareCard(): QuizShareCard {
+    const streak = String(this.best());
+    return {
+      title: this.i18n.t('quiz.share.bestTitle'),
+      text: this.i18n.t('quiz.share.best.text', { streak }),
+      url: this.quizLink(),
+      kicker: this.i18n.t('quiz.share.bestTitle'),
+      date: this.i18n.t('quiz.title'),
+      scoreLabel: this.i18n.t('quiz.best'),
+      score: streak,
+      streakLabel: '',
+      streak: '',
+      filename: 'unusual-animals-streak.png',
+    };
+  }
+
+  private async share(card: QuizShareCard, which: 'daily' | 'best'): Promise<void> {
+    this.shareLock = which;
+    try {
+      let file: File | null = null;
+      try {
+        file = this.cardFile(card);
+      } catch {
+        file = null;
+      }
+      const outcome = await shareQuizCard(card, file);
+      if (outcome === 'cancelled') return;
+      this.setShareStatus(
+        which,
+        outcome === 'copied' ? 'copied' : outcome === 'error' ? 'error' : null,
+      );
+    } finally {
+      this.shareLock = null;
+    }
+  }
+
+  private shareMessage(status: 'copied' | 'error' | null): string {
+    if (status === 'copied') return this.i18n.t('quiz.share.copied');
+    if (status === 'error') return this.i18n.t('quiz.share.error');
+    return '';
+  }
+
+  private setShareStatus(which: 'daily' | 'best', status: 'copied' | 'error' | null): void {
+    clearTimeout(this.shareTimers.get(which));
+    const target = which === 'daily' ? this.dailyShareStatus : this.bestShareStatus;
+    target.set(status);
+    if (status) {
+      this.shareTimers.set(
+        which,
+        setTimeout(() => target.set(null), QUIZ_SHARE_STATUS_MS),
+      );
+    }
   }
 }
