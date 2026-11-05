@@ -1,59 +1,42 @@
-# AnimalDatabaseProject
+# Unusual Animals UI
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.2.
+The Angular site for [Unusual Animals](https://unusualanimals.duckdns.org), a browsable index of unusual animals in
+English and German. Visitors can search, filter and compare animals. With the admin key, animals can be added, edited
+and deleted.
 
-## Development server
+The API lives in a separate repository (`AnimalDatabase_Server`, locally `D:\AnimalDatabase.Api`).
 
-To start a local development server, run:
+## Run it locally
 
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Start the API first, then:
 
 ```bash
-ng generate component component-name
+npm ci
+npm start
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Open `http://localhost:4200`. Calls to `/api` go to the API on `http://localhost:5190` (see `proxy.conf.json`).
+
+## Tests and build
 
 ```bash
-ng generate --help
+npm test -- --watch=false
+npm run build
 ```
 
-## Building
+Tests use Vitest with jsdom, so no browser is needed. The production build goes to `dist/AnimalDatabaseProject/browser`.
 
-To build the project run:
+## Where things are
 
-```bash
-ng build
-```
+| Folder                 | What it holds                                         |
+|------------------------|-------------------------------------------------------|
+| `src/app/animals-list` | Main page: search, filters, sorting and top searches  |
+| `src/app/animal-detail`| Detail page for one animal                            |
+| `src/app/animal-form`  | Admin form with Wikipedia lookup                      |
+| `src/app/animal-stats` | Stats page                                            |
+| `src/app/admin`        | Admin key unlock, guard and HTTP interceptor          |
+| `src/app/shared`       | Shared services, formatting and `i18n` dictionaries   |
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+## Deploying
 
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+The site is built into the API's Docker image. See `deploy/README.md` in the API repository.
