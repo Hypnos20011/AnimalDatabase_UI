@@ -14,6 +14,7 @@ export const de: Record<TranslationKey, string> = {
   'list.title': 'Tiere',
   'list.search.label': 'Tiere durchsuchen',
   'list.search.placeholder': 'Name, Lebensraum oder Verbreitung suchen...',
+  'list.shortcuts.hint': '/ Suche · R Zufall',
   'list.filters': 'Filter',
   'list.clearAll': 'Alle zurücksetzen',
   'list.sortBy': 'Sortieren nach',

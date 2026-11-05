@@ -10,13 +10,17 @@
 <div class="toolbar">
   <div class="search-wrap">
     <input
+      #searchInput
       type="search"
       class="search"
       [attr.aria-label]="i18n.t('list.search.label')"
+      [attr.aria-keyshortcuts]="'/'"
+      [attr.title]="i18n.t('list.shortcuts.hint')"
       [placeholder]="i18n.t('list.search.placeholder')"
       [value]="query()"
       (input)="onQueryChange($any($event.target).value)"
     />
+    <span class="visually-hidden">{{ i18n.t('list.shortcuts.hint') }}</span>
 
     @if (query().trim().length >= 2 && suggestions().length > 0) {
       <ul class="suggestions">

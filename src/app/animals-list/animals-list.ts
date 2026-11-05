@@ -3,10 +3,12 @@ import {
   Component,
   computed,
   effect,
+  ElementRef,
   inject,
   Injector,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavigationStart, Router, RouterLink } from '@angular/router';
@@ -28,6 +30,7 @@ import { Language } from '../shared/i18n/languages';
 import { RecentlyViewedService } from './recently-viewed.service';
 import { FavoritesService } from './favorites.service';
 import { CompareService } from '../compare/compare.service';
+import { RandomAnimalService } from '../shared/random-animal.service';
 
 @Component({
   selector: 'app-animals-list',
@@ -36,6 +39,7 @@ import { CompareService } from '../compare/compare.service';
   styleUrl: './animals-list.css',
   host: {
     '(document:keydown.escape)': 'filtersOpen.set(false)',
+    '(document:keydown)': 'onDocumentKeydown($event)',
   },
 })
 export class AnimalsList {
@@ -47,7 +51,9 @@ export class AnimalsList {
   private recentlyViewed = inject(RecentlyViewedService);
   private favoritesService = inject(FavoritesService);
   protected compare = inject(CompareService);
+  private random = inject(RandomAnimalService);
   private injector = inject(Injector);
+  private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
   animals = signal<Animal[]>([]);
   loading = signal(true);
@@ -311,6 +317,34 @@ export class AnimalsList {
         this.topLoaded.set(true);
       },
     });
+  }
+
+  onDocumentKeydown(event: KeyboardEvent): void {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (this.filtersOpen()) return;
+    if (this.isTypingTarget(event.target)) return;
+
+    if (event.key === '/') {
+      event.preventDefault();
+      const input = this.searchInput()?.nativeElement;
+      if (!input) return;
+      input.focus();
+      input.select();
+      return;
+    }
+
+    if (event.key === 'r' || event.key === 'R') {
+      event.preventDefault();
+      this.random.open();
+    }
+  }
+
+  private isTypingTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false;
+    const tag = target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+    if (target.isContentEditable) return true;
+    return target.closest('[contenteditable="true"], [contenteditable=""]') !== null;
   }
 
   onQueryChange(value: string): void {

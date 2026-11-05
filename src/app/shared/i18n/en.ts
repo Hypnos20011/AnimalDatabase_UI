@@ -12,6 +12,7 @@ export const en = {
   'list.title': 'Animals',
   'list.search.label': 'Search animals',
   'list.search.placeholder': 'Search name, habitat or range...',
+  'list.shortcuts.hint': '/ to search · R for random',
   'list.filters': 'Filters',
   'list.clearAll': 'Clear all',
   'list.sortBy': 'Sort by',
