@@ -12,6 +12,10 @@ export const fr: Record<TranslationKey, string> = {
   'footer.credits':
     'Les textes et les photos proviennent de Wikipédia et de Wikimedia Commons (CC BY-SA et autres licences libres). Les données de traits proviennent d’AnAge (CC BY 3.0) ainsi que de FishBase et SeaLifeBase (CC BY-NC 4.0).',
   'language.label': 'Langue',
+  'language.current': 'Langue, {name}',
+  'language.en': 'English',
+  'language.de': 'Deutsch',
+  'language.fr': 'Français',
   'list.title': 'Animaux',
   'list.search.label': 'Rechercher des animaux',
   'list.search.placeholder': 'Rechercher un nom, un habitat ou une aire...',

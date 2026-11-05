@@ -47,6 +47,7 @@
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  margin-left: auto;
 }
 
 .nav-link {
@@ -71,21 +72,86 @@
   border-bottom-color: var(--color-accent);
 }
 
-.language-select {
-  padding: 0.2rem 0.4rem;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  background: var(--color-bg);
-  color: var(--color-muted);
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
+.language {
+  position: relative;
 }
 
-.language-select:hover,
-.language-select:focus-visible {
+.lang-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  height: var(--control-h-sm);
+  min-width: 3.25rem;
+  padding: 0 0.55rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.lang-button:hover,
+.lang-button[aria-expanded='true'] {
   border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.lang-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 30;
+  min-width: 13.5rem;
+  padding: 0.3rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.lang-menu.is-open {
+  display: grid;
+}
+
+.lang-menu button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: var(--control-h);
+  padding: 0 0.7rem;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.lang-menu button:hover,
+.lang-menu button:focus-visible {
+  background: var(--color-surface-muted);
+}
+
+.lang-menu button[aria-checked='true'] {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.lang-menu .code {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+
+.lang-menu button[aria-checked='true'] .code {
   color: var(--color-accent);
 }
 
@@ -140,7 +206,21 @@
 }
 
 @media (max-width: 600px) {
+  .header-inner {
+    flex-wrap: wrap;
+    gap: 0.35rem 1rem;
+    padding-top: 0.65rem;
+    padding-bottom: 0.55rem;
+  }
+
+  .brand {
+    flex: 1 1 auto;
+  }
+
   .site-nav {
+    order: 3;
+    flex-basis: 100%;
+    margin-left: 0;
     gap: 1rem;
   }
 

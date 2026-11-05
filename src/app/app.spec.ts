@@ -51,7 +51,11 @@ describe('App', () => {
     const { navLinks } = await render();
     const links = navLinks();
 
-    expect(links.map((link) => link.textContent!.trim())).toEqual(['Random animal', 'Quiz', 'Stats']);
+    expect(links.map((link) => link.textContent!.trim())).toEqual([
+      'Random animal',
+      'Quiz',
+      'Stats',
+    ]);
     links[0].click();
     expect(open).toHaveBeenCalledTimes(1);
   });
@@ -61,7 +65,12 @@ describe('App', () => {
     const { navLinks } = await render();
     const links = navLinks();
 
-    expect(links.map((link) => link.textContent!.trim())).toEqual(['Random animal', 'Add animal', 'Quiz', 'Stats']);
+    expect(links.map((link) => link.textContent!.trim())).toEqual([
+      'Random animal',
+      'Add animal',
+      'Quiz',
+      'Stats',
+    ]);
     expect(links[1].getAttribute('href')).toBe('/animals/new');
   });
 
@@ -88,46 +97,135 @@ describe('App', () => {
   describe('language switch', () => {
     afterEach(() => localStorage.clear());
 
-    function select(element: HTMLElement): HTMLSelectElement {
-      return element.querySelector<HTMLSelectElement>('.site-nav .language-select')!;
+    function button(element: HTMLElement): HTMLButtonElement {
+      return element.querySelector<HTMLButtonElement>('button.lang-button')!;
     }
 
-    it('offers every supported language in upper case', async () => {
+    function menu(element: HTMLElement): HTMLElement {
+      return element.querySelector<HTMLElement>('#lang-menu')!;
+    }
+
+    function items(element: HTMLElement): HTMLButtonElement[] {
+      return Array.from(
+        menu(element).querySelectorAll<HTMLButtonElement>('[role="menuitemradio"]'),
+      );
+    }
+
+    async function open(
+      fixture: { detectChanges(): void; whenStable(): Promise<void> },
+      element: HTMLElement,
+    ) {
+      button(element).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+    }
+
+    it('offers English, Deutsch and Français from a closed menu', async () => {
       const { element } = await render();
-      const options = Array.from(select(element).options).map((o) => [o.value, o.textContent!.trim()]);
-      expect(options).toEqual([
-        ['en', 'EN'],
-        ['de', 'DE'],
-        ['fr', 'FR'],
+
+      expect(button(element).getAttribute('aria-expanded')).toBe('false');
+      expect(button(element).getAttribute('aria-haspopup')).toBe('menu');
+      expect(button(element).textContent).toContain('EN');
+      expect(menu(element).classList.contains('is-open')).toBe(false);
+      expect(items(element).map((item) => item.getAttribute('aria-label'))).toEqual([
+        'English',
+        'Deutsch',
+        'Français',
+      ]);
+      expect(items(element).map((item) => item.querySelector('.code')!.textContent)).toEqual([
+        'EN',
+        'DE',
+        'FR',
       ]);
     });
 
     it('starts on English with English texts', async () => {
       const { element, navLinks } = await render();
-      expect(select(element).value).toBe('en');
-      expect(navLinks().map((l) => l.textContent!.trim())).toEqual(['Random animal', 'Quiz', 'Stats']);
-      expect(select(element).getAttribute('aria-label')).toBe('Language');
+      expect(button(element).getAttribute('aria-label')).toBe('Language, English');
+      expect(items(element)[0].getAttribute('aria-checked')).toBe('true');
+      expect(navLinks().map((l) => l.textContent!.trim())).toEqual([
+        'Random animal',
+        'Quiz',
+        'Stats',
+      ]);
     });
 
-    it('switches the header and footer to German when DE is picked', async () => {
+    it('switches the header and footer to German when Deutsch is picked', async () => {
       const { fixture, element, navLinks } = await render();
-      const languageSelect = select(element);
-      languageSelect.value = 'de';
-      languageSelect.dispatchEvent(new Event('change'));
+      await open(fixture, element);
+      items(element)[1].click();
       fixture.detectChanges();
 
-      expect(navLinks().map((l) => l.textContent!.trim())).toEqual(['Zufälliges Tier', 'Quiz', 'Statistik']);
+      expect(navLinks().map((l) => l.textContent!.trim())).toEqual([
+        'Zufälliges Tier',
+        'Quiz',
+        'Statistik',
+      ]);
       expect(element.querySelector('.site-nav')!.getAttribute('aria-label')).toBe('Schnellzugriff');
-      expect(languageSelect.getAttribute('aria-label')).toBe('Sprache');
+      expect(button(element).getAttribute('aria-label')).toBe('Sprache, Deutsch');
+      expect(button(element).textContent).toContain('DE');
+      expect(menu(element).classList.contains('is-open')).toBe(false);
+      expect(document.activeElement).toBe(button(element));
       expect(localStorage.getItem('language')).toBe('de');
       expect(document.documentElement.lang).toBe('de');
     });
 
-    it('shows German and selects DE when German was stored', async () => {
+    it('shows German immediately when German was stored', async () => {
       localStorage.setItem('language', 'de');
       const { element, navLinks } = await render();
-      expect(select(element).value).toBe('de');
-      expect(navLinks().map((l) => l.textContent!.trim())).toEqual(['Zufälliges Tier', 'Quiz', 'Statistik']);
+      expect(button(element).textContent).toContain('DE');
+      expect(button(element).getAttribute('aria-label')).toBe('Sprache, Deutsch');
+      expect(items(element)[1].getAttribute('aria-checked')).toBe('true');
+      expect(navLinks().map((l) => l.textContent!.trim())).toEqual([
+        'Zufälliges Tier',
+        'Quiz',
+        'Statistik',
+      ]);
+    });
+
+    it('moves through the menu with the keyboard and closes on Escape', async () => {
+      const { fixture, element } = await render();
+      button(element).dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }),
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(menu(element).classList.contains('is-open')).toBe(true);
+      expect(document.activeElement).toBe(items(element)[0]);
+
+      menu(element).dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }),
+      );
+      expect(document.activeElement).toBe(items(element)[1]);
+      menu(element).dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+      expect(document.activeElement).toBe(items(element)[0]);
+      menu(element).dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+      expect(document.activeElement).toBe(items(element)[2]);
+
+      menu(element).dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      fixture.detectChanges();
+      expect(menu(element).classList.contains('is-open')).toBe(false);
+      expect(document.activeElement).toBe(button(element));
+    });
+
+    it('closes the menu when the click is outside it', async () => {
+      const { fixture, element } = await render();
+      await open(fixture, element);
+      expect(menu(element).classList.contains('is-open')).toBe(true);
+
+      document.body.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      fixture.detectChanges();
+      expect(menu(element).classList.contains('is-open')).toBe(false);
+    });
+
+    it('uses the French language label', async () => {
+      localStorage.setItem('language', 'fr');
+      const { element } = await render();
+      expect(button(element).getAttribute('aria-label')).toBe('Langue, Français');
+      expect(button(element).textContent).toContain('FR');
     });
 
     it('translates the unlocked footer', async () => {
