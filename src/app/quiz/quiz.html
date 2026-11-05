@@ -198,17 +198,19 @@
       </div>
     </div>
   } @else if (round(); as r) {
-    <figure class="quiz-photo" [class.is-blurred]="!answered()">
-      <img
-        [src]="r.answer.thumbnailUrl"
-        [attr.srcset]="srcset(r.answer.thumbnailUrl)"
-        sizes="(max-width: 600px) 100vw, 40rem"
-        [alt]="answered() ? r.answer.commonName : i18n.t('quiz.photoAlt')"
-        decoding="async"
-        (error)="photoFailed()"
-      />
-    </figure>
-    <p class="quiz-prompt" id="quiz-prompt">{{ i18n.t('quiz.prompt') }}</p>
+    @if (photoUrl(r); as src) {
+      <figure class="quiz-photo">
+        <img
+          [src]="src"
+          [attr.srcset]="srcset(src)"
+          sizes="(max-width: 600px) 100vw, 40rem"
+          [alt]="answered() ? r.answer.commonName : i18n.t('quiz.photoAlt')"
+          decoding="async"
+          (error)="photoFailed()"
+        />
+      </figure>
+    }
+    <p class="quiz-prompt" id="quiz-prompt">{{ questionText(r) }}</p>
     <div class="quiz-choices" role="group" aria-labelledby="quiz-prompt">
       @for (choice of r.choices; track choice.id; let i = $index) {
         <button
@@ -226,9 +228,20 @@
         </button>
       }
     </div>
+    @if (!answered()) {
+      <button type="button" class="show-solution btn btn-secondary btn-sm" (click)="showSolution()">
+        {{ i18n.t('quiz.showSolution') }}
+      </button>
+    }
     <div class="quiz-feedback" aria-live="polite">
       @if (answered()) {
-        <p class="result" [class.is-correct]="correct()">{{ resultText(r) }}</p>
+        <p class="result" [class.is-correct]="correct()" [class.is-revealed]="picked() === null">
+          {{ resultText(r) }}
+        </p>
+        <p class="fun-fact">
+          <span class="fun-fact-label">{{ i18n.t('quiz.funFact') }}</span>
+          {{ factText(r) }}
+        </p>
         <div class="quiz-actions">
           <button #nextButton type="button" class="next btn btn-primary" (click)="next()">
             {{ nextLabel() }}

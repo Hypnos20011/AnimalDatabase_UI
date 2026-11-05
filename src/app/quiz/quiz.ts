@@ -28,6 +28,7 @@ import {
   quizShareUrl,
   shareQuizCard,
 } from './quiz-share';
+import { QUIZ_FACT_LIST, QuizFact, quizFactText } from './quiz-facts';
 
 export const QUIZ_CHOICES = 4;
 
@@ -46,7 +47,13 @@ export const QUIZ_RANDOM = new InjectionToken<() => number>('QUIZ_RANDOM', {
   factory: () => Math.random,
 });
 
+export const QUIZ_FACTS = new InjectionToken<readonly QuizFact[]>('QUIZ_FACTS', {
+  providedIn: 'root',
+  factory: () => QUIZ_FACT_LIST,
+});
+
 export interface QuizRound {
+  fact: QuizFact;
   answer: Animal;
   choices: Animal[];
 }
@@ -178,6 +185,45 @@ export function hasPhoto(animal: Animal): boolean {
   return !!animal.thumbnailUrl?.trim();
 }
 
+function normName(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function scientificMatch(factName: string, animalName: string): boolean {
+  const fact = normName(factName);
+  const animal = normName(animalName);
+  if (!fact || !animal) return false;
+  if (fact === animal) return true;
+  if (!fact.includes(' ')) return animal.split(' ')[0] === fact;
+  return false;
+}
+
+export function matchFactAnimal(fact: QuizFact, animals: readonly Animal[]): Animal | null {
+  const byScience = animals.find(
+    (animal) =>
+      !!animal.scientificName && scientificMatch(fact.scientificName, animal.scientificName),
+  );
+  if (byScience) return byScience;
+  const common = normName(fact.commonName);
+  return animals.find((animal) => normName(animal.commonName) === common) ?? null;
+}
+
+function linkedFacts(
+  facts: readonly QuizFact[],
+  animals: readonly Animal[],
+): { fact: QuizFact; answer: Animal }[] {
+  const linked: { fact: QuizFact; answer: Animal }[] = [];
+  for (const fact of facts) {
+    const answer = matchFactAnimal(fact, animals);
+    if (answer) linked.push({ fact, answer });
+  }
+  return linked;
+}
+
 function pick<T>(items: readonly T[], random: () => number): T {
   return items[Math.min(items.length - 1, Math.floor(random() * items.length))];
 }
@@ -191,45 +237,61 @@ export function shuffle<T>(items: readonly T[], random: () => number = Math.rand
   return result;
 }
 
-export function buildRound(
+export function buildFactRound(
+  facts: readonly QuizFact[],
   animals: readonly Animal[],
   random: () => number = Math.random,
   avoid: ReadonlySet<number> = new Set(),
 ): QuizRound | null {
   const named = animals.filter((animal) => animal.commonName?.trim());
   if (new Set(named.map(nameKey)).size < QUIZ_CHOICES) return null;
-  const withPhoto = named.filter(hasPhoto);
-  const fresh = withPhoto.filter((animal) => !avoid.has(animal.id));
-  const pool = fresh.length > 0 ? fresh : withPhoto;
+  const linked = linkedFacts(facts, named);
+  const fresh = linked.filter((item) => !avoid.has(item.answer.id));
+  const pool = fresh.length > 0 ? fresh : linked;
   if (pool.length === 0) return null;
-  const answer = pick(pool, random);
-  const wrong = new Map<string, Animal>([[nameKey(answer), answer]]);
+  const picked = pick(pool, random);
+  const choices = new Map<string, Animal>([[nameKey(picked.answer), picked.answer]]);
   for (const animal of shuffle(named, random)) {
-    if (wrong.size === QUIZ_CHOICES) break;
-    if (!wrong.has(nameKey(animal))) wrong.set(nameKey(animal), animal);
+    if (choices.size === QUIZ_CHOICES) break;
+    if (!choices.has(nameKey(animal))) choices.set(nameKey(animal), animal);
   }
-  return { answer, choices: shuffle([...wrong.values()], random) };
+  if (choices.size < QUIZ_CHOICES) return null;
+  return {
+    fact: picked.fact,
+    answer: picked.answer,
+    choices: shuffle([...choices.values()], random),
+  };
 }
 
 export function buildDailyPlan(
+  facts: readonly QuizFact[],
   animals: readonly Animal[],
   dateKey: string,
   count: number = QUIZ_DAILY_ROUNDS,
 ): QuizRound[] | null {
   const stable = [...animals].sort((a, b) => a.id - b.id);
-  if (stable.filter((animal) => animal.commonName?.trim() && hasPhoto(animal)).length < count) {
+  const linked = linkedFacts(facts, stable).sort(
+    (a, b) =>
+      a.fact.scientificName.localeCompare(b.fact.scientificName) || a.answer.id - b.answer.id,
+  );
+  if (linked.length < count) return null;
+  if (
+    new Set(stable.filter((animal) => animal.commonName?.trim()).map(nameKey)).size < QUIZ_CHOICES
+  ) {
     return null;
   }
   const random = mulberry32(seedFromDate(dateKey));
   const plan: QuizRound[] = [];
   const used = new Set<number>();
-  for (let i = 0; i < count; i++) {
-    const round = buildRound(stable, random, used);
-    if (!round) return null;
+  for (const item of shuffle(linked, random)) {
+    if (plan.length === count) break;
+    if (used.has(item.answer.id)) continue;
+    const round = buildFactRound([item.fact], stable, random, used);
+    if (!round) continue;
     plan.push(round);
     used.add(round.answer.id);
   }
-  return plan;
+  return plan.length === count ? plan : null;
 }
 
 @Component({
@@ -244,6 +306,7 @@ export class Quiz {
   private random = inject(QUIZ_RANDOM);
   private injector = inject(Injector);
   private cardFile = inject(QUIZ_CARD_FILE);
+  private facts = inject(QUIZ_FACTS);
   protected i18n = inject(LanguageService);
   readonly srcset = wikimediaSrcset;
   readonly dailyTotal = QUIZ_DAILY_ROUNDS;
@@ -273,6 +336,7 @@ export class Quiz {
   dailyFinished = signal(false);
   dailyBest = signal<DailyBest | null>(readDailyBest());
   runBestStreak = signal(0);
+  solutionShown = signal(false);
   classFilter = signal('');
   habitatFilter = signal('');
   dailyShareStatus = signal<'copied' | 'error' | null>(null);
@@ -302,7 +366,7 @@ export class Quiz {
       (this.classes().length > 0 || this.habitats().length > 0 || this.missedCount() > 0),
   );
 
-  answered = computed(() => this.picked() !== null);
+  answered = computed(() => this.picked() !== null || this.solutionShown());
   correct = computed(() => this.picked() !== null && this.picked() === this.round()?.answer.id);
   dailyLast = computed(
     () => this.dailyMode() && this.dailyIndex() >= (this.dailyPlan()?.length ?? 0) - 1,
@@ -352,8 +416,8 @@ export class Quiz {
   private remapRound(round: QuizRound, byId: Map<number, Animal>): QuizRound | null {
     const answer = byId.get(round.answer.id);
     const choices = round.choices.map((choice) => byId.get(choice.id));
-    if (!answer || !hasPhoto(answer) || choices.some((choice) => !choice)) return null;
-    return { answer, choices: choices as Animal[] };
+    if (!answer || choices.some((choice) => !choice)) return null;
+    return { fact: round.fact, answer, choices: choices as Animal[] };
   }
 
   private keepRound(): boolean {
@@ -476,8 +540,9 @@ export class Quiz {
     this.played.set(0);
     this.streak.set(0);
     this.runBestStreak.set(0);
+    this.solutionShown.set(false);
     this.picked.set(null);
-    const plan = buildDailyPlan(this.withBroken(this.animals()), date);
+    const plan = buildDailyPlan(this.facts, this.withBroken(this.animals()), date);
     this.dailyPlan.set(plan);
     this.round.set(plan?.[0] ?? null);
   }
@@ -502,7 +567,8 @@ export class Quiz {
   private startRound(): void {
     const previous = this.round()?.answer.id;
     const avoid = new Set(previous === undefined ? [] : [previous]);
-    this.round.set(buildRound(this.pool(), this.random, avoid));
+    this.solutionShown.set(false);
+    this.round.set(buildFactRound(this.facts, this.pool(), this.random, avoid));
     this.picked.set(null);
   }
 
@@ -543,6 +609,7 @@ export class Quiz {
       const index = this.dailyIndex() + 1;
       this.dailyIndex.set(index);
       this.round.set(plan[index]);
+      this.solutionShown.set(false);
       this.picked.set(null);
       this.focusLater(() => this.choiceButtons()[0]?.nativeElement);
       return;
@@ -563,28 +630,20 @@ export class Quiz {
     this.next();
   }
 
-  photoFailed(): void {
+  showSolution(): void {
     const round = this.round();
     if (!round || this.answered() || this.dailyFinished()) return;
-    this.brokenPhotos.add(round.answer.id);
-    if (this.dailyMode()) {
-      const plan = this.dailyPlan();
-      if (!plan) {
-        this.beginDaily();
-        return;
-      }
-      if (this.dailyIndex() >= plan.length - 1) {
-        this.round.set(null);
-        this.finishDaily();
-        return;
-      }
-      const index = this.dailyIndex() + 1;
-      this.dailyIndex.set(index);
-      this.round.set(plan[index]);
-      this.picked.set(null);
-      return;
-    }
-    this.startRound();
+    this.solutionShown.set(true);
+    this.played.update((n) => n + 1);
+    this.streak.set(0);
+    this.addMissed(round.answer.id);
+    this.focusLater(() => this.nextButton()?.nativeElement);
+  }
+
+  photoFailed(): void {
+    const id = this.round()?.answer.id;
+    if (id == null || this.dailyFinished()) return;
+    this.brokenPhotos.add(id);
   }
 
   onKey(event: KeyboardEvent): void {
@@ -592,7 +651,11 @@ export class Quiz {
       return;
     }
     const target = event.target instanceof Element ? event.target : null;
-    if (target?.closest('input, textarea, select, button.share-best, [contenteditable="true"]')) {
+    if (
+      target?.closest(
+        'input, textarea, select, button.share-best, button.show-solution, .language, [contenteditable="true"]',
+      )
+    ) {
       return;
     }
     const choice = this.round()?.choices[Number(event.key) - 1];
@@ -602,9 +665,26 @@ export class Quiz {
   }
 
   resultText(round: QuizRound): string {
+    if (this.picked() === null) {
+      return this.i18n.t('quiz.revealed', { name: round.answer.commonName });
+    }
     return this.i18n.t(this.correct() ? 'quiz.correct' : 'quiz.wrong', {
       name: round.answer.commonName,
     });
+  }
+
+  questionText(round: QuizRound): string {
+    return quizFactText(round.fact.question, this.i18n.language());
+  }
+
+  factText(round: QuizRound): string {
+    return quizFactText(round.fact.fact, this.i18n.language());
+  }
+
+  photoUrl(round: QuizRound): string | null {
+    if (this.brokenPhotos.has(round.answer.id)) return null;
+    const url = round.answer.thumbnailUrl?.trim();
+    return url || null;
   }
 
   emptyText(): string {

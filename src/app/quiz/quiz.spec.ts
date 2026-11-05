@@ -4,15 +4,18 @@ import { of, throwError } from 'rxjs';
 import { Animal } from '../animal-model/animal.model';
 import { AnimalService } from '../shared/animal.service';
 import { LanguageService } from '../shared/i18n/language.service';
+import { QUIZ_FACT_LIST, QuizFact } from './quiz-facts';
 import {
   buildDailyPlan,
-  buildRound,
+  buildFactRound,
+  matchFactAnimal,
   matchesFilter,
   mulberry32,
   Quiz,
   QUIZ_BEST_STORAGE,
   QUIZ_DAILY_ROUNDS,
   QUIZ_DAILY_STORAGE,
+  QUIZ_FACTS,
   QUIZ_MISSED_STORAGE,
   QUIZ_RANDOM,
   quizDateKey,
@@ -22,6 +25,27 @@ import {
   seedFromDate,
   shuffle,
 } from './quiz';
+
+function testFact(commonName: string): QuizFact {
+  return {
+    scientificName: `Species ${commonName}`,
+    commonName,
+    question: {
+      en: `Which fact matches ${commonName}?`,
+      de: `Welcher Fakt passt zu ${commonName}?`,
+      fr: `Quel fait correspond à ${commonName} ?`,
+    },
+    fact: {
+      en: `${commonName} fact.`,
+      de: `${commonName} Fakt.`,
+      fr: `${commonName} fait.`,
+    },
+  };
+}
+
+const testFacts = ['Okapi', 'Axolotl', 'Aye-aye', 'Shoebill', 'Tapir', 'Lion', 'Wolf', 'Kiwi'].map(
+  testFact,
+);
 
 function animal(id: number, commonName: string, thumbnailUrl: string | null = null): Animal {
   return { id, commonName, thumbnailUrl } as Animal;
@@ -64,16 +88,56 @@ const photos = [
   animal(6, 'Lion', 'https://example.org/lion.jpg'),
 ];
 
-describe('buildRound', () => {
+describe('curated facts', () => {
+  it('has a reviewed fact in English, German, and French for each question', () => {
+    expect(QUIZ_FACT_LIST.length).toBeGreaterThanOrEqual(15);
+    const names = new Set<string>();
+    for (const fact of QUIZ_FACT_LIST) {
+      expect(names.has(fact.scientificName)).toBe(false);
+      names.add(fact.scientificName);
+      for (const language of ['en', 'de', 'fr'] as const) {
+        expect(fact.question[language].trim().length).toBeGreaterThan(10);
+        expect(fact.fact[language].trim().length).toBeGreaterThan(10);
+      }
+    }
+  });
+});
+
+describe('buildFactRound', () => {
   const ids = (animals: Animal[]) => animals.map((a) => a.id).sort();
 
-  it('picks an answer with a photo and three other names', () => {
-    const round = buildRound(zoo, () => 0)!;
+  it('picks a matching fact and three other names, with or without a photo', () => {
+    const round = buildFactRound(testFacts, zoo, () => 0)!;
 
-    expect(round.answer.id).toBe(1);
+    expect(round.answer.commonName).toBe('Okapi');
+    expect(round.fact.commonName).toBe('Okapi');
     expect(round.choices).toHaveLength(4);
     expect(round.choices).toContain(round.answer);
     expect(new Set(round.choices.map((a) => a.commonName)).size).toBe(4);
+    expect(
+      buildFactRound(
+        testFacts,
+        zoo.map((a) => ({ ...a, thumbnailUrl: null })),
+        () => 0,
+      ),
+    ).not.toBeNull();
+  });
+
+  it('matches a scientific name before the common name', () => {
+    const latin = {
+      ...zoo[0],
+      commonName: 'Okapi DE',
+      scientificName: 'Okapia johnstoni',
+    } as Animal;
+    const fact = {
+      ...testFacts[0],
+      scientificName: 'Okapia johnstoni',
+      commonName: 'Okapi',
+    };
+    expect(matchFactAnimal(fact, [latin])?.id).toBe(latin.id);
+    expect(
+      matchFactAnimal(testFacts[0], [{ ...zoo[0], commonName: 'Something else' } as Animal]),
+    ).toBeNull();
   });
 
   it('never uses the same name twice', () => {
@@ -85,20 +149,18 @@ describe('buildRound', () => {
       animal(5, 'C'),
     ];
     for (const r of [0, 0.3, 0.6, 0.99]) {
-      expect(ids(buildRound(twins, () => r)!.choices)).not.toContain(2);
+      expect(ids(buildFactRound(testFacts, twins, () => r)!.choices)).not.toContain(2);
     }
   });
 
   it('avoids the last answer when it can', () => {
-    expect(buildRound(zoo, () => 0, new Set([1]))!.answer.id).toBe(2);
-    const onePhoto = zoo.map((a) => (a.id === 1 ? a : { ...a, thumbnailUrl: null }));
-    expect(buildRound(onePhoto, () => 0, new Set([1]))!.answer.id).toBe(1);
+    expect(buildFactRound(testFacts, zoo, () => 0, new Set([1]))!.answer.id).toBe(2);
   });
 
-  it('needs four different names and one photo', () => {
-    expect(buildRound(zoo.slice(0, 3))).toBeNull();
-    expect(buildRound(zoo.map((a) => ({ ...a, thumbnailUrl: '  ' })))).toBeNull();
-    expect(buildRound([])).toBeNull();
+  it('needs four different names and a matching fact', () => {
+    expect(buildFactRound(testFacts, zoo.slice(0, 3))).toBeNull();
+    expect(buildFactRound([], zoo)).toBeNull();
+    expect(buildFactRound(testFacts, [])).toBeNull();
   });
 
   it('shuffles without losing items', () => {
@@ -155,9 +217,9 @@ describe('daily challenge helpers', () => {
   ];
 
   it('builds the same plan for the same date and a different plan for another day', () => {
-    const a = buildDailyPlan(many, '2026-11-05')!;
-    const b = buildDailyPlan(many, '2026-11-05')!;
-    const c = buildDailyPlan(many, '2026-11-06')!;
+    const a = buildDailyPlan(testFacts, many, '2026-11-05')!;
+    const b = buildDailyPlan(testFacts, many, '2026-11-05')!;
+    const c = buildDailyPlan(testFacts, many, '2026-11-06')!;
 
     expect(a).toHaveLength(QUIZ_DAILY_ROUNDS);
     expect(a.map((round) => round.answer.id)).toEqual(b.map((round) => round.answer.id));
@@ -167,8 +229,8 @@ describe('daily challenge helpers', () => {
     expect(a.map((round) => round.answer.id)).not.toEqual(c.map((round) => round.answer.id));
   });
 
-  it('needs enough photo animals for the daily length', () => {
-    expect(buildDailyPlan(many.slice(0, 4), '2026-11-05')).toBeNull();
+  it('needs enough matching facts for the daily length', () => {
+    expect(buildDailyPlan(testFacts, many.slice(0, 4), '2026-11-05')).toBeNull();
   });
 
   it('seeds deterministically from the date key', () => {
@@ -185,10 +247,7 @@ describe('daily challenge helpers', () => {
   it("reads only today's daily best", () => {
     const today = quizDateKey();
     expect(readDailyBest(today)).toBeNull();
-    localStorage.setItem(
-      QUIZ_DAILY_STORAGE,
-      JSON.stringify({ date: today, score: 4, streak: 3 }),
-    );
+    localStorage.setItem(QUIZ_DAILY_STORAGE, JSON.stringify({ date: today, score: 4, streak: 3 }));
     expect(readDailyBest(today)).toEqual({ date: today, score: 4, streak: 3 });
     localStorage.setItem(
       QUIZ_DAILY_STORAGE,
@@ -208,6 +267,7 @@ describe('Quiz', () => {
         provideRouter([]),
         { provide: AnimalService, useValue: { getAll } },
         { provide: QUIZ_RANDOM, useValue: () => 0 },
+        { provide: QUIZ_FACTS, useValue: testFacts },
       ],
     });
     const fixture = TestBed.createComponent(Quiz);
@@ -227,14 +287,18 @@ describe('Quiz', () => {
     return { fixture, element, refresh, choices, choice, stat, photo, practice, getAll };
   }
 
-  it('shows a blurred photo with four answers', async () => {
+  it('shows a clear photo, a fact, and four answers', async () => {
     const { element, choices, stat, photo, getAll } = await setup();
 
     expect(getAll).toHaveBeenCalledWith('en');
-    expect(element.querySelector('h2')!.textContent).toBe('Guess the animal');
+    expect(element.querySelector('h2')!.textContent).toBe('Fact quiz');
+    expect(element.querySelector('.quiz-prompt')!.textContent).toBe('Which fact matches Okapi?');
+    expect(element.querySelector('button.show-solution')!.textContent!.trim()).toBe(
+      'Show solution',
+    );
     expect(photo().getAttribute('src')).toBe('https://example.org/okapi.jpg');
-    expect(photo().alt).toBe('Photo of the mystery animal');
-    expect(element.querySelector('.quiz-photo')!.classList).toContain('is-blurred');
+    expect(photo().alt).toBe('Photo shown with this question');
+    expect(element.querySelector('.quiz-photo')!.classList.contains('is-blurred')).toBe(false);
     expect(choices().map((b) => b.querySelector('.choice-name')!.textContent)).toHaveLength(4);
     expect(choices().map((b) => b.querySelector('.key')!.textContent)).toEqual([
       '1',
@@ -253,8 +317,10 @@ describe('Quiz', () => {
     choice('Okapi').click();
     await refresh();
 
-    expect(element.querySelector('.quiz-photo')!.classList).not.toContain('is-blurred');
+    expect(element.querySelector('.quiz-photo')!.classList.contains('is-blurred')).toBe(false);
     expect(photo().alt).toBe('Okapi');
+    expect(element.querySelector('.fun-fact')!.textContent).toContain('Okapi fact.');
+    expect(element.querySelector('button.show-solution')).toBeNull();
     expect(element.querySelector('.result')!.textContent).toBe('Correct! It is the Okapi.');
     expect(choice('Okapi').classList).toContain('is-correct');
     expect(choices().every((b) => b.disabled)).toBe(true);
@@ -293,7 +359,8 @@ describe('Quiz', () => {
     await refresh();
 
     expect(photo().getAttribute('src')).toBe('https://example.org/axolotl.jpg');
-    expect(element.querySelector('.quiz-photo')!.classList).toContain('is-blurred');
+    expect(element.querySelector('.quiz-photo')!.classList.contains('is-blurred')).toBe(false);
+    expect(element.querySelector('.quiz-prompt')!.textContent).toBe('Which fact matches Axolotl?');
     expect(choices().some((b) => b.disabled)).toBe(false);
     expect(element.querySelector('.result')).toBeNull();
     expect(document.activeElement).toBe(choices()[0]);
@@ -316,13 +383,28 @@ describe('Quiz', () => {
     expect(stat('score')).toMatch(/\/1$/);
   });
 
-  it('skips an animal whose photo does not load', async () => {
-    const { photo, refresh } = await setup();
+  it('keeps the fact when the photo does not load', async () => {
+    const { element, photo, refresh } = await setup();
 
     photo().dispatchEvent(new Event('error'));
     await refresh();
 
-    expect(photo().getAttribute('src')).toBe('https://example.org/axolotl.jpg');
+    expect(element.querySelector('.quiz-photo')).toBeNull();
+    expect(element.querySelector('.quiz-prompt')!.textContent).toBe('Which fact matches Okapi?');
+    expect(element.querySelectorAll('button.choice')).toHaveLength(4);
+  });
+
+  it('shows the answer and fun fact without scoring when the solution is revealed', async () => {
+    const { element, stat, refresh } = await setup();
+
+    element.querySelector<HTMLButtonElement>('button.show-solution')!.click();
+    await refresh();
+
+    expect(element.querySelector('.result')!.textContent).toBe('It is the Okapi.');
+    expect(element.querySelector('.fun-fact')!.textContent).toContain('Okapi fact.');
+    expect(stat('score')).toBe('0/1');
+    expect(stat('streak')).toBe('0');
+    expect(element.querySelector('button.choice.is-correct')!.textContent).toContain('Okapi');
   });
 
   it('starts over with a clean score', async () => {
@@ -345,7 +427,9 @@ describe('Quiz', () => {
   it('explains when there are not enough animals', async () => {
     const { element } = await setup(vi.fn(() => of(zoo.slice(0, 3))));
 
-    expect(element.querySelector('.state-message')!.textContent).toContain('at least four animals');
+    expect(element.querySelector('.state-message')!.textContent).toContain(
+      'at least four animals and a fact',
+    );
     expect(element.querySelector('button.choice')).toBeNull();
   });
 
@@ -368,17 +452,15 @@ describe('Quiz', () => {
     expect(getAll).toHaveBeenCalledWith('de');
     expect(photo().getAttribute('src')).toBe('https://example.org/okapi.jpg');
     expect(choices().every((b) => b.textContent!.includes(' DE'))).toBe(true);
-    expect(element.querySelector('h2')!.textContent).toBe('Errate das Tier');
-    expect(element.querySelector('.quiz-prompt')!.textContent).toBe(
-      'Welches Tier ist auf dem Foto?',
-    );
+    expect(element.querySelector('h2')!.textContent).toBe('Faktenquiz');
+    expect(element.querySelector('.quiz-prompt')!.textContent).toBe('Welcher Fakt passt zu Okapi?');
   });
 
   it('uses French labels', async () => {
     localStorage.setItem('language', 'fr');
     const { element, choice, refresh } = await setup();
 
-    expect(element.querySelector('h2')!.textContent).toBe("Devinez l’animal");
+    expect(element.querySelector('h2')!.textContent).toBe('Quiz des faits');
     choice('Okapi').click();
     await refresh();
     expect(element.querySelector('button.next')!.textContent!.trim()).toBe('Animal suivant');
@@ -422,7 +504,9 @@ describe('Quiz', () => {
       const { choices, stat, refresh } = await setup();
       expect(stat('best')).toBe('0');
 
-      choices().find((b) => !b.textContent!.includes('Okapi'))!.click();
+      choices()
+        .find((b) => !b.textContent!.includes('Okapi'))!
+        .click();
       await refresh();
 
       expect(stat('best')).toBe('0');
@@ -435,7 +519,9 @@ describe('Quiz', () => {
       const { choices, practice, refresh } = await setup(vi.fn(() => of(photos)));
       expect(practice()).toBeNull();
 
-      choices().find((b) => !b.textContent!.includes('Okapi'))!.click();
+      choices()
+        .find((b) => !b.textContent!.includes('Okapi'))!
+        .click();
       await refresh();
 
       expect(JSON.parse(localStorage.getItem(QUIZ_MISSED_STORAGE)!)).toEqual([1]);
@@ -445,7 +531,9 @@ describe('Quiz', () => {
 
     it('does not duplicate a missed id on another wrong answer', async () => {
       const { element, choice, choices, refresh } = await setup(vi.fn(() => of(photos)));
-      choices().find((b) => !b.textContent!.includes('Okapi'))!.click();
+      choices()
+        .find((b) => !b.textContent!.includes('Okapi'))!
+        .click();
       await refresh();
       element.querySelector<HTMLButtonElement>('button.next')!.click();
       await refresh();
@@ -453,7 +541,9 @@ describe('Quiz', () => {
       await refresh();
       element.querySelector<HTMLButtonElement>('button.next')!.click();
       await refresh();
-      choices().find((b) => !b.textContent!.includes('Okapi'))!.click();
+      choices()
+        .find((b) => !b.textContent!.includes('Okapi'))!
+        .click();
       await refresh();
 
       expect(JSON.parse(localStorage.getItem(QUIZ_MISSED_STORAGE)!)).toEqual([1]);
@@ -517,7 +607,7 @@ describe('Quiz', () => {
       expect(choices()).toHaveLength(0);
       expect(element.querySelector('.quiz-photo')).toBeNull();
       expect(element.querySelector('.state-message')!.textContent).toContain(
-        'Not enough missed animals',
+        'Not enough missed animals to practice',
       );
 
       element.querySelector<HTMLButtonElement>('button.exit-practice')!.click();
@@ -573,7 +663,9 @@ describe('Quiz', () => {
       classSelect.dispatchEvent(new Event('change'));
       await refresh();
 
-      const names = choices().map((b) => b.querySelector('.choice-name')!.textContent).sort();
+      const names = choices()
+        .map((b) => b.querySelector('.choice-name')!.textContent)
+        .sort();
       expect(names).toEqual(['Aye-aye', 'Lion', 'Okapi', 'Tapir']);
     });
   });
@@ -622,7 +714,7 @@ describe('Quiz', () => {
     });
 
     it('plays the same answer order for the same day', async () => {
-      const plan = buildDailyPlan(many, quizDateKey())!;
+      const plan = buildDailyPlan(testFacts, many, quizDateKey())!;
       const { choice, element, refresh, photo } = await setup(vi.fn(() => of(many)));
       dailyBtn(element).click();
       await refresh();
@@ -641,7 +733,7 @@ describe('Quiz', () => {
     });
 
     it("saves and restores today's best after finishing", async () => {
-      const plan = buildDailyPlan(many, quizDateKey())!;
+      const plan = buildDailyPlan(testFacts, many, quizDateKey())!;
       const { choice, element, refresh, stat } = await setup(vi.fn(() => of(many)));
       dailyBtn(element).click();
       await refresh();
@@ -657,7 +749,9 @@ describe('Quiz', () => {
       expect(stat('score')).toBe('5/5');
       const saved = JSON.parse(localStorage.getItem(QUIZ_DAILY_STORAGE)!);
       expect(saved).toEqual({ date: quizDateKey(), score: 5, streak: 5 });
-      expect(element.querySelector('[data-daily="best"]')!.textContent).toContain("Today's best: 5/5");
+      expect(element.querySelector('[data-daily="best"]')!.textContent).toContain(
+        "Today's best: 5/5",
+      );
 
       element.querySelector<HTMLButtonElement>('button.daily-exit')!.click();
       await refresh();
@@ -671,7 +765,7 @@ describe('Quiz', () => {
       await refresh();
 
       expect(element.querySelector('.state-message')!.textContent).toContain(
-        "Not enough animals with photos for today's challenge",
+        'Not enough matching facts',
       );
       element.querySelector<HTMLButtonElement>('button.daily-exit')!.click();
       await refresh();
@@ -691,7 +785,7 @@ describe('Quiz', () => {
     it('keeps daily mode across a language switch', async () => {
       const german = many.map((a) => ({ ...a, commonName: `${a.commonName} DE` }));
       const getAll = vi.fn((lang?: string) => of(lang === 'de' ? german : many));
-      const plan = buildDailyPlan(many, quizDateKey())!;
+      const plan = buildDailyPlan(testFacts, many, quizDateKey())!;
       const { element, photo, refresh } = await setup(getAll);
       dailyBtn(element).click();
       await refresh();
@@ -776,7 +870,7 @@ describe('Quiz', () => {
       expect(choices()).toHaveLength(0);
       expect(element.querySelector('.quiz-photo')).toBeNull();
       expect(element.querySelector('.state-message')!.textContent).toContain(
-        'Not enough animals with photos for this filter',
+        'Not enough animals for this filter',
       );
 
       element.querySelector<HTMLButtonElement>('button.reset-filters')!.click();
