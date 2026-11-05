@@ -149,7 +149,7 @@ describe('AnimalDetail share button', () => {
     expect(status().textContent!.trim()).toBe('');
   });
 
-  it('falls back to copying without an error when the user cancels the share sheet', async () => {
+  it('does nothing when the user cancels the share sheet', async () => {
     const share = vi.fn(() => Promise.reject(new DOMException('Share canceled', 'AbortError')));
     const writeText = vi.fn(() => Promise.resolve());
     mockNavigator({ share, clipboard: { writeText } });
@@ -158,17 +158,7 @@ describe('AnimalDetail share button', () => {
     await click();
 
     expect(share).toHaveBeenCalled();
-    expect(writeText).toHaveBeenCalledWith(window.location.href);
-    expect(status().textContent!.trim()).toBe('Link copied to clipboard');
-  });
-
-  it('stays quiet when the user cancels and copying also fails', async () => {
-    const share = vi.fn(() => Promise.reject(new DOMException('Share canceled', 'AbortError')));
-    mockNavigator({ share, clipboard: { writeText: vi.fn(() => Promise.reject(new Error('denied'))) } });
-    const { click, status } = await setup();
-
-    await click();
-
+    expect(writeText).not.toHaveBeenCalled();
     expect(status().textContent!.trim()).toBe('');
     expect(status().classList).not.toContain('is-error');
   });

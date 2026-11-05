@@ -163,21 +163,20 @@ export class AnimalDetail {
       text: this.i18n.t('detail.share.text', { name: animal.commonName }),
       url,
     };
-    let cancelled = false;
     if (typeof navigator.share === 'function' && (!navigator.canShare || navigator.canShare(data))) {
       try {
         await navigator.share(data);
         this.setShareStatus(null);
         return;
       } catch (error) {
-        cancelled = (error as Error | undefined)?.name === 'AbortError';
+        if ((error as Error | undefined)?.name === 'AbortError') return;
       }
     }
     try {
       await navigator.clipboard.writeText(url);
       this.setShareStatus('copied');
     } catch {
-      this.setShareStatus(cancelled ? null : 'error');
+      this.setShareStatus('error');
     }
   }
 
