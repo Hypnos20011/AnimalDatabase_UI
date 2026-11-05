@@ -267,23 +267,23 @@
     <div class="actions">
       <button type="button" class="back btn btn-secondary" (click)="onClose()">{{ i18n.t('detail.back') }}</button>
       @if (admin.unlocked()) {
-        <a class="edit btn btn-primary" [routerLink]="['/animals', animal()!.id, 'edit']">Edit</a>
+        <a class="edit btn btn-primary" [routerLink]="['/animals', animal()!.id, 'edit']">{{ i18n.t('detail.edit') }}</a>
         <button
           type="button"
           class="delete btn btn-danger"
           [disabled]="deleting()"
           (click)="onDelete()"
         >
-          Delete
+          {{ i18n.t('detail.delete') }}
         </button>
       }
     </div>
     <app-confirm-dialog
       [open]="confirmOpen()"
       [title]="deleteTitle()"
-      [message]="deleteMessage"
-      confirmLabel="Delete"
-      busyLabel="Deleting..."
+      [message]="deleteMessage()"
+      [confirmLabel]="i18n.t('detail.delete')"
+      [busyLabel]="i18n.t('detail.delete.busy')"
       [busy]="deleting()"
       [error]="deleteError()"
       (confirmed)="confirmDelete()"

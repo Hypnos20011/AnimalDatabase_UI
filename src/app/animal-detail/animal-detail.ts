@@ -111,9 +111,12 @@ export class AnimalDetail {
   confirmOpen = signal(false);
   deleting = signal(false);
   deleteError = signal('');
-  deleteTitle = computed(() => `Delete ${this.animal()?.commonName ?? 'this animal'}?`);
-  readonly deleteMessage =
-    "This removes the animal and its pictures for good, and it drops out of Top searches. This can't be undone.";
+  deleteTitle = computed(() =>
+    this.i18n.t('detail.delete.title', {
+      name: this.animal()?.commonName ?? this.i18n.t('detail.delete.thisAnimal'),
+    }),
+  );
+  deleteMessage = computed(() => this.i18n.t('detail.delete.message'));
 
   constructor() {
     inject(DestroyRef).onDestroy(() => clearTimeout(this.shareStatusTimer));
@@ -245,7 +248,7 @@ export class AnimalDetail {
         this.router.navigate(['/']);
       },
       error: () => {
-        this.deleteError.set('Could not delete this animal. Please try again.');
+        this.deleteError.set(this.i18n.t('detail.delete.error'));
         this.deleting.set(false);
       },
     });
