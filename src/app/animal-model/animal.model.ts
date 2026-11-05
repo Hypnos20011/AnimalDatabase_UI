@@ -18,7 +18,7 @@ export interface Animal {
   habitatType: string | null;
   rangeRegion: string | null;
   profile: string | null;
-  sourceUrl?: string | null;
+  sourceUrl: string | null;
   thumbnailUrl: string | null;
   createdAt: string;
   updatedAt: string;

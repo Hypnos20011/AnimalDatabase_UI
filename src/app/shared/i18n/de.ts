@@ -74,7 +74,7 @@ export const de: Record<TranslationKey, string> = {
   'detail.lastUpdated': 'Zuletzt aktualisiert',
   'detail.funFact': 'Wusstest du?',
   'detail.profile': 'Steckbrief',
-  'detail.source': 'Quelle',
+  'detail.readMore': 'Weiterlesen',
   'detail.morePictures': 'Weitere Bilder',
   'detail.back': 'Zurück zur Liste',
   'detail.loading': 'Wird geladen...',

@@ -74,6 +74,18 @@ describe('AnimalForm number checks', () => {
     expect(form.form.valid).toBe(false);
   });
 
+  it('only accepts https source links', () => {
+    const { form } = setup();
+    for (const bad of ['http://en.wikipedia.org/wiki/Blue_whale', 'javascript:alert(1)', 'https://']) {
+      form.form.controls.sourceUrl.setValue(bad);
+      expect(form.form.controls.sourceUrl.invalid).toBe(true);
+    }
+    form.form.controls.sourceUrl.setValue('https://en.wikipedia.org/wiki/Blue_whale');
+    expect(form.form.controls.sourceUrl.valid).toBe(true);
+    form.form.controls.sourceUrl.setValue('');
+    expect(form.form.controls.sourceUrl.valid).toBe(true);
+  });
+
   it('shows the reason the API gives for a failed save', () => {
     const error = new HttpErrorResponse({
       status: 400,

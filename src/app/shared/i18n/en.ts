@@ -72,7 +72,7 @@ export const en = {
   'detail.lastUpdated': 'Last updated',
   'detail.funFact': 'Fun fact',
   'detail.profile': 'Profile',
-  'detail.source': 'Source',
+  'detail.readMore': 'Read more',
   'detail.morePictures': 'More pictures',
   'detail.back': 'Back to list',
   'detail.loading': 'Loading...',
