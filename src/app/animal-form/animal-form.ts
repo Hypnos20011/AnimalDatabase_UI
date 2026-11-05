@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { forkJoin } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 import {
   AbstractControl,
   FormBuilder,
@@ -11,16 +11,47 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AnimalService } from '../shared/animal.service';
-import { Animal, NewAnimal, NewAnimalImage } from '../animal-model/animal.model';
+import { Animal, AnimalTexts, NewAnimal, NewAnimalImage } from '../animal-model/animal.model';
 import { WikipediaImport } from '../animal-model/wikipedia-import.model';
 import { formatCount } from '../shared/plural';
 import { isRateLimited, rateLimitMessage } from '../shared/rate-limit';
+import { apiErrorMessage } from '../shared/api-error';
 
 const oneDecimal: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const value = control.value;
   if (value === null || value === undefined || value === '') return null;
   const tenths = Number(value) * 10;
   return Math.abs(tenths - Math.round(tenths)) < 1e-6 ? null : { oneDecimal: true };
+};
+
+const wholeNumber: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+  const value = control.value;
+  if (value === null || value === undefined || value === '') return null;
+  return Number.isInteger(Number(value)) ? null : { wholeNumber: true };
+};
+
+const MAX_SIZE_CM = 999999.9;
+const MAX_WEIGHT_KG = 9999999.99;
+const MAX_LIFESPAN_YEARS = 2147483647;
+
+const sizeRules = [Validators.min(0), Validators.max(MAX_SIZE_CM), oneDecimal];
+const weightRules = [Validators.min(0), Validators.max(MAX_WEIGHT_KG)];
+const lifespanRules = [Validators.min(0), Validators.max(MAX_LIFESPAN_YEARS), wholeNumber];
+
+const RANGES = [
+  ['sizeLengthCmMin', 'sizeLengthCmMax'],
+  ['sizeHeightCmMin', 'sizeHeightCmMax'],
+  ['weightKgMin', 'weightKgMax'],
+  ['lifespanYearsMin', 'lifespanYearsMax'],
+] as const;
+
+const minNotAboveMax: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
+  const reversed = RANGES.filter(([min, max]) => {
+    const low = group.get(min)?.value;
+    const high = group.get(max)?.value;
+    return low !== null && low !== '' && high !== null && high !== '' && Number(low) > Number(high);
+  }).map(([min]) => min as string);
+  return reversed.length > 0 ? { minAboveMax: reversed } : null;
 };
 
 @Component({
@@ -75,6 +106,9 @@ export class AnimalForm {
   importMessage = signal('');
   importError = signal('');
   importWarnings = signal<string[]>([]);
+  translating = signal(false);
+  translateMessage = signal('');
+  translateError = signal('');
   private originalCaptions = new Map<string, string | null>();
   private importedImageUrl = '';
   private savedImageUrl = '';
@@ -82,30 +116,38 @@ export class AnimalForm {
   private importedValues = new Map<string, unknown>();
   error = signal('');
 
-  form = this.fb.group({
-    commonName: ['', [Validators.required, Validators.maxLength(120)]],
-    scientificName: ['', Validators.maxLength(150)],
-    family: ['', Validators.maxLength(120)],
-    taxonomicClass: [''],
-    isDomesticated: [false],
-    sizeLengthCmMin: [null as number | null, [Validators.min(0), oneDecimal]],
-    sizeLengthCmMax: [null as number | null, [Validators.min(0), oneDecimal]],
-    sizeHeightCmMin: [null as number | null, [Validators.min(0), oneDecimal]],
-    sizeHeightCmMax: [null as number | null, [Validators.min(0), oneDecimal]],
-    weightKgMin: [null as number | null, Validators.min(0)],
-    weightKgMax: [null as number | null, Validators.min(0)],
-    lifespanYearsMin: [null as number | null, Validators.min(0)],
-    lifespanYearsMax: [null as number | null, Validators.min(0)],
-    iucnStatus: [''],
-    habitat: ['', Validators.maxLength(255)],
-    habitatType: ['', Validators.maxLength(30)],
-    rangeRegion: ['', Validators.maxLength(255)],
-    profile: [''],
-    maleImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
-    femaleImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
-    babyImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
-    otherImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
-  });
+  form = this.fb.group(
+    {
+      commonName: ['', [Validators.required, Validators.maxLength(120)]],
+      scientificName: ['', Validators.maxLength(150)],
+      family: ['', Validators.maxLength(120)],
+      taxonomicClass: [''],
+      isDomesticated: [false],
+      sizeLengthCmMin: [null as number | null, sizeRules],
+      sizeLengthCmMax: [null as number | null, sizeRules],
+      sizeHeightCmMin: [null as number | null, sizeRules],
+      sizeHeightCmMax: [null as number | null, sizeRules],
+      weightKgMin: [null as number | null, weightRules],
+      weightKgMax: [null as number | null, weightRules],
+      lifespanYearsMin: [null as number | null, lifespanRules],
+      lifespanYearsMax: [null as number | null, lifespanRules],
+      iucnStatus: [''],
+      habitat: ['', Validators.maxLength(255)],
+      habitatType: ['', Validators.maxLength(30)],
+      rangeRegion: ['', Validators.maxLength(255)],
+      profile: [''],
+      sourceUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
+      commonNameDe: ['', Validators.maxLength(120)],
+      habitatDe: ['', Validators.maxLength(255)],
+      rangeRegionDe: ['', Validators.maxLength(255)],
+      profileDe: [''],
+      maleImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
+      femaleImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
+      babyImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
+      otherImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
+    },
+    { validators: minNotAboveMax },
+  );
 
   private existingAnimals = signal<Animal[]>([]);
   private commonNameValue = toSignal(this.form.controls.commonName.valueChanges, {
@@ -142,8 +184,7 @@ export class AnimalForm {
       if (isDomesticated) {
         this.form.controls.iucnStatus.setValue('');
         this.form.controls.iucnStatus.disable();
-      }
-      else{
+      } else {
         this.form.controls.iucnStatus.enable();
       }
     });
@@ -175,6 +216,7 @@ export class AnimalForm {
       habitatType: this.text(v.habitatType),
       rangeRegion: this.text(v.rangeRegion),
       profile: this.text(v.profile),
+      sourceUrl: this.text(v.sourceUrl),
       images: this.collectImages(),
     };
 
@@ -184,13 +226,25 @@ export class AnimalForm {
     const request = id
       ? this.animalService.update(Number(id), animal)
       : this.animalService.create(animal);
-    request.subscribe({
-      next: () => this.router.navigate(id ? ['/animals', id] : ['/']),
-      error: (err) => {
-        this.error.set(err.message ?? 'Could not save animal');
-        this.saving.set(false);
-      },
-    });
+    request
+      .pipe(
+        switchMap((saved) => {
+          const texts = this.germanTexts();
+          const animalId = id ? Number(id) : saved.id;
+          const empty = !texts.commonName && !texts.habitat && !texts.rangeRegion && !texts.profile;
+          if (empty) {
+            return of(saved);
+          }
+          return this.animalService.saveTranslation(animalId, 'de', texts).pipe(map(() => saved));
+        }),
+      )
+      .subscribe({
+        next: (saved) => this.router.navigate(id ? ['/animals', id] : ['/']),
+        error: (err) => {
+          this.error.set(apiErrorMessage(err, 'Could not save animal'));
+          this.saving.set(false);
+        },
+      });
   }
 
   private failedPreviews = signal<ReadonlySet<string>>(new Set());
@@ -212,6 +266,11 @@ export class AnimalForm {
       const control = this.form.get(key);
       return !!control && control.touched && control.invalid;
     });
+  }
+
+  rangeReversed(minKey: string): boolean {
+    const reversed: string[] = this.form.errors?.['minAboveMax'] ?? [];
+    return reversed.includes(minKey);
   }
 
   imageInvalid(key: string): boolean {
@@ -250,6 +309,41 @@ export class AnimalForm {
     });
   }
 
+  translateToGerman(): void {
+    const texts = this.englishTextsForTranslate();
+    if (!texts.commonName && !texts.habitat && !texts.rangeRegion && !texts.profile) {
+      this.translateError.set('Fill in some English text first');
+      this.translateMessage.set('');
+      return;
+    }
+
+    this.translating.set(true);
+    this.translateMessage.set('');
+    this.translateError.set('');
+    this.animalService.translate(texts).subscribe({
+      next: (german) => {
+        this.form.patchValue({
+          commonNameDe: german.commonName ?? '',
+          habitatDe: german.habitat ?? '',
+          rangeRegionDe: german.rangeRegion ?? '',
+          profileDe: german.profile ?? '',
+        });
+        this.translateMessage.set('German fields filled in. Check them before saving.');
+        this.translating.set(false);
+      },
+      error: (err) => {
+        this.translateError.set(
+          isRateLimited(err)
+            ? rateLimitMessage(err, 'translations')
+            : typeof err.error === 'string' && err.error
+              ? err.error
+              : 'Could not translate right now',
+        );
+        this.translating.set(false);
+      },
+    });
+  }
+
   private applyImport(data: WikipediaImport): number {
     const keys = [
       'commonName',
@@ -284,6 +378,7 @@ export class AnimalForm {
         this.importedValues.delete(key);
       }
     }
+    if (data.sourceUrl) this.form.controls.sourceUrl.setValue(data.sourceUrl);
     const imageControl = this.form.controls.otherImageUrl;
     const current = (imageControl.value ?? '').trim();
     if (
@@ -313,8 +408,11 @@ export class AnimalForm {
     forkJoin({
       animal: this.animalService.getById(id),
       images: this.animalService.getImages(id),
+      translation: this.animalService
+        .getTranslation(id, 'de')
+        .pipe(catchError((err) => (err.status === 404 ? of(null) : throwError(() => err)))),
     }).subscribe({
-      next: ({ animal, images }) => {
+      next: ({ animal, images, translation }) => {
         this.form.patchValue({
           commonName: animal.commonName,
           scientificName: animal.scientificName ?? '',
@@ -334,6 +432,7 @@ export class AnimalForm {
           habitatType: animal.habitatType ?? '',
           rangeRegion: animal.rangeRegion ?? '',
           profile: animal.profile ?? '',
+          sourceUrl: animal.sourceUrl ?? '',
         });
         this.originalCaptions.clear();
 
@@ -342,6 +441,13 @@ export class AnimalForm {
           this.form.get(field.key)?.setValue(image?.url ?? '');
           if (image) this.originalCaptions.set(image.url, image.caption);
         }
+        this.form.patchValue({
+          commonNameDe: translation?.commonName ?? '',
+          habitatDe: translation?.habitat ?? '',
+          profileDe: translation?.profile ?? '',
+          rangeRegionDe: translation?.rangeRegion ?? '',
+        });
+
         this.savedScientificName = animal.scientificName ?? '';
         this.savedImageUrl = this.form.controls.otherImageUrl.value ?? '';
 
@@ -379,5 +485,25 @@ export class AnimalForm {
   private text(value: string | null | undefined): string | null {
     const trimmed = (value ?? '').trim();
     return trimmed.length > 0 ? trimmed : null;
+  }
+
+  private germanTexts(): AnimalTexts {
+    const v = this.form.getRawValue();
+    return {
+      commonName: this.text(v.commonNameDe),
+      habitat: this.text(v.habitatDe),
+      rangeRegion: this.text(v.rangeRegionDe),
+      profile: this.text(v.profileDe),
+    };
+  }
+
+  private englishTextsForTranslate(): AnimalTexts {
+    const v = this.form.getRawValue();
+    return {
+      commonName: this.text(v.commonName),
+      habitat: this.text(v.habitat),
+      rangeRegion: this.text(v.rangeRegion),
+      profile: this.text(v.profile),
+    };
   }
 }

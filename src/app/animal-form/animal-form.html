@@ -26,7 +26,7 @@
   @if (importMessage()) {
     <p class="hint">{{ importMessage() }}</p>
   }
-  @if (importWarnings().length > 0){
+  @if (importWarnings().length > 0) {
     <ul class="import-warnings">
       @for (warning of importWarnings(); track warning) {
         <li>{{ warning }}</li>
@@ -40,7 +40,7 @@
 <form [formGroup]="form" (ngSubmit)="submit()">
   <label>
     Common name *
-    <input type="text" formControlName="commonName" />
+    <input type="text" formControlName="commonName"/>
   </label>
   @if (form.controls.commonName.touched && form.controls.commonName.invalid) {
     <p class="field-error">Common name is required.</p>
@@ -59,12 +59,12 @@
 
   <label>
     Scientific name
-    <input type="text" formControlName="scientificName" />
+    <input type="text" formControlName="scientificName"/>
   </label>
 
   <label>
     Family
-    <input type="text" formControlName="family" />
+    <input type="text" formControlName="family"/>
   </label>
 
   <label>
@@ -78,39 +78,57 @@
   </label>
 
   <label class="checkbox">
-    <input type="checkbox" formControlName="isDomesticated" />
+    <input type="checkbox" formControlName="isDomesticated"/>
     Domesticated
   </label>
 
   <div class="range">
     <span>Length (cm)</span>
-    <input type="number" min="0" step="0.1" placeholder="min" formControlName="sizeLengthCmMin" />
-    <input type="number" min="0" step="0.1" placeholder="max" formControlName="sizeLengthCmMax" />
+    <input type="number" min="0" step="0.1" placeholder="min" formControlName="sizeLengthCmMin"/>
+    <input type="number" min="0" step="0.1" placeholder="max" formControlName="sizeLengthCmMax"/>
   </div>
   @if (rangeInvalid('sizeLengthCmMin', 'sizeLengthCmMax')) {
-    <p class="field-error">Use 0 or more with at most one decimal, e.g. 12.5.</p>
+    <p class="field-error">Use 0 to 999,999.9 with at most one decimal, e.g. 12.5.</p>
+  }
+  @if (rangeReversed('sizeLengthCmMin')) {
+    <p class="field-error">The minimum can't be larger than the maximum.</p>
   }
 
   <div class="range">
     <span>Height (cm)</span>
-    <input type="number" min="0" step="0.1" placeholder="min" formControlName="sizeHeightCmMin" />
-    <input type="number" min="0" step="0.1" placeholder="max" formControlName="sizeHeightCmMax" />
+    <input type="number" min="0" step="0.1" placeholder="min" formControlName="sizeHeightCmMin"/>
+    <input type="number" min="0" step="0.1" placeholder="max" formControlName="sizeHeightCmMax"/>
   </div>
   @if (rangeInvalid('sizeHeightCmMin', 'sizeHeightCmMax')) {
-    <p class="field-error">Use 0 or more with at most one decimal, e.g. 12.5.</p>
+    <p class="field-error">Use 0 to 999,999.9 with at most one decimal, e.g. 12.5.</p>
+  }
+  @if (rangeReversed('sizeHeightCmMin')) {
+    <p class="field-error">The minimum can't be larger than the maximum.</p>
   }
 
   <div class="range">
     <span>Weight (kg)</span>
-    <input type="number" min="0" step="0.01" placeholder="min" formControlName="weightKgMin" />
-    <input type="number" min="0" step="0.01" placeholder="max" formControlName="weightKgMax" />
+    <input type="number" min="0" step="0.01" placeholder="min" formControlName="weightKgMin"/>
+    <input type="number" min="0" step="0.01" placeholder="max" formControlName="weightKgMax"/>
   </div>
+  @if (rangeInvalid('weightKgMin', 'weightKgMax')) {
+    <p class="field-error">Use a weight from 0 to 9,999,999.99 kg.</p>
+  }
+  @if (rangeReversed('weightKgMin')) {
+    <p class="field-error">The minimum can't be larger than the maximum.</p>
+  }
 
   <div class="range">
     <span>Lifespan (years)</span>
-    <input type="number" min="0" step="1" placeholder="min" formControlName="lifespanYearsMin" />
-    <input type="number" min="0" step="1" placeholder="max" formControlName="lifespanYearsMax" />
+    <input type="number" min="0" step="1" placeholder="min" formControlName="lifespanYearsMin"/>
+    <input type="number" min="0" step="1" placeholder="max" formControlName="lifespanYearsMax"/>
   </div>
+  @if (rangeInvalid('lifespanYearsMin', 'lifespanYearsMax')) {
+    <p class="field-error">Use a whole number of years, 0 or more.</p>
+  }
+  @if (rangeReversed('lifespanYearsMin')) {
+    <p class="field-error">The minimum can't be larger than the maximum.</p>
+  }
 
   <label>
     IUCN status
@@ -124,14 +142,14 @@
 
   <label>
     Habitat
-    <input type="text" formControlName="habitat" />
+    <input type="text" formControlName="habitat"/>
   </label>
 
   <label>
     Habitat Type
-    <select formControlName="habitatType" >
+    <select formControlName="habitatType">
       <option value="">Unknown</option>
-      @for (type of habitatTypes; track type){
+      @for (type of habitatTypes; track type) {
         <option [value]="type">{{ type }}</option>
       }
     </select>
@@ -139,13 +157,56 @@
 
   <label>
     Range / region
-    <input type="text" formControlName="rangeRegion" />
+    <input type="text" formControlName="rangeRegion"/>
   </label>
 
   <label>
     Profile
     <textarea rows="5" formControlName="profile"></textarea>
   </label>
+
+  <div class="german-texts">
+    <h3>German texts</h3>
+    <button
+      type="button"
+      class="btn btn-primary"
+      [disabled]="translating() || !form.controls.commonName.value?.trim()"
+      (click)="translateToGerman()"
+    >
+      {{ translating() ? 'Translating...' : 'Translate with DeepL' }}
+    </button>
+    @if (translateMessage()) {
+      <p class="hint">{{ translateMessage() }}</p>
+    }
+    @if (translateError()) {
+      <p class="field-error">{{ translateError() }}</p>
+    }
+
+    <label>
+      Common name (German)
+      <input type="text" formControlName="commonNameDe"/>
+    </label>
+    <label>
+      Habitat (German)
+      <input type="text" formControlName="habitatDe"/>
+    </label>
+    <label>
+      Range / region (German)
+      <input type="text" formControlName="rangeRegionDe"/>
+    </label>
+    <label>
+      Profile (German)
+      <textarea rows="5" formControlName="profileDe"></textarea>
+    </label>
+  </div>
+
+  <label>
+    Source link
+    <input type="url" placeholder="https://en.wikipedia.org/wiki/..." formControlName="sourceUrl"/>
+  </label>
+  @if (imageInvalid('sourceUrl')) {
+    <p class="field-error">That doesn't look like a link.</p>
+  }
 
   <fieldset class="images">
     <legend>Pictures</legend>

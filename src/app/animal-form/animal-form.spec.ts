@@ -257,6 +257,7 @@ describe('AnimalForm lookup', () => {
             getImages: vi.fn(() =>
               of([{ kind: 'unspecified', url: boxerCrabPicture, caption: 'Other' }]),
             ),
+            getTranslation: vi.fn(() => throwError(() => ({ status: 404 }))),
           },
         },
       ],
@@ -368,6 +369,7 @@ describe('AnimalForm domesticated animals', () => {
             getAll: vi.fn(() => of([])),
             getById: vi.fn(() => of(dog)),
             getImages: vi.fn(() => of([])),
+            getTranslation: vi.fn(() => throwError(() => ({ status: 404 }))),
             create,
           },
         },
@@ -430,6 +432,7 @@ describe('AnimalForm habitat type', () => {
             getAll: vi.fn(() => of([])),
             getById: vi.fn(() => of(okapi)),
             getImages: vi.fn(() => of([])),
+            getTranslation: vi.fn(() => throwError(() => ({ status: 404 }))),
             create,
           },
         },

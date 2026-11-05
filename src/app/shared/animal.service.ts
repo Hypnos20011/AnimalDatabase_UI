@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Animal, NewAnimal } from '../animal-model/animal.model';
+import { Animal, AnimalTexts, NewAnimal } from '../animal-model/animal.model';
 import { AnimalImage } from '../animal-model/animal-image.model';
 import { WikipediaImport } from '../animal-model/wikipedia-import.model';
 import { environment } from '../../environments/environment';
@@ -42,5 +42,17 @@ export class AnimalService {
     return this.http.get<WikipediaImport>(`${environment.apiUrl}/wikipedia/import`, {
       params: { q: query },
     });
+  }
+
+  translate(texts: AnimalTexts): Observable<AnimalTexts> {
+    return this.http.post<AnimalTexts>(`${environment.apiUrl}/translate`, texts);
+  }
+
+  getTranslation(id: number, language: Language): Observable<AnimalTexts> {
+    return this.http.get<AnimalTexts>(`${this.apiUrl}/${id}/translations/${language}`);
+  }
+
+  saveTranslation(id: number, language: Language, texts: AnimalTexts): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/translations/${language}`, texts);
   }
 }

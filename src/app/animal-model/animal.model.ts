@@ -18,6 +18,7 @@ export interface Animal {
   habitatType: string | null;
   rangeRegion: string | null;
   profile: string | null;
+  sourceUrl?: string | null;
   thumbnailUrl: string | null;
   createdAt: string;
   updatedAt: string;
@@ -32,3 +33,10 @@ export interface NewAnimalImage {
 export type NewAnimal = Omit<Animal, 'id' | 'createdAt' | 'updatedAt' | 'thumbnailUrl'> & {
   images: NewAnimalImage[];
 };
+
+export interface AnimalTexts {
+  commonName: string | null;
+  habitat: string | null;
+  rangeRegion: string | null;
+  profile: string | null;
+}
