@@ -27,6 +27,12 @@ export const QUIZ_BEST_STORAGE = 'animaldb.quiz.bestStreak';
 
 export const QUIZ_MISSED_STORAGE = 'animaldb.quiz.missed';
 
+export const QUIZ_DAILY_STORAGE = 'animaldb.quiz.dailyBest';
+
+export const QUIZ_DAILY_ROUNDS = 5;
+
+export const QUIZ_DAILY_TZ = 'Europe/Vienna';
+
 export const QUIZ_RANDOM = new InjectionToken<() => number>('QUIZ_RANDOM', {
   providedIn: 'root',
   factory: () => Math.random,
@@ -40,6 +46,12 @@ export interface QuizRound {
 export interface QuizFilter {
   taxonomicClass: string;
   habitatType: string;
+}
+
+export interface DailyBest {
+  date: string;
+  score: number;
+  streak: number;
 }
 
 export function matchesFilter(animal: Animal, filter: QuizFilter): boolean {
@@ -87,6 +99,63 @@ function saveMissedIds(ids: number[]): void {
   } catch {}
 }
 
+export function quizDateKey(now: Date = new Date(), timeZone: string = QUIZ_DAILY_TZ): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+}
+
+export function seedFromDate(dateKey: string): number {
+  let hash = 2166136261;
+  for (let i = 0; i < dateKey.length; i++) {
+    hash ^= dateKey.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+export function mulberry32(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+export function readDailyBest(today: string = quizDateKey()): DailyBest | null {
+  try {
+    const raw = localStorage.getItem(QUIZ_DAILY_STORAGE);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<DailyBest>;
+    if (!parsed || parsed.date !== today) return null;
+    const score = Number(parsed.score);
+    const streak = Number(parsed.streak);
+    if (!Number.isSafeInteger(score) || score < 0) return null;
+    if (!Number.isSafeInteger(streak) || streak < 0) return null;
+    return { date: today, score, streak };
+  } catch {
+    return null;
+  }
+}
+
+function saveDailyBest(best: DailyBest): void {
+  try {
+    localStorage.setItem(QUIZ_DAILY_STORAGE, JSON.stringify(best));
+  } catch {}
+}
+
+function isBetterDaily(candidate: DailyBest, current: DailyBest | null): boolean {
+  if (!current || current.date !== candidate.date) return true;
+  if (candidate.score !== current.score) return candidate.score > current.score;
+  return candidate.streak > current.streak;
+}
+
 function distinctValues(values: (string | null)[]): string[] {
   return [...new Set(values.filter((value): value is string => !!value?.trim()))];
 }
@@ -132,6 +201,27 @@ export function buildRound(
   return { answer, choices: shuffle([...wrong.values()], random) };
 }
 
+export function buildDailyPlan(
+  animals: readonly Animal[],
+  dateKey: string,
+  count: number = QUIZ_DAILY_ROUNDS,
+): QuizRound[] | null {
+  const stable = [...animals].sort((a, b) => a.id - b.id);
+  if (stable.filter((animal) => animal.commonName?.trim() && hasPhoto(animal)).length < count) {
+    return null;
+  }
+  const random = mulberry32(seedFromDate(dateKey));
+  const plan: QuizRound[] = [];
+  const used = new Set<number>();
+  for (let i = 0; i < count; i++) {
+    const round = buildRound(stable, random, used);
+    if (!round) return null;
+    plan.push(round);
+    used.add(round.answer.id);
+  }
+  return plan;
+}
+
 @Component({
   selector: 'app-quiz',
   imports: [RouterLink],
@@ -145,6 +235,7 @@ export class Quiz {
   private injector = inject(Injector);
   protected i18n = inject(LanguageService);
   readonly srcset = wikimediaSrcset;
+  readonly dailyTotal = QUIZ_DAILY_ROUNDS;
 
   private request?: Subscription;
   private animals = signal<Animal[]>([]);
@@ -162,17 +253,34 @@ export class Quiz {
   best = signal(readBestStreak());
   missedIds = signal<number[]>(readMissedIds());
   practiceMode = signal(false);
+  dailyMode = signal(false);
+  dailyPlan = signal<QuizRound[] | null>(null);
+  dailyIndex = signal(0);
+  dailyFinished = signal(false);
+  dailyBest = signal<DailyBest | null>(readDailyBest());
+  runBestStreak = signal(0);
   classFilter = signal('');
   habitatFilter = signal('');
 
   missedCount = computed(() => this.missedIds().length);
   filterActive = computed(() => !!this.classFilter() || !!this.habitatFilter());
-  poolRestricted = computed(() => this.practiceMode() || this.filterActive());
+  poolRestricted = computed(
+    () => !this.dailyMode() && (this.practiceMode() || this.filterActive()),
+  );
   classes = computed(() => this.sortedLabels('class', this.animals().map((a) => a.taxonomicClass)));
   habitats = computed(() => this.sortedLabels('habitat', this.animals().map((a) => a.habitatType)));
+  dailyQuestion = computed(() => this.dailyIndex() + 1);
+  showFilters = computed(
+    () =>
+      !this.dailyMode() &&
+      (this.classes().length > 0 || this.habitats().length > 0 || this.missedCount() > 0),
+  );
 
   answered = computed(() => this.picked() !== null);
   correct = computed(() => this.picked() !== null && this.picked() === this.round()?.answer.id);
+  dailyLast = computed(
+    () => this.dailyMode() && this.dailyIndex() >= (this.dailyPlan()?.length ?? 0) - 1,
+  );
 
   constructor() {
     effect(() => {
@@ -191,6 +299,10 @@ export class Quiz {
         this.loading.set(false);
         this.animals.set(animals);
         this.dropMissingFilters();
+        if (this.dailyMode()) {
+          if (!this.refreshDailyPlan()) this.beginDaily();
+          return;
+        }
         if (!this.keepRound()) this.startRound();
       },
       error: () => {
@@ -200,26 +312,53 @@ export class Quiz {
     });
   }
 
+  private withBroken(animals: readonly Animal[]): Animal[] {
+    return animals.map((animal) =>
+      this.brokenPhotos.has(animal.id) ? { ...animal, thumbnailUrl: null } : animal,
+    );
+  }
+
+  private remapRound(round: QuizRound, byId: Map<number, Animal>): QuizRound | null {
+    const answer = byId.get(round.answer.id);
+    const choices = round.choices.map((choice) => byId.get(choice.id));
+    if (!answer || !hasPhoto(answer) || choices.some((choice) => !choice)) return null;
+    return { answer, choices: choices as Animal[] };
+  }
+
   private keepRound(): boolean {
     const current = this.round();
     if (!current) return false;
     const byId = new Map(this.pool().map((animal) => [animal.id, animal]));
-    const answer = byId.get(current.answer.id);
-    const choices = current.choices.map((choice) => byId.get(choice.id));
-    if (!answer || !hasPhoto(answer) || choices.some((choice) => !choice)) return false;
-    this.round.set({ answer, choices: choices as Animal[] });
+    const remapped = this.remapRound(current, byId);
+    if (!remapped) return false;
+    this.round.set(remapped);
+    return true;
+  }
+
+  private refreshDailyPlan(): boolean {
+    const current = this.dailyPlan();
+    if (!current || this.dailyFinished()) return false;
+    const byId = new Map(this.withBroken(this.animals()).map((animal) => [animal.id, animal]));
+    const remapped: QuizRound[] = [];
+    for (const round of current) {
+      const next = this.remapRound(round, byId);
+      if (!next) return false;
+      remapped.push(next);
+    }
+    this.dailyPlan.set(remapped);
+    const active = remapped[this.dailyIndex()];
+    if (!active) return false;
+    this.round.set(active);
     return true;
   }
 
   private pool(): Animal[] {
+    if (this.dailyMode()) return this.withBroken(this.animals());
     const filter = { taxonomicClass: this.classFilter(), habitatType: this.habitatFilter() };
     const missed = new Set(this.missedIds());
-    return this.animals()
+    return this.withBroken(this.animals())
       .filter((animal) => matchesFilter(animal, filter))
-      .filter((animal) => !this.practiceMode() || missed.has(animal.id))
-      .map((animal) =>
-        this.brokenPhotos.has(animal.id) ? { ...animal, thumbnailUrl: null } : animal,
-      );
+      .filter((animal) => !this.practiceMode() || missed.has(animal.id));
   }
 
   private sortedLabels(group: 'class' | 'habitat', values: (string | null)[]): string[] {
@@ -254,13 +393,13 @@ export class Quiz {
   }
 
   setClassFilter(value: string): void {
-    if (value === this.classFilter()) return;
+    if (this.dailyMode() || value === this.classFilter()) return;
     this.classFilter.set(value);
     this.startRound();
   }
 
   setHabitatFilter(value: string): void {
-    if (value === this.habitatFilter()) return;
+    if (this.dailyMode() || value === this.habitatFilter()) return;
     this.habitatFilter.set(value);
     this.startRound();
   }
@@ -272,9 +411,58 @@ export class Quiz {
   }
 
   setPracticeMode(active: boolean): void {
-    if (active === this.practiceMode()) return;
+    if (this.dailyMode() || active === this.practiceMode()) return;
     this.practiceMode.set(active);
     this.startRound();
+  }
+
+  setDailyMode(active: boolean): void {
+    if (active === this.dailyMode()) {
+      if (active) this.beginDaily();
+      return;
+    }
+    if (active) {
+      this.practiceMode.set(false);
+      this.dailyMode.set(true);
+      this.beginDaily();
+      return;
+    }
+    this.dailyMode.set(false);
+    this.dailyPlan.set(null);
+    this.dailyFinished.set(false);
+    this.dailyIndex.set(0);
+    this.startRound();
+  }
+
+  private beginDaily(): void {
+    const date = quizDateKey();
+    this.dailyBest.set(readDailyBest(date));
+    this.dailyFinished.set(false);
+    this.dailyIndex.set(0);
+    this.score.set(0);
+    this.played.set(0);
+    this.streak.set(0);
+    this.runBestStreak.set(0);
+    this.picked.set(null);
+    const plan = buildDailyPlan(this.withBroken(this.animals()), date);
+    this.dailyPlan.set(plan);
+    this.round.set(plan?.[0] ?? null);
+  }
+
+  private finishDaily(): void {
+    this.dailyFinished.set(true);
+    const date = quizDateKey();
+    const candidate: DailyBest = {
+      date,
+      score: this.score(),
+      streak: this.runBestStreak(),
+    };
+    if (isBetterDaily(candidate, this.dailyBest())) {
+      this.dailyBest.set(candidate);
+      saveDailyBest(candidate);
+    } else {
+      this.dailyBest.set(readDailyBest(date));
+    }
   }
 
   private startRound(): void {
@@ -290,12 +478,13 @@ export class Quiz {
 
   choose(choice: Animal): void {
     const round = this.round();
-    if (!round || this.answered()) return;
+    if (!round || this.answered() || this.dailyFinished()) return;
     this.picked.set(choice.id);
     this.played.update((n) => n + 1);
     if (choice.id === round.answer.id) {
       this.score.update((n) => n + 1);
       this.streak.update((n) => n + 1);
+      if (this.streak() > this.runBestStreak()) this.runBestStreak.set(this.streak());
       if (this.streak() > this.best()) {
         this.best.set(this.streak());
         saveBestStreak(this.best());
@@ -309,11 +498,31 @@ export class Quiz {
   }
 
   next(): void {
+    if (this.dailyMode()) {
+      if (this.dailyFinished()) return;
+      const plan = this.dailyPlan();
+      if (!plan) return;
+      if (this.dailyIndex() >= plan.length - 1) {
+        this.finishDaily();
+        return;
+      }
+      const index = this.dailyIndex() + 1;
+      this.dailyIndex.set(index);
+      this.round.set(plan[index]);
+      this.picked.set(null);
+      this.focusLater(() => this.choiceButtons()[0]?.nativeElement);
+      return;
+    }
     this.startRound();
     this.focusLater(() => this.choiceButtons()[0]?.nativeElement);
   }
 
   restart(): void {
+    if (this.dailyMode()) {
+      this.beginDaily();
+      this.focusLater(() => this.choiceButtons()[0]?.nativeElement);
+      return;
+    }
     this.score.set(0);
     this.played.set(0);
     this.streak.set(0);
@@ -322,13 +531,32 @@ export class Quiz {
 
   photoFailed(): void {
     const round = this.round();
-    if (!round || this.answered()) return;
+    if (!round || this.answered() || this.dailyFinished()) return;
     this.brokenPhotos.add(round.answer.id);
+    if (this.dailyMode()) {
+      const plan = this.dailyPlan();
+      if (!plan) {
+        this.beginDaily();
+        return;
+      }
+      if (this.dailyIndex() >= plan.length - 1) {
+        this.round.set(null);
+        this.finishDaily();
+        return;
+      }
+      const index = this.dailyIndex() + 1;
+      this.dailyIndex.set(index);
+      this.round.set(plan[index]);
+      this.picked.set(null);
+      return;
+    }
     this.startRound();
   }
 
   onKey(event: KeyboardEvent): void {
-    if (event.ctrlKey || event.metaKey || event.altKey || this.answered()) return;
+    if (event.ctrlKey || event.metaKey || event.altKey || this.answered() || this.dailyFinished()) {
+      return;
+    }
     const target = event.target instanceof Element ? event.target : null;
     if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
     const choice = this.round()?.choices[Number(event.key) - 1];
@@ -344,6 +572,22 @@ export class Quiz {
   }
 
   emptyText(): string {
+    if (this.dailyMode()) return this.i18n.t('quiz.daily.empty');
     return this.i18n.t(this.practiceMode() ? 'quiz.practice.empty' : 'quiz.filter.empty');
+  }
+
+  dailyBestText(): string {
+    const best = this.dailyBest();
+    if (!best) return '';
+    return this.i18n.t('quiz.daily.best', { score: best.score, total: this.dailyTotal });
+  }
+
+  dailyDoneText(): string {
+    return this.i18n.t('quiz.daily.done', { score: this.score(), total: this.dailyTotal });
+  }
+
+  nextLabel(): string {
+    if (this.dailyMode() && this.dailyLast()) return this.i18n.t('quiz.daily.finish');
+    return this.i18n.t('quiz.next');
   }
 }

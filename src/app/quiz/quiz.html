@@ -17,7 +17,29 @@
     </dl>
   </div>
 
-  @if (classes().length > 0 || habitats().length > 0 || missedCount() > 0) {
+  <div class="quiz-modes">
+    <button
+      type="button"
+      class="daily-challenge btn btn-secondary btn-sm"
+      [class.is-active]="dailyMode()"
+      [attr.aria-pressed]="dailyMode()"
+      (click)="setDailyMode(!dailyMode())"
+    >
+      {{ i18n.t('quiz.daily') }}
+    </button>
+    @if (dailyMode()) {
+      @if (!dailyFinished() && dailyPlan()) {
+        <p class="daily-progress" data-daily="progress">
+          {{ i18n.t('quiz.daily.progress', { current: dailyQuestion(), total: dailyTotal }) }}
+        </p>
+      }
+      @if (dailyBest(); as best) {
+        <p class="daily-best" data-daily="best">{{ dailyBestText() }}</p>
+      }
+    }
+  </div>
+
+  @if (showFilters()) {
     <div class="quiz-filters">
       @if (classes().length > 0) {
         <label>
@@ -69,6 +91,21 @@
 
   @if (error()) {
     <p class="error-message" role="alert">{{ i18n.t('quiz.loadError') }}</p>
+  } @else if (dailyMode() && dailyFinished()) {
+    <div class="quiz-daily-done">
+      <p class="state-message" data-daily="done">{{ dailyDoneText() }}</p>
+      @if (dailyBest(); as best) {
+        <p class="daily-best" data-daily="best">{{ dailyBestText() }}</p>
+      }
+      <div class="quiz-actions">
+        <button type="button" class="daily-again btn btn-primary" (click)="restart()">
+          {{ i18n.t('quiz.daily.again') }}
+        </button>
+        <button type="button" class="daily-exit btn btn-secondary btn-sm" (click)="setDailyMode(false)">
+          {{ i18n.t('quiz.daily.exit') }}
+        </button>
+      </div>
+    </div>
   } @else if (round(); as r) {
     <figure class="quiz-photo" [class.is-blurred]="!answered()">
       <img
@@ -103,12 +140,12 @@
         <p class="result" [class.is-correct]="correct()">{{ resultText(r) }}</p>
         <div class="quiz-actions">
           <button #nextButton type="button" class="next btn btn-primary" (click)="next()">
-            {{ i18n.t('quiz.next') }}
+            {{ nextLabel() }}
           </button>
           <a class="learn-more" [routerLink]="['/animals', r.answer.id]">{{
             i18n.t('quiz.learnMore', { name: r.answer.commonName })
           }}</a>
-          @if (played() > 1) {
+          @if (!dailyMode() && played() > 1) {
             <button type="button" class="restart btn btn-secondary btn-sm" (click)="restart()">
               {{ i18n.t('quiz.restart') }}
             </button>
@@ -118,6 +155,13 @@
     </div>
   } @else if (loading()) {
     <p class="state-message">{{ i18n.t('quiz.loading') }}</p>
+  } @else if (dailyMode()) {
+    <div class="quiz-empty">
+      <p class="state-message">{{ i18n.t('quiz.daily.empty') }}</p>
+      <button type="button" class="daily-exit btn btn-secondary btn-sm" (click)="setDailyMode(false)">
+        {{ i18n.t('quiz.daily.exit') }}
+      </button>
+    </div>
   } @else if (poolRestricted()) {
     <div class="quiz-empty">
       <p class="state-message">{{ emptyText() }}</p>

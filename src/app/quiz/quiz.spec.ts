@@ -5,14 +5,21 @@ import { Animal } from '../animal-model/animal.model';
 import { AnimalService } from '../shared/animal.service';
 import { LanguageService } from '../shared/i18n/language.service';
 import {
+  buildDailyPlan,
   buildRound,
   matchesFilter,
+  mulberry32,
   Quiz,
   QUIZ_BEST_STORAGE,
+  QUIZ_DAILY_ROUNDS,
+  QUIZ_DAILY_STORAGE,
   QUIZ_MISSED_STORAGE,
   QUIZ_RANDOM,
+  quizDateKey,
   readBestStreak,
+  readDailyBest,
   readMissedIds,
+  seedFromDate,
   shuffle,
 } from './quiz';
 
@@ -133,6 +140,63 @@ describe('quiz helpers', () => {
   });
 });
 
+describe('daily challenge helpers', () => {
+  afterEach(() => localStorage.clear());
+
+  const many = [
+    animal(1, 'Okapi', 'https://example.org/okapi.jpg'),
+    animal(2, 'Axolotl', 'https://example.org/axolotl.jpg'),
+    animal(3, 'Aye-aye', 'https://example.org/aye.jpg'),
+    animal(4, 'Shoebill', 'https://example.org/shoebill.jpg'),
+    animal(5, 'Tapir', 'https://example.org/tapir.jpg'),
+    animal(6, 'Lion', 'https://example.org/lion.jpg'),
+    animal(7, 'Wolf', 'https://example.org/wolf.jpg'),
+    animal(8, 'Kiwi', 'https://example.org/kiwi.jpg'),
+  ];
+
+  it('builds the same plan for the same date and a different plan for another day', () => {
+    const a = buildDailyPlan(many, '2026-11-05')!;
+    const b = buildDailyPlan(many, '2026-11-05')!;
+    const c = buildDailyPlan(many, '2026-11-06')!;
+
+    expect(a).toHaveLength(QUIZ_DAILY_ROUNDS);
+    expect(a.map((round) => round.answer.id)).toEqual(b.map((round) => round.answer.id));
+    expect(a.map((round) => round.choices.map((choice) => choice.id))).toEqual(
+      b.map((round) => round.choices.map((choice) => choice.id)),
+    );
+    expect(a.map((round) => round.answer.id)).not.toEqual(c.map((round) => round.answer.id));
+  });
+
+  it('needs enough photo animals for the daily length', () => {
+    expect(buildDailyPlan(many.slice(0, 4), '2026-11-05')).toBeNull();
+  });
+
+  it('seeds deterministically from the date key', () => {
+    expect(seedFromDate('2026-11-05')).toBe(seedFromDate('2026-11-05'));
+    expect(seedFromDate('2026-11-05')).not.toBe(seedFromDate('2026-11-06'));
+    expect(mulberry32(1)()).toBe(mulberry32(1)());
+  });
+
+  it('formats Vienna calendar dates as YYYY-MM-DD', () => {
+    expect(quizDateKey(new Date('2026-11-05T10:00:00+01:00'))).toBe('2026-11-05');
+    expect(quizDateKey(new Date('2026-11-05T23:30:00+01:00'))).toBe('2026-11-05');
+  });
+
+  it("reads only today's daily best", () => {
+    const today = quizDateKey();
+    expect(readDailyBest(today)).toBeNull();
+    localStorage.setItem(
+      QUIZ_DAILY_STORAGE,
+      JSON.stringify({ date: today, score: 4, streak: 3 }),
+    );
+    expect(readDailyBest(today)).toEqual({ date: today, score: 4, streak: 3 });
+    localStorage.setItem(
+      QUIZ_DAILY_STORAGE,
+      JSON.stringify({ date: '1999-01-01', score: 5, streak: 5 }),
+    );
+    expect(readDailyBest(today)).toBeNull();
+  });
+});
 describe('Quiz', () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => localStorage.clear());
@@ -514,6 +578,134 @@ describe('Quiz', () => {
     });
   });
 
+  describe('daily challenge', () => {
+    const many = [
+      animal(1, 'Okapi', 'https://example.org/okapi.jpg'),
+      animal(2, 'Axolotl', 'https://example.org/axolotl.jpg'),
+      animal(3, 'Aye-aye', 'https://example.org/aye.jpg'),
+      animal(4, 'Shoebill', 'https://example.org/shoebill.jpg'),
+      animal(5, 'Tapir', 'https://example.org/tapir.jpg'),
+      animal(6, 'Lion', 'https://example.org/lion.jpg'),
+      animal(7, 'Wolf', 'https://example.org/wolf.jpg'),
+      animal(8, 'Kiwi', 'https://example.org/kiwi.jpg'),
+    ];
+
+    const dailyBtn = (element: HTMLElement) =>
+      element.querySelector<HTMLButtonElement>('button.daily-challenge')!;
+
+    it('enters daily mode with a seeded progress label and hides filters', async () => {
+      const catalog = [
+        classed(1, 'Okapi', 'mammal', 'forest', 'https://example.org/okapi.jpg'),
+        classed(2, 'Axolotl', 'amphibian', 'freshwater', 'https://example.org/axolotl.jpg'),
+        classed(3, 'Aye-aye', 'mammal', 'forest', 'https://example.org/aye.jpg'),
+        classed(4, 'Shoebill', 'bird', 'wetland', 'https://example.org/shoebill.jpg'),
+        classed(5, 'Tapir', 'mammal', 'forest', 'https://example.org/tapir.jpg'),
+        classed(6, 'Lion', 'mammal', 'grassland', 'https://example.org/lion.jpg'),
+        classed(7, 'Wolf', 'mammal', 'forest', 'https://example.org/wolf.jpg'),
+        classed(8, 'Kiwi', 'bird', 'forest', 'https://example.org/kiwi.jpg'),
+      ];
+      const { element, choices, refresh } = await setup(vi.fn(() => of(catalog)));
+      expect(dailyBtn(element).textContent!.trim()).toBe('Daily challenge');
+      expect(element.querySelector('select.filter-class')).not.toBeNull();
+
+      dailyBtn(element).click();
+      await refresh();
+
+      expect(dailyBtn(element).classList).toContain('is-active');
+      expect(element.querySelector('[data-daily="progress"]')!.textContent).toContain(
+        'Question 1 of 5',
+      );
+      expect(element.querySelector('select.filter-class')).toBeNull();
+      expect(element.querySelector('button.practice-missed')).toBeNull();
+      expect(choices()).toHaveLength(4);
+      expect(element.querySelector('.quiz-photo')).not.toBeNull();
+    });
+
+    it('plays the same answer order for the same day', async () => {
+      const plan = buildDailyPlan(many, quizDateKey())!;
+      const { choice, element, refresh, photo } = await setup(vi.fn(() => of(many)));
+      dailyBtn(element).click();
+      await refresh();
+
+      expect(photo().getAttribute('src')).toBe(plan[0].answer.thumbnailUrl);
+
+      choice(plan[0].answer.commonName).click();
+      await refresh();
+      element.querySelector<HTMLButtonElement>('button.next')!.click();
+      await refresh();
+
+      expect(photo().getAttribute('src')).toBe(plan[1].answer.thumbnailUrl);
+      expect(element.querySelector('[data-daily="progress"]')!.textContent).toContain(
+        'Question 2 of 5',
+      );
+    });
+
+    it("saves and restores today's best after finishing", async () => {
+      const plan = buildDailyPlan(many, quizDateKey())!;
+      const { choice, element, refresh, stat } = await setup(vi.fn(() => of(many)));
+      dailyBtn(element).click();
+      await refresh();
+
+      for (let i = 0; i < plan.length; i++) {
+        choice(plan[i].answer.commonName).click();
+        await refresh();
+        element.querySelector<HTMLButtonElement>('button.next')!.click();
+        await refresh();
+      }
+
+      expect(element.querySelector('[data-daily="done"]')!.textContent).toContain('5/5');
+      expect(stat('score')).toBe('5/5');
+      const saved = JSON.parse(localStorage.getItem(QUIZ_DAILY_STORAGE)!);
+      expect(saved).toEqual({ date: quizDateKey(), score: 5, streak: 5 });
+      expect(element.querySelector('[data-daily="best"]')!.textContent).toContain("Today's best: 5/5");
+
+      element.querySelector<HTMLButtonElement>('button.daily-exit')!.click();
+      await refresh();
+      expect(dailyBtn(element).classList).not.toContain('is-active');
+      expect(element.querySelector('button.choice')).not.toBeNull();
+    });
+
+    it('shows an empty state when daily cannot be built', async () => {
+      const { element, refresh } = await setup(vi.fn(() => of(many.slice(0, 3))));
+      dailyBtn(element).click();
+      await refresh();
+
+      expect(element.querySelector('.state-message')!.textContent).toContain(
+        "Not enough animals with photos for today's challenge",
+      );
+      element.querySelector<HTMLButtonElement>('button.daily-exit')!.click();
+      await refresh();
+      expect(dailyBtn(element).classList).not.toContain('is-active');
+    });
+
+    it('labels daily mode in German and French', async () => {
+      localStorage.setItem('language', 'de');
+      const de = await setup(vi.fn(() => of(many)));
+      expect(dailyBtn(de.element).textContent!.trim()).toBe('Tägliche Herausforderung');
+
+      TestBed.inject(LanguageService).setLanguage('fr');
+      await de.refresh();
+      expect(dailyBtn(de.element).textContent!.trim()).toBe('Défi du jour');
+    });
+
+    it('keeps daily mode across a language switch', async () => {
+      const german = many.map((a) => ({ ...a, commonName: `${a.commonName} DE` }));
+      const getAll = vi.fn((lang?: string) => of(lang === 'de' ? german : many));
+      const plan = buildDailyPlan(many, quizDateKey())!;
+      const { element, photo, refresh } = await setup(getAll);
+      dailyBtn(element).click();
+      await refresh();
+
+      TestBed.inject(LanguageService).setLanguage('de');
+      await refresh();
+
+      expect(dailyBtn(element).classList).toContain('is-active');
+      expect(photo().getAttribute('src')).toBe(plan[0].answer.thumbnailUrl);
+      expect(element.querySelector('[data-daily="progress"]')!.textContent).toContain(
+        'Frage 1 von 5',
+      );
+    });
+  });
   describe('filters', () => {
     const select = (element: HTMLElement, name: 'class' | 'habitat') =>
       element.querySelector<HTMLSelectElement>(`select.filter-${name}`)!;
