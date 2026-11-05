@@ -47,11 +47,11 @@ describe('App', () => {
     expect(element.querySelector('h1')?.textContent).toContain('Unusual Animals');
   });
 
-  it('shows Random animal and Stats in the top bar while locked', async () => {
+  it('shows Random animal, Quiz and Stats in the top bar while locked', async () => {
     const { navLinks } = await render();
     const links = navLinks();
 
-    expect(links.map((link) => link.textContent!.trim())).toEqual(['Random animal', 'Stats']);
+    expect(links.map((link) => link.textContent!.trim())).toEqual(['Random animal', 'Quiz', 'Stats']);
     links[0].click();
     expect(open).toHaveBeenCalledTimes(1);
   });
@@ -61,7 +61,7 @@ describe('App', () => {
     const { navLinks } = await render();
     const links = navLinks();
 
-    expect(links.map((link) => link.textContent!.trim())).toEqual(['Random animal', 'Add animal', 'Stats']);
+    expect(links.map((link) => link.textContent!.trim())).toEqual(['Random animal', 'Add animal', 'Quiz', 'Stats']);
     expect(links[1].getAttribute('href')).toBe('/animals/new');
   });
 
@@ -105,7 +105,7 @@ describe('App', () => {
     it('starts on English with English texts', async () => {
       const { element, navLinks } = await render();
       expect(select(element).value).toBe('en');
-      expect(navLinks().map((l) => l.textContent!.trim())).toEqual(['Random animal', 'Stats']);
+      expect(navLinks().map((l) => l.textContent!.trim())).toEqual(['Random animal', 'Quiz', 'Stats']);
       expect(select(element).getAttribute('aria-label')).toBe('Language');
     });
 
@@ -116,7 +116,7 @@ describe('App', () => {
       languageSelect.dispatchEvent(new Event('change'));
       fixture.detectChanges();
 
-      expect(navLinks().map((l) => l.textContent!.trim())).toEqual(['Zufälliges Tier', 'Statistik']);
+      expect(navLinks().map((l) => l.textContent!.trim())).toEqual(['Zufälliges Tier', 'Quiz', 'Statistik']);
       expect(element.querySelector('.site-nav')!.getAttribute('aria-label')).toBe('Schnellzugriff');
       expect(languageSelect.getAttribute('aria-label')).toBe('Sprache');
       expect(localStorage.getItem('language')).toBe('de');
@@ -127,7 +127,7 @@ describe('App', () => {
       localStorage.setItem('language', 'de');
       const { element, navLinks } = await render();
       expect(select(element).value).toBe('de');
-      expect(navLinks().map((l) => l.textContent!.trim())).toEqual(['Zufälliges Tier', 'Statistik']);
+      expect(navLinks().map((l) => l.textContent!.trim())).toEqual(['Zufälliges Tier', 'Quiz', 'Statistik']);
     });
 
     it('translates the unlocked footer', async () => {

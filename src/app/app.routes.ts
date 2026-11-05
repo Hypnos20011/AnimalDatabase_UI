@@ -25,5 +25,10 @@ export const routes: Routes = [
   { path: 'animals/:id', component: AnimalDetail, title: 'Unusual Animals' },
   { path: 'stats', component: Stats, title: 'Stats - Unusual Animals' },
   { path: 'compare', component: Compare, title: 'Compare · Unusual Animals' },
+  {
+    path: 'quiz',
+    loadComponent: () => import('./quiz/quiz').then((m) => m.Quiz),
+    title: 'Quiz · Unusual Animals',
+  },
   { path: '**', redirectTo: '' },
 ];

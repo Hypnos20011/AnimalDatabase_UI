@@ -21,6 +21,10 @@
            ariaCurrentWhenActive="page">{{ i18n.t('nav.compare', { count: compare.count() }) }}</a>
       }
       <a class="nav-link"
+         routerLink="/quiz"
+         routerLinkActive="is-active"
+         ariaCurrentWhenActive="page">{{ i18n.t('nav.quiz') }}</a>
+      <a class="nav-link"
          routerLink="/stats"
          routerLinkActive="is-active"
          ariaCurrentWhenActive="page">{{ i18n.t('nav.stats') }}</a>

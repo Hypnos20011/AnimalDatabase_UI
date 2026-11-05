@@ -41,6 +41,7 @@ describe('App compare link', () => {
     expect(navLinks()).toEqual([
       { text: 'Random animal', href: null },
       { text: 'Compare (1/2)', href: '/compare' },
+      { text: 'Quiz', href: '/quiz' },
       { text: 'Stats', href: '/stats' },
     ]);
   });
@@ -56,6 +57,6 @@ describe('App compare link', () => {
 
     compare.clear();
     fixture.detectChanges();
-    expect(navLinks().map((link) => link.text)).toEqual(['Random animal', 'Stats']);
+    expect(navLinks().map((link) => link.text)).toEqual(['Random animal', 'Quiz', 'Stats']);
   });
 });

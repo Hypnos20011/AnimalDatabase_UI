@@ -1,7 +1,7 @@
 # Unusual Animals UI
 
 The Angular site for [Unusual Animals](https://unusualanimals.duckdns.org), a browsable index of unusual animals in
-English, German and French. Visitors can search, filter and compare animals. With the admin key, animals can be added, edited
+English, German and French. Visitors can search, filter and compare animals, and play a guess-the-animal quiz. With the admin key, animals can be added, edited
 and deleted.
 
 The API lives in a separate repository (`AnimalDatabase_Server`, locally `D:\AnimalDatabase.Api`).
@@ -35,6 +35,7 @@ Tests use Vitest with jsdom, so no browser is needed. The production build goes 
 | `src/app/animal-form`  | Admin form with Wikipedia lookup                      |
 | `src/app/animal-stats` | Stats page                                            |
 | `src/app/compare`      | Compare two animals side by side                      |
+| `src/app/quiz`         | Guess-the-animal photo quiz                           |
 | `src/app/admin`        | Admin key unlock, guard and HTTP interceptor          |
 | `src/app/shared`       | Shared services, formatting and `i18n` dictionaries   |
 

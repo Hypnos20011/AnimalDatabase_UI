@@ -1,0 +1,74 @@
+<section class="quiz" aria-labelledby="quiz-title">
+  <div class="quiz-head">
+    <h2 id="quiz-title">{{ i18n.t('quiz.title') }}</h2>
+    <dl class="quiz-score">
+      <div>
+        <dt>{{ i18n.t('quiz.score') }}</dt>
+        <dd data-stat="score">{{ score() }}/{{ played() }}</dd>
+      </div>
+      <div>
+        <dt>{{ i18n.t('quiz.streak') }}</dt>
+        <dd data-stat="streak">{{ streak() }}</dd>
+      </div>
+      <div>
+        <dt>{{ i18n.t('quiz.best') }}</dt>
+        <dd data-stat="best">{{ best() }}</dd>
+      </div>
+    </dl>
+  </div>
+
+  @if (error()) {
+    <p class="error-message" role="alert">{{ i18n.t('quiz.loadError') }}</p>
+  } @else if (round(); as r) {
+    <figure class="quiz-photo" [class.is-blurred]="!answered()">
+      <img
+        [src]="r.answer.thumbnailUrl"
+        [attr.srcset]="srcset(r.answer.thumbnailUrl)"
+        sizes="(max-width: 600px) 100vw, 40rem"
+        [alt]="answered() ? r.answer.commonName : i18n.t('quiz.photoAlt')"
+        decoding="async"
+        (error)="photoFailed()"
+      />
+    </figure>
+    <p class="quiz-prompt" id="quiz-prompt">{{ i18n.t('quiz.prompt') }}</p>
+    <div class="quiz-choices" role="group" aria-labelledby="quiz-prompt">
+      @for (choice of r.choices; track choice.id; let i = $index) {
+        <button
+          #choiceButton
+          type="button"
+          class="choice btn"
+          [class.is-correct]="answered() && choice.id === r.answer.id"
+          [class.is-wrong]="picked() === choice.id && choice.id !== r.answer.id"
+          [disabled]="answered()"
+          [attr.aria-keyshortcuts]="i + 1"
+          (click)="choose(choice)"
+        >
+          <span class="key" aria-hidden="true">{{ i + 1 }}</span>
+          <span class="choice-name">{{ choice.commonName }}</span>
+        </button>
+      }
+    </div>
+    <div class="quiz-feedback" aria-live="polite">
+      @if (answered()) {
+        <p class="result" [class.is-correct]="correct()">{{ resultText(r) }}</p>
+        <div class="quiz-actions">
+          <button #nextButton type="button" class="next btn btn-primary" (click)="next()">
+            {{ i18n.t('quiz.next') }}
+          </button>
+          <a class="learn-more" [routerLink]="['/animals', r.answer.id]">{{
+            i18n.t('quiz.learnMore', { name: r.answer.commonName })
+          }}</a>
+          @if (played() > 1) {
+            <button type="button" class="restart btn btn-secondary btn-sm" (click)="restart()">
+              {{ i18n.t('quiz.restart') }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+  } @else if (loading()) {
+    <p class="state-message">{{ i18n.t('quiz.loading') }}</p>
+  } @else {
+    <p class="state-message">{{ i18n.t('quiz.notEnough') }}</p>
+  }
+</section>
