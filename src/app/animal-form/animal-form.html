@@ -1,15 +1,15 @@
-<h2>{{ editing() ? 'Edit animal' : 'Add animal' }}</h2>
+<h2>{{ editing() ? i18n.t('form.title.edit') : i18n.t('form.title.add') }}</h2>
 
 @if (loadingAnimal()) {
-  <p class="hint">Loading...</p>
+  <p class="hint">{{ i18n.t('form.loading') }}</p>
 }
 
 <div class="wiki-import">
   <label>
-    Look up on Wikipedia
+    {{ i18n.t('form.wiki.label') }}
     <input
       type="text"
-      placeholder="Animal name, e.g. Shoebill"
+      [placeholder]="i18n.t('form.wiki.placeholder')"
       [value]="wikiUrl()"
       (input)="wikiUrl.set($any($event.target).value)"
       (keydown.enter)="importFromWikipedia()"
@@ -21,7 +21,7 @@
     [disabled]="importing() || !wikiUrl().trim()"
     (click)="importFromWikipedia()"
   >
-    {{ importing() ? 'Loading...' : 'Fill in' }}
+    {{ importing() ? i18n.t('form.wiki.loading') : i18n.t('form.wiki.fill') }}
   </button>
   @if (importMessage()) {
     <p class="hint">{{ importMessage() }}</p>
@@ -39,15 +39,15 @@
 </div>
 <form [formGroup]="form" (ngSubmit)="submit()">
   <label>
-    Common name *
+    {{ i18n.t('form.commonName') }}
     <input type="text" formControlName="commonName"/>
   </label>
   @if (form.controls.commonName.touched && form.controls.commonName.invalid) {
-    <p class="field-error">Common name is required.</p>
+    <p class="field-error">{{ i18n.t('form.commonName.required') }}</p>
   }
   @if (duplicates().length > 0) {
     <div class="duplicate-warning">
-      Already in the database:
+      {{ i18n.t('form.duplicates') }}
       @for (animal of duplicates(); track animal.id) {
         <a [routerLink]="['/animals', animal.id]">{{ animal.commonName }}</a>
         @if (animal.scientificName) {
@@ -58,125 +58,125 @@
   }
 
   <label>
-    Scientific name
+    {{ i18n.t('form.scientificName') }}
     <input type="text" formControlName="scientificName"/>
   </label>
 
   <label>
-    Family
+    {{ i18n.t('form.family') }}
     <input type="text" formControlName="family"/>
   </label>
 
   <label>
-    Class
+    {{ i18n.t('form.class') }}
     <select formControlName="taxonomicClass">
-      <option value="">Unknown</option>
+      <option value="">{{ i18n.t('form.unknown') }}</option>
       @for (cls of classes; track cls) {
-        <option [value]="cls">{{ cls }}</option>
+        <option [value]="cls">{{ i18n.tValue('class', cls) }}</option>
       }
     </select>
   </label>
 
   <label class="checkbox">
     <input type="checkbox" formControlName="isDomesticated"/>
-    Domesticated
+    {{ i18n.t('form.domesticated') }}
   </label>
 
   <div class="range">
-    <span>Length (cm)</span>
-    <input type="number" min="0" step="0.1" placeholder="min" formControlName="sizeLengthCmMin"/>
-    <input type="number" min="0" step="0.1" placeholder="max" formControlName="sizeLengthCmMax"/>
+    <span>{{ i18n.t('form.length') }}</span>
+    <input type="number" min="0" step="0.1" [placeholder]="i18n.t('form.min')" formControlName="sizeLengthCmMin"/>
+    <input type="number" min="0" step="0.1" [placeholder]="i18n.t('form.max')" formControlName="sizeLengthCmMax"/>
   </div>
   @if (rangeInvalid('sizeLengthCmMin', 'sizeLengthCmMax')) {
-    <p class="field-error">Use 0 to 999,999.9 with at most one decimal, e.g. 12.5.</p>
+    <p class="field-error">{{ i18n.t('form.error.size') }}</p>
   }
   @if (rangeReversed('sizeLengthCmMin')) {
-    <p class="field-error">The minimum can't be larger than the maximum.</p>
+    <p class="field-error">{{ i18n.t('form.error.minAboveMax') }}</p>
   }
 
   <div class="range">
-    <span>Height (cm)</span>
-    <input type="number" min="0" step="0.1" placeholder="min" formControlName="sizeHeightCmMin"/>
-    <input type="number" min="0" step="0.1" placeholder="max" formControlName="sizeHeightCmMax"/>
+    <span>{{ i18n.t('form.height') }}</span>
+    <input type="number" min="0" step="0.1" [placeholder]="i18n.t('form.min')" formControlName="sizeHeightCmMin"/>
+    <input type="number" min="0" step="0.1" [placeholder]="i18n.t('form.max')" formControlName="sizeHeightCmMax"/>
   </div>
   @if (rangeInvalid('sizeHeightCmMin', 'sizeHeightCmMax')) {
-    <p class="field-error">Use 0 to 999,999.9 with at most one decimal, e.g. 12.5.</p>
+    <p class="field-error">{{ i18n.t('form.error.size') }}</p>
   }
   @if (rangeReversed('sizeHeightCmMin')) {
-    <p class="field-error">The minimum can't be larger than the maximum.</p>
+    <p class="field-error">{{ i18n.t('form.error.minAboveMax') }}</p>
   }
 
   <div class="range">
-    <span>Weight (kg)</span>
-    <input type="number" min="0" step="0.01" placeholder="min" formControlName="weightKgMin"/>
-    <input type="number" min="0" step="0.01" placeholder="max" formControlName="weightKgMax"/>
+    <span>{{ i18n.t('form.weight') }}</span>
+    <input type="number" min="0" step="0.01" [placeholder]="i18n.t('form.min')" formControlName="weightKgMin"/>
+    <input type="number" min="0" step="0.01" [placeholder]="i18n.t('form.max')" formControlName="weightKgMax"/>
   </div>
   @if (rangeInvalid('weightKgMin', 'weightKgMax')) {
-    <p class="field-error">Use a weight from 0 to 9,999,999.99 kg.</p>
+    <p class="field-error">{{ i18n.t('form.error.weight') }}</p>
   }
   @if (rangeReversed('weightKgMin')) {
-    <p class="field-error">The minimum can't be larger than the maximum.</p>
+    <p class="field-error">{{ i18n.t('form.error.minAboveMax') }}</p>
   }
 
   <div class="range">
-    <span>Lifespan (years)</span>
-    <input type="number" min="0" step="1" placeholder="min" formControlName="lifespanYearsMin"/>
-    <input type="number" min="0" step="1" placeholder="max" formControlName="lifespanYearsMax"/>
+    <span>{{ i18n.t('form.lifespan') }}</span>
+    <input type="number" min="0" step="1" [placeholder]="i18n.t('form.min')" formControlName="lifespanYearsMin"/>
+    <input type="number" min="0" step="1" [placeholder]="i18n.t('form.max')" formControlName="lifespanYearsMax"/>
   </div>
   @if (rangeInvalid('lifespanYearsMin', 'lifespanYearsMax')) {
-    <p class="field-error">Use a whole number of years, 0 or more.</p>
+    <p class="field-error">{{ i18n.t('form.error.lifespan') }}</p>
   }
   @if (rangeReversed('lifespanYearsMin')) {
-    <p class="field-error">The minimum can't be larger than the maximum.</p>
+    <p class="field-error">{{ i18n.t('form.error.minAboveMax') }}</p>
   }
 
   <label>
-    IUCN status
+    {{ i18n.t('form.iucnStatus') }}
     <select formControlName="iucnStatus">
-      <option value="">Unknown</option>
+      <option value="">{{ i18n.t('form.unknown') }}</option>
       @for (status of statuses; track status) {
-        <option [value]="status">{{ status }}</option>
+        <option [value]="status">{{ i18n.tValue('iucn', status) }}</option>
       }
     </select>
   </label>
 
   <label>
-    Habitat
+    {{ i18n.t('form.habitat') }}
     <input type="text" formControlName="habitat"/>
   </label>
 
   <label>
-    Habitat Type
+    {{ i18n.t('form.habitatType') }}
     <select formControlName="habitatType">
-      <option value="">Unknown</option>
+      <option value="">{{ i18n.t('form.unknown') }}</option>
       @for (type of habitatTypes; track type) {
-        <option [value]="type">{{ type }}</option>
+        <option [value]="type">{{ i18n.tValue('habitat', type) }}</option>
       }
     </select>
   </label>
 
   <label>
-    Range / region
+    {{ i18n.t('form.range') }}
     <input type="text" formControlName="rangeRegion"/>
   </label>
 
   <label>
-    Profile
+    {{ i18n.t('form.profile') }}
     <textarea rows="5" formControlName="profile"></textarea>
   </label>
   @if (imageInvalid('profile')) {
-    <p class="field-error">The profile can have at most 20,000 characters.</p>
+    <p class="field-error">{{ i18n.t('form.error.profileTooLong') }}</p>
   }
 
   <div class="german-texts">
-    <h3>German texts</h3>
+    <h3>{{ i18n.t('form.german.title') }}</h3>
     <button
       type="button"
       class="btn btn-primary"
       [disabled]="translating() || !form.controls.commonName.value?.trim()"
       (click)="translateToGerman()"
     >
-      {{ translating() ? 'Translating...' : 'Translate with DeepL' }}
+      {{ translating() ? i18n.t('form.german.translating') : i18n.t('form.german.translate') }}
     </button>
     @if (translateMessage()) {
       <p class="hint">{{ translateMessage() }}</p>
@@ -186,39 +186,37 @@
     }
 
     <label>
-      Common name (German)
+      {{ i18n.t('form.german.commonName') }}
       <input type="text" formControlName="commonNameDe"/>
     </label>
     <label>
-      Habitat (German)
+      {{ i18n.t('form.german.habitat') }}
       <input type="text" formControlName="habitatDe"/>
     </label>
     <label>
-      Range / region (German)
+      {{ i18n.t('form.german.range') }}
       <input type="text" formControlName="rangeRegionDe"/>
     </label>
     <label>
-      Profile (German)
+      {{ i18n.t('form.german.profile') }}
       <textarea rows="5" formControlName="profileDe"></textarea>
     </label>
   </div>
 
   <label>
-    Source link
+    {{ i18n.t('form.sourceUrl') }}
     <input type="url" placeholder="https://en.wikipedia.org/wiki/..." formControlName="sourceUrl"/>
   </label>
   @if (imageInvalid('sourceUrl')) {
-    <p class="field-error">That doesn't look like an https:// link.</p>
+    <p class="field-error">{{ i18n.t('form.error.httpsLink') }}</p>
   }
 
   <fieldset class="images">
-    <legend>Pictures</legend>
-    <p class="hint">
-      On Wikipedia, right-click the photo and choose "Copy image address", then paste it here.
-    </p>
+    <legend>{{ i18n.t('form.pictures') }}</legend>
+    <p class="hint">{{ i18n.t('form.pictures.hint') }}</p>
     @for (field of imageFields; track field.key) {
       <label>
-        {{ field.label }}
+        {{ i18n.t(field.labelKey) }}
         <input
           type="url"
           placeholder="https://upload.wikimedia.org/..."
@@ -226,19 +224,19 @@
         />
       </label>
       @if (imageInvalid(field.key)) {
-        <p class="field-error">That doesn't look like an image link.</p>
+        <p class="field-error">{{ i18n.t('form.error.imageLink') }}</p>
       }
       <label>
-        Credit / attribution
+        {{ i18n.t('form.image.attribution') }}
         <input
           type="text"
           maxlength="500"
-          placeholder="Artist / license"
+          [placeholder]="i18n.t('form.image.attributionPlaceholder')"
           [formControlName]="field.attributionKey"
         />
       </label>
       <label>
-        Source page
+        {{ i18n.t('form.image.sourcePage') }}
         <input
           type="url"
           placeholder="https://commons.wikimedia.org/wiki/File:..."
@@ -246,18 +244,18 @@
         />
       </label>
       @if (imageInvalid(field.sourcePageKey)) {
-        <p class="field-error">That doesn't look like an https:// link.</p>
+        <p class="field-error">{{ i18n.t('form.error.httpsLink') }}</p>
       }
       @if (imageUrl(field.key) && !imageInvalid(field.key)) {
         @if (previewFailed(imageUrl(field.key))) {
           <p class="field-error">
-            No picture found at this link. Right-click the photo itself and copy its image address.
+            {{ i18n.t('form.image.notFound') }}
           </p>
         } @else {
           <img
             class="preview"
             [src]="imageUrl(field.key)"
-            [alt]="field.label"
+            [alt]="i18n.t(field.labelKey)"
             decoding="async"
             (error)="markPreviewFailed(imageUrl(field.key))"
           />
@@ -272,8 +270,8 @@
 
   <div class="actions">
     <button type="submit" class="btn btn-primary" [disabled]="saving()">
-      {{ saving() ? 'Saving...' : 'Save' }}
+      {{ saving() ? i18n.t('form.saving') : i18n.t('form.save') }}
     </button>
-    <a class="btn btn-secondary" [routerLink]="editing() ? ['/animals', id()] : '/'">Cancel</a>
+    <a class="btn btn-secondary" [routerLink]="editing() ? ['/animals', id()] : '/'">{{ i18n.t('form.cancel') }}</a>
   </div>
 </form>

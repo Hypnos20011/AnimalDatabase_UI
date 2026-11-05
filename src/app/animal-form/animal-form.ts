@@ -13,8 +13,9 @@ import { Router, RouterLink } from '@angular/router';
 import { AnimalService } from '../shared/animal.service';
 import { Animal, AnimalTexts, NewAnimal, NewAnimalImage } from '../animal-model/animal.model';
 import { WikipediaImport } from '../animal-model/wikipedia-import.model';
-import { formatCount } from '../shared/plural';
-import { isRateLimited, rateLimitMessage } from '../shared/rate-limit';
+import { HttpErrorResponse } from '@angular/common/http';
+import { isRateLimited, retryAfterSeconds } from '../shared/rate-limit';
+import { LanguageService } from '../shared/i18n/language.service';
 import { apiErrorMessage } from '../shared/api-error';
 
 const oneDecimal: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
@@ -66,6 +67,7 @@ export class AnimalForm {
   private fb = inject(FormBuilder);
   private animalService = inject(AnimalService);
   private router = inject(Router);
+  protected i18n = inject(LanguageService);
 
   readonly classes = ['mammal', 'bird', 'reptile', 'amphibian', 'fish', 'invertebrate'];
   readonly statuses = [
@@ -98,6 +100,7 @@ export class AnimalForm {
       sourcePageKey: 'maleImageSourcePageUrl',
       kind: 'male',
       label: 'Male',
+      labelKey: 'form.image.male',
     },
     {
       key: 'femaleImageUrl',
@@ -105,6 +108,7 @@ export class AnimalForm {
       sourcePageKey: 'femaleImageSourcePageUrl',
       kind: 'female',
       label: 'Female',
+      labelKey: 'form.image.female',
     },
     {
       key: 'babyImageUrl',
@@ -112,6 +116,7 @@ export class AnimalForm {
       sourcePageKey: 'babyImageSourcePageUrl',
       kind: 'baby',
       label: 'Baby',
+      labelKey: 'form.image.baby',
     },
     {
       key: 'otherImageUrl',
@@ -119,6 +124,7 @@ export class AnimalForm {
       sourcePageKey: 'otherImageSourcePageUrl',
       kind: 'unspecified',
       label: 'Other',
+      labelKey: 'form.image.other',
     },
   ] as const;
 
@@ -273,7 +279,7 @@ export class AnimalForm {
       .subscribe({
         next: (saved) => this.router.navigate(id ? ['/animals', id] : ['/']),
         error: (err) => {
-          this.error.set(apiErrorMessage(err, 'Could not save animal'));
+          this.error.set(apiErrorMessage(err, this.i18n.t('form.error.save')));
           this.saving.set(false);
         },
       });
@@ -322,8 +328,8 @@ export class AnimalForm {
         const filled = this.applyImport(data);
         this.importMessage.set(
           filled > 0
-            ? `Filled in ${formatCount(filled, { one: 'field', other: 'fields' })} from Wikipedia. Check them before saving.`
-            : 'Wikipedia had nothing to fill in for this animal.',
+            ? this.i18n.tPlural('form.wiki.filled', filled)
+            : this.i18n.t('form.wiki.nothing'),
         );
         this.importWarnings.set(data.warnings);
         this.importing.set(false);
@@ -331,10 +337,10 @@ export class AnimalForm {
       error: (err) => {
         this.importError.set(
           isRateLimited(err)
-            ? rateLimitMessage(err, 'lookups')
+            ? this.rateLimitText(err, 'form.rateLimit.lookups')
             : typeof err.error === 'string' && err.error
               ? err.error
-              : 'Could not load that Wikipedia page.',
+              : this.i18n.t('form.wiki.error'),
         );
         this.importing.set(false);
       },
@@ -344,7 +350,7 @@ export class AnimalForm {
   translateToGerman(): void {
     const texts = this.englishTextsForTranslate();
     if (!texts.commonName && !texts.habitat && !texts.rangeRegion && !texts.profile) {
-      this.translateError.set('Fill in some English text first');
+      this.translateError.set(this.i18n.t('form.german.needEnglish'));
       this.translateMessage.set('');
       return;
     }
@@ -360,16 +366,16 @@ export class AnimalForm {
           rangeRegionDe: german.rangeRegion ?? '',
           profileDe: german.profile ?? '',
         });
-        this.translateMessage.set('German fields filled in. Check them before saving.');
+        this.translateMessage.set(this.i18n.t('form.german.filled'));
         this.translating.set(false);
       },
       error: (err) => {
         this.translateError.set(
           isRateLimited(err)
-            ? rateLimitMessage(err, 'translations')
+            ? this.rateLimitText(err, 'form.rateLimit.translations')
             : typeof err.error === 'string' && err.error
               ? err.error
-              : 'Could not translate right now',
+              : this.i18n.t('form.german.error'),
         );
         this.translating.set(false);
       },
@@ -499,7 +505,7 @@ export class AnimalForm {
         this.loadingAnimal.set(false);
       },
       error: () => {
-        this.error.set('Could not load this animal.');
+        this.error.set(this.i18n.t('form.error.load'));
         this.loadingAnimal.set(false);
       },
     });
@@ -523,6 +529,18 @@ export class AnimalForm {
       }
     }
     return images;
+  }
+
+  private rateLimitText(
+    err: HttpErrorResponse,
+    key: 'form.rateLimit.lookups' | 'form.rateLimit.translations',
+  ): string {
+    const seconds = retryAfterSeconds(err);
+    const when =
+      seconds === null
+        ? this.i18n.t('form.rateLimit.inMinute')
+        : this.i18n.tPlural('form.rateLimit.inSeconds', seconds);
+    return this.i18n.t(key, { when });
   }
 
   private sameValue(a: unknown, b: unknown): boolean {
