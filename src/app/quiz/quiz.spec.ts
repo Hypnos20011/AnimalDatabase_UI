@@ -9,8 +9,10 @@ import {
   matchesFilter,
   Quiz,
   QUIZ_BEST_STORAGE,
+  QUIZ_MISSED_STORAGE,
   QUIZ_RANDOM,
   readBestStreak,
+  readMissedIds,
   shuffle,
 } from './quiz';
 
@@ -44,6 +46,15 @@ const zoo = [
   animal(3, 'Aye-aye'),
   animal(4, 'Shoebill'),
   animal(5, 'Tapir'),
+];
+
+const photos = [
+  animal(1, 'Okapi', 'https://example.org/okapi.jpg'),
+  animal(2, 'Axolotl', 'https://example.org/axolotl.jpg'),
+  animal(3, 'Aye-aye', 'https://example.org/aye.jpg'),
+  animal(4, 'Shoebill', 'https://example.org/shoebill.jpg'),
+  animal(5, 'Tapir', 'https://example.org/tapir.jpg'),
+  animal(6, 'Lion', 'https://example.org/lion.jpg'),
 ];
 
 describe('buildRound', () => {
@@ -110,6 +121,16 @@ describe('quiz helpers', () => {
       expect(readBestStreak()).toBe(0);
     }
   });
+
+  it('reads missed animal ids from storage', () => {
+    expect(readMissedIds()).toEqual([]);
+    localStorage.setItem(QUIZ_MISSED_STORAGE, JSON.stringify([3, 1, 3, 0, -2, 'x', 1.5, 2]));
+    expect(readMissedIds()).toEqual([3, 1, 2]);
+    localStorage.setItem(QUIZ_MISSED_STORAGE, '{');
+    expect(readMissedIds()).toEqual([]);
+    localStorage.setItem(QUIZ_MISSED_STORAGE, '"nope"');
+    expect(readMissedIds()).toEqual([]);
+  });
 });
 
 describe('Quiz', () => {
@@ -138,7 +159,8 @@ describe('Quiz', () => {
     const stat = (name: string) =>
       element.querySelector(`[data-stat="${name}"]`)!.textContent!.trim();
     const photo = () => element.querySelector<HTMLImageElement>('.quiz-photo img')!;
-    return { fixture, element, refresh, choices, choice, stat, photo, getAll };
+    const practice = () => element.querySelector<HTMLButtonElement>('button.practice-missed');
+    return { fixture, element, refresh, choices, choice, stat, photo, practice, getAll };
   }
 
   it('shows a blurred photo with four answers', async () => {
@@ -292,7 +314,7 @@ describe('Quiz', () => {
     localStorage.setItem('language', 'fr');
     const { element, choice, refresh } = await setup();
 
-    expect(element.querySelector('h2')!.textContent).toBe('Devinez l’animal');
+    expect(element.querySelector('h2')!.textContent).toBe("Devinez l’animal");
     choice('Okapi').click();
     await refresh();
     expect(element.querySelector('button.next')!.textContent!.trim()).toBe('Animal suivant');
@@ -341,6 +363,154 @@ describe('Quiz', () => {
 
       expect(stat('best')).toBe('0');
       expect(localStorage.getItem(QUIZ_BEST_STORAGE)).toBeNull();
+    });
+  });
+
+  describe('missed animals', () => {
+    it('saves a missed id on a wrong answer and shows the practice control', async () => {
+      const { choices, practice, refresh } = await setup(vi.fn(() => of(photos)));
+      expect(practice()).toBeNull();
+
+      choices().find((b) => !b.textContent!.includes('Okapi'))!.click();
+      await refresh();
+
+      expect(JSON.parse(localStorage.getItem(QUIZ_MISSED_STORAGE)!)).toEqual([1]);
+      expect(practice()!.textContent!.trim()).toBe('Practice missed (1)');
+      expect(practice()!.getAttribute('aria-pressed')).toBe('false');
+    });
+
+    it('does not duplicate a missed id on another wrong answer', async () => {
+      const { element, choice, choices, refresh } = await setup(vi.fn(() => of(photos)));
+      choices().find((b) => !b.textContent!.includes('Okapi'))!.click();
+      await refresh();
+      element.querySelector<HTMLButtonElement>('button.next')!.click();
+      await refresh();
+      choice('Axolotl').click();
+      await refresh();
+      element.querySelector<HTMLButtonElement>('button.next')!.click();
+      await refresh();
+      choices().find((b) => !b.textContent!.includes('Okapi'))!.click();
+      await refresh();
+
+      expect(JSON.parse(localStorage.getItem(QUIZ_MISSED_STORAGE)!)).toEqual([1]);
+    });
+
+    it('removes a missed id after one correct answer', async () => {
+      localStorage.setItem(QUIZ_MISSED_STORAGE, JSON.stringify([1, 2]));
+      const { choice, practice, refresh } = await setup(vi.fn(() => of(photos)));
+
+      expect(practice()!.textContent!.trim()).toBe('Practice missed (2)');
+      choice('Okapi').click();
+      await refresh();
+
+      expect(JSON.parse(localStorage.getItem(QUIZ_MISSED_STORAGE)!)).toEqual([2]);
+      expect(practice()!.textContent!.trim()).toBe('Practice missed (1)');
+    });
+
+    it('restores missed ids from localStorage', async () => {
+      localStorage.setItem(QUIZ_MISSED_STORAGE, JSON.stringify([4, 6]));
+      const { practice } = await setup(vi.fn(() => of(photos)));
+      expect(practice()!.textContent!.trim()).toBe('Practice missed (2)');
+    });
+
+    it('narrows the pool to missed animals in practice mode', async () => {
+      localStorage.setItem(QUIZ_MISSED_STORAGE, JSON.stringify([1, 2, 3, 4]));
+      const { choices, practice, photo, refresh, stat } = await setup(vi.fn(() => of(photos)));
+      practice()!.click();
+      await refresh();
+
+      expect(practice()!.classList).toContain('is-active');
+      expect(practice()!.getAttribute('aria-pressed')).toBe('true');
+      expect(photo().getAttribute('src')).toBe('https://example.org/axolotl.jpg');
+      expect(
+        choices()
+          .map((b) => b.querySelector('.choice-name')!.textContent)
+          .sort(),
+      ).toEqual(['Axolotl', 'Aye-aye', 'Okapi', 'Shoebill']);
+      expect(stat('score')).toBe('0/0');
+    });
+
+    it('keeps the streak when entering practice mode', async () => {
+      localStorage.setItem(QUIZ_MISSED_STORAGE, JSON.stringify([1, 2, 3, 4]));
+      const { choice, practice, refresh, stat } = await setup(vi.fn(() => of(photos)));
+      choice('Okapi').click();
+      await refresh();
+      expect(stat('streak')).toBe('1');
+
+      practice()!.click();
+      await refresh();
+
+      expect(stat('streak')).toBe('1');
+      expect(stat('score')).toBe('1/1');
+    });
+
+    it('shows an empty state when practice has too few animals', async () => {
+      localStorage.setItem(QUIZ_MISSED_STORAGE, JSON.stringify([1, 2]));
+      const { element, choices, practice, refresh } = await setup(vi.fn(() => of(photos)));
+      practice()!.click();
+      await refresh();
+
+      expect(choices()).toHaveLength(0);
+      expect(element.querySelector('.quiz-photo')).toBeNull();
+      expect(element.querySelector('.state-message')!.textContent).toContain(
+        'Not enough missed animals',
+      );
+
+      element.querySelector<HTMLButtonElement>('button.exit-practice')!.click();
+      await refresh();
+
+      expect(choices()).toHaveLength(4);
+      expect(practice()!.classList).not.toContain('is-active');
+    });
+
+    it('clears the last missed id and hides the practice control', async () => {
+      localStorage.setItem(QUIZ_MISSED_STORAGE, JSON.stringify([1]));
+      const { choice, practice, refresh } = await setup(vi.fn(() => of(photos)));
+      expect(practice()!.textContent!.trim()).toBe('Practice missed (1)');
+      choice('Okapi').click();
+      await refresh();
+
+      expect(localStorage.getItem(QUIZ_MISSED_STORAGE)).toBeNull();
+      expect(practice()).toBeNull();
+    });
+
+    it('keeps practice mode across a language switch', async () => {
+      localStorage.setItem(QUIZ_MISSED_STORAGE, JSON.stringify([1, 2, 3, 4]));
+      const german = photos.map((a) => ({ ...a, commonName: `${a.commonName} DE` }));
+      const getAll = vi.fn((lang?: string) => of(lang === 'de' ? german : photos));
+      const { practice, photo, choices, refresh } = await setup(getAll);
+      practice()!.click();
+      await refresh();
+
+      TestBed.inject(LanguageService).setLanguage('de');
+      await refresh();
+
+      expect(practice()!.classList).toContain('is-active');
+      expect(practice()!.textContent!.trim()).toBe('Fehler üben (4)');
+      expect(photo().getAttribute('src')).toBe('https://example.org/axolotl.jpg');
+      expect(choices().every((b) => b.textContent!.includes(' DE'))).toBe(true);
+    });
+
+    it('labels practice mode in French', async () => {
+      localStorage.setItem('language', 'fr');
+      localStorage.setItem(QUIZ_MISSED_STORAGE, JSON.stringify([1, 2]));
+      const { practice } = await setup(vi.fn(() => of(photos)));
+      expect(practice()!.textContent!.trim()).toBe('Réviser les ratés (2)');
+    });
+
+    it('combines practice mode with class filters', async () => {
+      localStorage.setItem(QUIZ_MISSED_STORAGE, JSON.stringify([1, 3, 5, 6, 7]));
+      const { element, choices, practice, refresh } = await setup(vi.fn(() => of(wild)));
+      practice()!.click();
+      await refresh();
+
+      const classSelect = element.querySelector<HTMLSelectElement>('select.filter-class')!;
+      classSelect.value = 'mammal';
+      classSelect.dispatchEvent(new Event('change'));
+      await refresh();
+
+      const names = choices().map((b) => b.querySelector('.choice-name')!.textContent).sort();
+      expect(names).toEqual(['Aye-aye', 'Lion', 'Okapi', 'Tapir']);
     });
   });
 

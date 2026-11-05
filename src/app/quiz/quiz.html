@@ -17,7 +17,7 @@
     </dl>
   </div>
 
-  @if (classes().length > 0 || habitats().length > 0) {
+  @if (classes().length > 0 || habitats().length > 0 || missedCount() > 0) {
     <div class="quiz-filters">
       @if (classes().length > 0) {
         <label>
@@ -52,6 +52,17 @@
             }
           </select>
         </label>
+      }
+      @if (missedCount() > 0) {
+        <button
+          type="button"
+          class="practice-missed btn btn-secondary btn-sm"
+          [class.is-active]="practiceMode()"
+          [attr.aria-pressed]="practiceMode()"
+          (click)="setPracticeMode(!practiceMode())"
+        >
+          {{ i18n.t('quiz.practice', { count: missedCount() }) }}
+        </button>
       }
     </div>
   }
@@ -107,12 +118,23 @@
     </div>
   } @else if (loading()) {
     <p class="state-message">{{ i18n.t('quiz.loading') }}</p>
-  } @else if (filterActive()) {
+  } @else if (poolRestricted()) {
     <div class="quiz-empty">
-      <p class="state-message">{{ i18n.t('quiz.filter.empty') }}</p>
-      <button type="button" class="reset-filters btn btn-secondary btn-sm" (click)="clearFilters()">
-        {{ i18n.t('quiz.filter.reset') }}
-      </button>
+      <p class="state-message">{{ emptyText() }}</p>
+      @if (practiceMode()) {
+        <button
+          type="button"
+          class="exit-practice btn btn-secondary btn-sm"
+          (click)="setPracticeMode(false)"
+        >
+          {{ i18n.t('quiz.practice.exit') }}
+        </button>
+      }
+      @if (filterActive()) {
+        <button type="button" class="reset-filters btn btn-secondary btn-sm" (click)="clearFilters()">
+          {{ i18n.t('quiz.filter.reset') }}
+        </button>
+      }
     </div>
   } @else {
     <p class="state-message">{{ i18n.t('quiz.notEnough') }}</p>

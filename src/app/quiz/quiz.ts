@@ -25,6 +25,8 @@ export const QUIZ_CHOICES = 4;
 
 export const QUIZ_BEST_STORAGE = 'animaldb.quiz.bestStreak';
 
+export const QUIZ_MISSED_STORAGE = 'animaldb.quiz.missed';
+
 export const QUIZ_RANDOM = new InjectionToken<() => number>('QUIZ_RANDOM', {
   providedIn: 'root',
   factory: () => Math.random,
@@ -59,6 +61,29 @@ export function readBestStreak(): number {
 function saveBestStreak(best: number): void {
   try {
     localStorage.setItem(QUIZ_BEST_STORAGE, String(best));
+  } catch {}
+}
+
+export function readMissedIds(): number[] {
+  try {
+    const raw = localStorage.getItem(QUIZ_MISSED_STORAGE);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return [
+      ...new Set(
+        parsed.filter((id): id is number => typeof id === 'number' && Number.isSafeInteger(id) && id > 0),
+      ),
+    ];
+  } catch {
+    return [];
+  }
+}
+
+function saveMissedIds(ids: number[]): void {
+  try {
+    if (ids.length === 0) localStorage.removeItem(QUIZ_MISSED_STORAGE);
+    else localStorage.setItem(QUIZ_MISSED_STORAGE, JSON.stringify(ids));
   } catch {}
 }
 
@@ -135,10 +160,14 @@ export class Quiz {
   played = signal(0);
   streak = signal(0);
   best = signal(readBestStreak());
+  missedIds = signal<number[]>(readMissedIds());
+  practiceMode = signal(false);
   classFilter = signal('');
   habitatFilter = signal('');
 
+  missedCount = computed(() => this.missedIds().length);
   filterActive = computed(() => !!this.classFilter() || !!this.habitatFilter());
+  poolRestricted = computed(() => this.practiceMode() || this.filterActive());
   classes = computed(() => this.sortedLabels('class', this.animals().map((a) => a.taxonomicClass)));
   habitats = computed(() => this.sortedLabels('habitat', this.animals().map((a) => a.habitatType)));
 
@@ -184,8 +213,10 @@ export class Quiz {
 
   private pool(): Animal[] {
     const filter = { taxonomicClass: this.classFilter(), habitatType: this.habitatFilter() };
+    const missed = new Set(this.missedIds());
     return this.animals()
       .filter((animal) => matchesFilter(animal, filter))
+      .filter((animal) => !this.practiceMode() || missed.has(animal.id))
       .map((animal) =>
         this.brokenPhotos.has(animal.id) ? { ...animal, thumbnailUrl: null } : animal,
       );
@@ -205,6 +236,23 @@ export class Quiz {
     }
   }
 
+  private rememberMissed(ids: number[]): void {
+    this.missedIds.set(ids);
+    saveMissedIds(ids);
+  }
+
+  private addMissed(id: number): void {
+    if (this.missedIds().includes(id)) return;
+    this.rememberMissed([...this.missedIds(), id]);
+  }
+
+  private clearMissed(id: number): void {
+    if (!this.missedIds().includes(id)) return;
+    const next = this.missedIds().filter((missed) => missed !== id);
+    this.rememberMissed(next);
+    if (this.practiceMode() && next.length === 0) this.practiceMode.set(false);
+  }
+
   setClassFilter(value: string): void {
     if (value === this.classFilter()) return;
     this.classFilter.set(value);
@@ -221,6 +269,12 @@ export class Quiz {
     this.classFilter.set('');
     this.habitatFilter.set('');
     this.next();
+  }
+
+  setPracticeMode(active: boolean): void {
+    if (active === this.practiceMode()) return;
+    this.practiceMode.set(active);
+    this.startRound();
   }
 
   private startRound(): void {
@@ -246,8 +300,10 @@ export class Quiz {
         this.best.set(this.streak());
         saveBestStreak(this.best());
       }
+      this.clearMissed(round.answer.id);
     } else {
       this.streak.set(0);
+      this.addMissed(round.answer.id);
     }
     this.focusLater(() => this.nextButton()?.nativeElement);
   }
@@ -285,5 +341,9 @@ export class Quiz {
     return this.i18n.t(this.correct() ? 'quiz.correct' : 'quiz.wrong', {
       name: round.answer.commonName,
     });
+  }
+
+  emptyText(): string {
+    return this.i18n.t(this.practiceMode() ? 'quiz.practice.empty' : 'quiz.filter.empty');
   }
 }

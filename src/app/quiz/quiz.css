@@ -56,6 +56,11 @@
   color: var(--color-muted);
 }
 
+.practice-missed.is-active {
+  border-color: var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
 .quiz-empty {
   display: flex;
   flex-wrap: wrap;
