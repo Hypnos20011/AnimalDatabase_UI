@@ -228,6 +228,26 @@
       @if (imageInvalid(field.key)) {
         <p class="field-error">That doesn't look like an image link.</p>
       }
+      <label>
+        Credit / attribution
+        <input
+          type="text"
+          maxlength="500"
+          placeholder="Artist / license"
+          [formControlName]="field.attributionKey"
+        />
+      </label>
+      <label>
+        Source page
+        <input
+          type="url"
+          placeholder="https://commons.wikimedia.org/wiki/File:..."
+          [formControlName]="field.sourcePageKey"
+        />
+      </label>
+      @if (imageInvalid(field.sourcePageKey)) {
+        <p class="field-error">That doesn't look like an https:// link.</p>
+      }
       @if (imageUrl(field.key) && !imageInvalid(field.key)) {
         @if (previewFailed(imageUrl(field.key))) {
           <p class="field-error">

@@ -18,6 +18,16 @@
             @if (showCaption(hero)) {
               <figcaption class="hero-caption">{{ hero.caption }}</figcaption>
             }
+            @if (hero.attribution?.trim()) {
+              <p class="image-credit">
+                <span class="image-credit-label">{{ i18n.t('detail.imageCredit') }}:</span>
+                @if (hero.sourcePageUrl; as sourcePageUrl) {
+                  <a [href]="sourcePageUrl" target="_blank" rel="noopener noreferrer">{{ hero.attribution }}</a>
+                } @else {
+                  <span>{{ hero.attribution }}</span>
+                }
+              </p>
+            }
           }
         </figure>
       }

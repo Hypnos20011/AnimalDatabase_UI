@@ -76,6 +76,7 @@ export const de: Record<TranslationKey, string> = {
   'detail.funFact': 'Wusstest du?',
   'detail.profile': 'Steckbrief',
   'detail.readMore': 'Weiterlesen',
+  'detail.imageCredit': 'Bildnachweis',
   'detail.morePictures': 'Weitere Bilder',
   'detail.back': 'Zurück zur Liste',
   'detail.loading': 'Wird geladen...',

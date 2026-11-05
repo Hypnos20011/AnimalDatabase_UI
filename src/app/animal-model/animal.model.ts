@@ -28,6 +28,8 @@ export interface NewAnimalImage {
   kind: 'male' | 'female' | 'baby' | 'unspecified';
   url: string;
   caption: string | null;
+  attribution: string | null;
+  sourcePageUrl: string | null;
 }
 
 export type NewAnimal = Omit<Animal, 'id' | 'createdAt' | 'updatedAt' | 'thumbnailUrl'> & {

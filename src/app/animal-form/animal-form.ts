@@ -92,10 +92,34 @@ export class AnimalForm {
   ];
 
   readonly imageFields = [
-    { key: 'maleImageUrl', kind: 'male', label: 'Male' },
-    { key: 'femaleImageUrl', kind: 'female', label: 'Female' },
-    { key: 'babyImageUrl', kind: 'baby', label: 'Baby' },
-    { key: 'otherImageUrl', kind: 'unspecified', label: 'Other' },
+    {
+      key: 'maleImageUrl',
+      attributionKey: 'maleImageAttribution',
+      sourcePageKey: 'maleImageSourcePageUrl',
+      kind: 'male',
+      label: 'Male',
+    },
+    {
+      key: 'femaleImageUrl',
+      attributionKey: 'femaleImageAttribution',
+      sourcePageKey: 'femaleImageSourcePageUrl',
+      kind: 'female',
+      label: 'Female',
+    },
+    {
+      key: 'babyImageUrl',
+      attributionKey: 'babyImageAttribution',
+      sourcePageKey: 'babyImageSourcePageUrl',
+      kind: 'baby',
+      label: 'Baby',
+    },
+    {
+      key: 'otherImageUrl',
+      attributionKey: 'otherImageAttribution',
+      sourcePageKey: 'otherImageSourcePageUrl',
+      kind: 'unspecified',
+      label: 'Other',
+    },
   ] as const;
 
   editing = computed(() => !!this.id());
@@ -145,6 +169,14 @@ export class AnimalForm {
       femaleImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
       babyImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
       otherImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
+      maleImageAttribution: ['', Validators.maxLength(500)],
+      femaleImageAttribution: ['', Validators.maxLength(500)],
+      babyImageAttribution: ['', Validators.maxLength(500)],
+      otherImageAttribution: ['', Validators.maxLength(500)],
+      maleImageSourcePageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)]],
+      femaleImageSourcePageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)]],
+      babyImageSourcePageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)]],
+      otherImageSourcePageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)]],
     },
     { validators: minNotAboveMax },
   );
@@ -439,6 +471,8 @@ export class AnimalForm {
         for (const field of this.imageFields) {
           const image = images.find((i) => i.kind === field.kind);
           this.form.get(field.key)?.setValue(image?.url ?? '');
+          this.form.get(field.attributionKey)?.setValue(image?.attribution ?? '');
+          this.form.get(field.sourcePageKey)?.setValue(image?.sourcePageUrl ?? '');
           if (image) this.originalCaptions.set(image.url, image.caption);
         }
         this.form.patchValue({
@@ -468,7 +502,13 @@ export class AnimalForm {
         const caption = this.originalCaptions.has(url)
           ? this.originalCaptions.get(url)!
           : field.label;
-        images.push({ kind: field.kind, url, caption });
+        images.push({
+          kind: field.kind,
+          url,
+          caption,
+          attribution: this.text(this.form.get(field.attributionKey)?.value as string | null),
+          sourcePageUrl: this.text(this.form.get(field.sourcePageKey)?.value as string | null),
+        });
       }
     }
     return images;

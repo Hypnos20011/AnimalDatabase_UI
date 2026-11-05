@@ -249,6 +249,31 @@ describe('AnimalDetail hero', () => {
     );
   });
 
+  it('shows image credit under the photo when attribution is set', async () => {
+    const { element } = await setup([
+      {
+        ...photo,
+        attribution: 'Charles J. Sharp / CC BY-SA 4.0',
+        sourcePageUrl: 'https://commons.wikimedia.org/wiki/File:Okapia_johnstoni_17zz.jpg',
+      },
+    ]);
+
+    const credit = element.querySelector('.hero .image-credit');
+    expect(credit?.textContent).toContain('Credit');
+    expect(credit?.textContent).toContain('Charles J. Sharp / CC BY-SA 4.0');
+    const link = credit?.querySelector('a');
+    expect(link?.getAttribute('href')).toBe(
+      'https://commons.wikimedia.org/wiki/File:Okapia_johnstoni_17zz.jpg',
+    );
+    expect(link?.getAttribute('rel')).toContain('noopener');
+  });
+
+  it('hides image credit when attribution is missing', async () => {
+    const { element } = await setup([{ ...photo, attribution: null, sourcePageUrl: null }]);
+
+    expect(element.querySelector('.hero .image-credit')).toBeNull();
+  });
+
   it('keeps the name, facts and More details together in the text column', async () => {
     const { element, settle } = await setup([photo]);
     const text = element.querySelector('.intro .intro-text') as HTMLElement;

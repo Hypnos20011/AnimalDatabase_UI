@@ -95,4 +95,42 @@ describe('AnimalForm number checks', () => {
     form.submit();
     expect(form.error()).toBe("Weight: the minimum can't be larger than the maximum.");
   });
+
+  it('accepts https image source pages and rejects anything else', () => {
+    const { form } = setup();
+    const control = form.form.controls.otherImageSourcePageUrl;
+    for (const bad of ['http://commons.wikimedia.org/wiki/File:X.jpg', 'javascript:alert(1)', 'commons']) {
+      control.setValue(bad);
+      expect(control.invalid).toBe(true);
+    }
+    control.setValue('https://commons.wikimedia.org/wiki/File:Okapia_johnstoni_17zz.jpg');
+    expect(control.valid).toBe(true);
+    control.setValue('');
+    expect(control.valid).toBe(true);
+  });
+
+  it('includes attribution fields when collecting images', () => {
+    const create = vi.fn(() => of({ id: 9 }));
+    const { form } = setup(create);
+    form.form.controls.commonName.setValue('Okapi');
+    form.form.controls.otherImageUrl.setValue(
+      'https://upload.wikimedia.org/wikipedia/commons/9/9f/Okapia_johnstoni_17zz.jpg',
+    );
+    form.form.controls.otherImageAttribution.setValue('Charles J. Sharp / CC BY-SA 4.0');
+    form.form.controls.otherImageSourcePageUrl.setValue(
+      'https://commons.wikimedia.org/wiki/File:Okapia_johnstoni_17zz.jpg',
+    );
+    form.submit();
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        images: [
+          expect.objectContaining({
+            kind: 'unspecified',
+            attribution: 'Charles J. Sharp / CC BY-SA 4.0',
+            sourcePageUrl: 'https://commons.wikimedia.org/wiki/File:Okapia_johnstoni_17zz.jpg',
+          }),
+        ],
+      }),
+    );
+  });
 });

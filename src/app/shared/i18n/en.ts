@@ -74,6 +74,7 @@ export const en = {
   'detail.funFact': 'Fun fact',
   'detail.profile': 'Profile',
   'detail.readMore': 'Read more',
+  'detail.imageCredit': 'Credit',
   'detail.morePictures': 'More pictures',
   'detail.back': 'Back to list',
   'detail.loading': 'Loading...',

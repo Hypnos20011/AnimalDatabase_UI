@@ -37,8 +37,15 @@ const okapi = {
 } as Animal;
 
 const pictures = [
-  { id: 1, animalId: 2, url: 'https://example.org/a.jpg', caption: null },
-  { id: 2, animalId: 2, url: 'https://example.org/b.jpg', caption: null },
+  {
+    id: 1,
+    animalId: 2,
+    url: 'https://example.org/a.jpg',
+    caption: null,
+    attribution: 'Foto: Beispiel',
+    sourcePageUrl: 'https://commons.wikimedia.org/wiki/File:Example.jpg',
+  },
+  { id: 2, animalId: 2, url: 'https://example.org/b.jpg', caption: null, attribution: null, sourcePageUrl: null },
 ] as unknown as AnimalImage[];
 
 describe('AnimalDetail translation', () => {
@@ -147,6 +154,7 @@ describe('AnimalDetail translation', () => {
     expect(text('.fun-fact-label')).toBe('Wusstest du?');
     expect(text('.profile h3')).toBe('Steckbrief');
     expect(element.querySelector('.gallery')!.getAttribute('aria-label')).toBe('Weitere Bilder');
+    expect(element.querySelector('.image-credit')?.textContent).toContain('Bildnachweis');
   });
 
   it('translates the no images text', async () => {
