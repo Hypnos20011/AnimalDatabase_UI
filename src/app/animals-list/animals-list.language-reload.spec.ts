@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import { AnimalsList } from './animals-list';
 import { AnimalService } from '../shared/animal.service';
 import { SearchService } from './search.service';
@@ -46,6 +46,37 @@ describe('AnimalsList language reload', () => {
   });
 
   afterEach(() => localStorage.clear());
+
+  it('ignores a slow answer from the previous language', async () => {
+    const english = new Subject<Animal[]>();
+    const german = new Subject<Animal[]>();
+    getAll = vi.fn((language?: string) => (language === 'de' ? german : english));
+    const { component, fixture } = await renderList();
+
+    TestBed.inject(LanguageService).setLanguage('de');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    german.next([animal(1, 'Querzahnmolch')]);
+    english.next([animal(1, 'Axolotl')]);
+
+    expect(component.animals()[0].commonName).toBe('Querzahnmolch');
+  });
+
+  async function renderList() {
+    TestBed.configureTestingModule({
+      imports: [AnimalsList],
+      providers: [
+        provideRouter([]),
+        { provide: AnimalService, useValue: { getAll } },
+        { provide: SearchService, useValue: { getTop: vi.fn(() => of([])), record: vi.fn(() => of(undefined)) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(AnimalsList);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    return { fixture, component: fixture.componentInstance };
+  }
 
   async function render() {
     TestBed.configureTestingModule({

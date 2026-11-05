@@ -112,6 +112,13 @@
   font-size: 0.8rem;
 }
 
+.site-credits {
+  margin: 3rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-dim);
+}
+
 .footer-note {
   color: var(--color-dim);
 }

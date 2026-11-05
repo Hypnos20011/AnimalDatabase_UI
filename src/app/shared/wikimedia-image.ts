@@ -1,11 +1,28 @@
 const THUMB_URL = /^(https:\/\/[^/]+\/wikipedia\/[^/]+\/thumb\/[^?#]+\/)(\d+)px-([^/?#]+)$/;
 
-export const WIKIMEDIA_WIDTHS = [250, 500, 960, 1280] as const;
+const ORIGINAL_URL =
+  /^(https:\/\/upload\.wikimedia\.org\/wikipedia\/[^/]+\/)([0-9a-f]\/[0-9a-f]{2}\/)([^/?#]+\.(?:jpe?g|png))$/i;
 
-export function wikimediaSrcset(url: string | null | undefined): string | null {
-  const match = url ? THUMB_URL.exec(url.trim()) : null;
+export const WIKIMEDIA_WIDTHS = [250, 500, 960, 1280] as const;
+const ORIGINAL_THUMB_WIDTHS = [250, 500] as const;
+
+function originalSrcset(url: string): string | null {
+  const match = ORIGINAL_URL.exec(url);
   if (!match) {
     return null;
+  }
+  const [, root, folder, file] = match;
+  const thumbs = ORIGINAL_THUMB_WIDTHS.map(
+    (w) => `${root}thumb/${folder}${file}/${w}px-${file} ${w}w`,
+  );
+  return [...thumbs, `${url} 1280w`].join(', ');
+}
+
+export function wikimediaSrcset(url: string | null | undefined): string | null {
+  const trimmed = url?.trim() ?? '';
+  const match = THUMB_URL.exec(trimmed);
+  if (!match) {
+    return originalSrcset(trimmed);
   }
   const [, base, width, file] = match;
   const widths = WIKIMEDIA_WIDTHS.filter((w) => w <= Number(width));

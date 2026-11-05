@@ -135,7 +135,7 @@ export class AnimalForm {
       habitat: ['', Validators.maxLength(255)],
       habitatType: ['', Validators.maxLength(30)],
       rangeRegion: ['', Validators.maxLength(255)],
-      profile: [''],
+      profile: ['', Validators.maxLength(20000)],
       sourceUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
       commonNameDe: ['', Validators.maxLength(120)],
       habitatDe: ['', Validators.maxLength(255)],

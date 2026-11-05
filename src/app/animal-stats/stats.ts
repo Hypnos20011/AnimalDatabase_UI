@@ -14,8 +14,12 @@ export class Stats {
   private statsService = inject(StatsService);
   protected i18n = inject(LanguageService);
   stats = signal<AnimalStats | undefined>(undefined);
+  loadFailed = signal(false);
 
   constructor() {
-    this.statsService.getStats().subscribe((stats) => this.stats.set(stats));
+    this.statsService.getStats().subscribe({
+      next: (stats) => this.stats.set(stats),
+      error: () => this.loadFailed.set(true),
+    });
   }
 }

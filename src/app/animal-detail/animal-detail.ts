@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, input, signal, untracked } from '@
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
+import { Subscription } from 'rxjs';
 import { Animal } from '../animal-model/animal.model';
 import { AnimalService } from '../shared/animal.service';
 import { AnimalImage } from '../animal-model/animal-image.model';
@@ -36,6 +37,8 @@ export class AnimalDetail {
   private animalService = inject(AnimalService);
   private router = inject(Router);
   private title = inject(Title);
+  private animalRequest?: Subscription;
+  private imagesRequest?: Subscription;
   protected admin = inject(AdminKeyService);
   protected i18n = inject(LanguageService);
 
@@ -83,7 +86,8 @@ export class AnimalDetail {
       this.showDetails.set(false);
       this.loadImages(id);
     }
-    this.animalService.getById(id, language).subscribe({
+    this.animalRequest?.unsubscribe();
+    this.animalRequest = this.animalService.getById(id, language).subscribe({
       next: (data) => {
         this.animal.set(data);
         this.title.setTitle(`${data.commonName} · Unusual Animals`);
@@ -99,7 +103,8 @@ export class AnimalDetail {
   loadImages(animalId: number): void {
     this.imagesLoading.set(true);
     this.heroFailed.set(false);
-    this.animalService.getImages(animalId).subscribe({
+    this.imagesRequest?.unsubscribe();
+    this.imagesRequest = this.animalService.getImages(animalId).subscribe({
       next: (data) => {
         this.images.set(data);
         this.imagesLoading.set(false);

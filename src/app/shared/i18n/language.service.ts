@@ -12,15 +12,17 @@ export class LanguageService {
   language = signal<Language>(this.readStoredLanguage());
   setLanguage(lang: Language) {
     this.language.set(lang);
-    localStorage.setItem('language', lang);
+    try {
+      localStorage.setItem('language', lang);
+    } catch {}
     document.documentElement.lang = lang;
   }
 
   private readStoredLanguage(): Language {
-    const stored = localStorage.getItem('language');
-    if (isLanguage(stored)) {
-      return stored;
-    } else {
+    try {
+      const stored = localStorage.getItem('language');
+      return isLanguage(stored) ? stored : DEFAULT_LANGUAGE;
+    } catch {
       return DEFAULT_LANGUAGE;
     }
   }

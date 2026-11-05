@@ -164,6 +164,9 @@
     Profile
     <textarea rows="5" formControlName="profile"></textarea>
   </label>
+  @if (imageInvalid('profile')) {
+    <p class="field-error">The profile can have at most 20,000 characters.</p>
+  }
 
   <div class="german-texts">
     <h3>German texts</h3>

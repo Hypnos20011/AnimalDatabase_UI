@@ -28,6 +28,22 @@ describe('LanguageService', () => {
     TestBed.resetTestingModule();
   });
 
+  afterEach(() => vi.restoreAllMocks());
+
+  it('still works when the browser blocks storage', () => {
+    const blocked = () => {
+      throw new Error('blocked');
+    };
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(blocked);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(blocked);
+
+    const service = TestBed.inject(LanguageService);
+    expect(service.language()).toBe(DEFAULT_LANGUAGE);
+
+    service.setLanguage('de');
+    expect(service.language()).toBe('de');
+  });
+
   afterEach(() => {
     localStorage.clear();
   });

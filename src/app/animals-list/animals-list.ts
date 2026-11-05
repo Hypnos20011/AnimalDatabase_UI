@@ -85,6 +85,7 @@ export class AnimalsList {
         : this.i18n.tPlural('list.top.empty.days', this.topSearchDays()),
   );
   private topRequest?: Subscription;
+  private animalsRequest?: Subscription;
 
   activeFilterCount = computed(
     () =>
@@ -252,7 +253,8 @@ export class AnimalsList {
   }
 
   private loadAnimals(language: Language): void {
-    this.animalService.getAll(language).subscribe({
+    this.animalsRequest?.unsubscribe();
+    this.animalsRequest = this.animalService.getAll(language).subscribe({
       next: (data) => {
         this.animals.set(data);
         this.loading.set(false);

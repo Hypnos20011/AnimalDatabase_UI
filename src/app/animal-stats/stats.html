@@ -20,4 +20,8 @@
       <li>{{ i18n.tValue('habitat', entry.key) }}: {{ entry.value }}</li>
     }
   </ul>
+} @else if (loadFailed()) {
+  <p class="error-message" role="alert">{{ i18n.t('stats.loadError') }}</p>
+} @else {
+  <p class="state-message">{{ i18n.t('list.loading') }}</p>
 }

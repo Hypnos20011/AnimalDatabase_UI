@@ -149,6 +149,12 @@
       </section>
     }
 
+    @if (animal()!.sourceUrl; as sourceUrl) {
+      <p class="source">
+        <a [href]="sourceUrl" target="_blank" rel="noopener noreferrer">{{ i18n.t('detail.source') }}</a>
+      </p>
+    }
+
     @if (moreImages().length > 0) {
       <section class="gallery" [attr.aria-label]="i18n.t('detail.morePictures')">
         @for (img of moreImages(); track img.id) {

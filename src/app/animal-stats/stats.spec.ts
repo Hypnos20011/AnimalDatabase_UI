@@ -33,6 +33,20 @@ describe('Stats', () => {
     http.expectOne(`${environment.apiUrl}/stats`);
   });
 
+  it('shows a message when the stats cannot be loaded', () => {
+    const fixture = TestBed.createComponent(Stats);
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Loading...');
+
+    http
+      .expectOne(`${environment.apiUrl}/stats`)
+      .flush('down', { status: 500, statusText: 'Server Error' });
+    fixture.detectChanges();
+
+    const message = (fixture.nativeElement as HTMLElement).querySelector('[role="alert"]');
+    expect(message?.textContent).toContain('Could not load the stats');
+  });
+
   it('loads the stats when it opens', () => {
     const component = TestBed.createComponent(Stats).componentInstance;
     http.expectOne(`${environment.apiUrl}/stats`).flush(sampleStats);
@@ -70,9 +84,10 @@ describe('Stats page', () => {
     );
   }
 
-  it('shows nothing while loading', () => {
+  it('shows only a loading message while loading', () => {
     const page = render();
-    expect(page.querySelectorAll('p, ul').length).toBe(0);
+    expect(page.querySelectorAll('ul').length).toBe(0);
+    expect(page.textContent).toContain('Loading...');
   });
 
   it('shows the total and domesticated counts', () => {
