@@ -31,6 +31,7 @@
   --radius: 3px;
   --radius-sm: 2px;
   --header-height: 60px;
+  --footer-height: 3rem;
   --font-sans: 'Inter Tight', 'Segoe UI', Arial, sans-serif;
   --transition: 120ms ease;
   color-scheme: dark;
