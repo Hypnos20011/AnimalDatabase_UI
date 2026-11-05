@@ -121,7 +121,14 @@ ol {
   align-items: start;
 }
 
+.row {
+  display: flex;
+  align-items: stretch;
+}
+
 .row-link {
+  flex: 1 1 auto;
+  min-width: 0;
   display: grid;
   grid-template-columns: 2.75rem minmax(0, 1fr) 11rem 7.5rem 2.25rem;
   align-items: baseline;
@@ -238,6 +245,25 @@ ol {
   color: var(--color-muted);
 }
 
+.favorite-toggle {
+  flex: 0 0 auto;
+  width: 2.5rem;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.favorite-toggle:hover,
+.favorite-toggle:focus-visible,
+.favorite-toggle.is-favorite {
+  color: var(--color-accent);
+}
+
 @media (max-width: 900px) {
   .index {
     display: block;
@@ -327,7 +353,8 @@ ol {
   }
 }
 
-.recently-viewed {
+.recently-viewed,
+.favorites {
   display: flex;
   align-items: center;
   gap: 0.25rem 1rem;
@@ -338,7 +365,8 @@ ol {
   font-size: 0.9rem;
 }
 
-.recently-viewed h3 {
+.recently-viewed h3,
+.favorites h3 {
   margin: 0;
   font-size: 0.7rem;
   font-weight: 700;
@@ -347,7 +375,8 @@ ol {
   color: var(--color-muted);
 }
 
-.recently-viewed ul {
+.recently-viewed ul,
+.favorites ul {
   display: flex;
   flex: 1 1 0;
   min-width: 0;
@@ -356,26 +385,40 @@ ol {
   scrollbar-width: none;
 }
 
-.recently-viewed li + li {
+.recently-viewed li + li,
+.favorites li + li {
   border-left: 1px solid var(--color-border-strong);
 }
 
-.recent-link {
+.recent-link,
+.favorite-link {
   padding: 0 0.75rem;
   color: var(--color-text);
   text-decoration: none;
 }
 
-.recently-viewed li:first-child .recent-link {
+.recently-viewed li:first-child .recent-link,
+.favorites li:first-child .favorite-link {
   padding-left: 0;
 }
 
-.recent-link:hover {
+.recent-link:hover,
+.favorite-link:hover {
   color: var(--color-accent);
 }
 
 @media (max-width: 600px) {
-  .recently-viewed ul {
+  .recently-viewed ul,
+  .favorites ul {
     flex-basis: 100%;
   }
+}
+
+.favorites-empty {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+.favorites-chip.active::before {
+  content: '\2605\00a0';
 }

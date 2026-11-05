@@ -34,7 +34,20 @@
 
       <div class="intro-text">
         <header class="detail-header">
-          <h2>{{ animal()!.commonName }}</h2>
+          <div class="title-row">
+            <h2>{{ animal()!.commonName }}</h2>
+            <button
+              type="button"
+              class="favorite-toggle"
+              [class.is-favorite]="isFavorite()"
+              [attr.aria-pressed]="isFavorite()"
+              [attr.aria-label]="favoriteLabel()"
+              [attr.title]="favoriteLabel()"
+              (click)="toggleFavorite()"
+            >
+              <span aria-hidden="true">{{ isFavorite() ? '★' : '☆' }}</span>
+            </button>
+          </div>
           @if (animal()!.scientificName) {
             <em class="sci">{{ animal()!.scientificName }}</em>
           }

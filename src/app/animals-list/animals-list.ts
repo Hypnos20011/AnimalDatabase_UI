@@ -26,6 +26,7 @@ import { TranslationKey } from '../shared/i18n/en';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Language } from '../shared/i18n/languages';
 import { RecentlyViewedService } from './recently-viewed.service';
+import { FavoritesService } from './favorites.service';
 
 @Component({
   selector: 'app-animals-list',
@@ -43,6 +44,7 @@ export class AnimalsList {
   private searchService = inject(SearchService);
   protected i18n = inject(LanguageService);
   private recentlyViewed = inject(RecentlyViewedService);
+  private favoritesService = inject(FavoritesService);
   private injector = inject(Injector);
 
   animals = signal<Animal[]>([]);
@@ -59,6 +61,7 @@ export class AnimalsList {
   weightFrom = this.state.weightFrom;
   weightTo = this.state.weightTo;
   sortBy = this.state.sortBy;
+  favoritesOnly = this.state.favoritesOnly;
   filtersOpen = signal(false);
 
   readonly sortOptions: { value: SortOption; labelKey: TranslationKey }[] = [
@@ -72,6 +75,14 @@ export class AnimalsList {
     { value: 'newest', labelKey: 'list.sort.newest' },
   ];
   recent = this.recentlyViewed.recent;
+  favoriteIds = this.favoritesService.ids;
+  favoriteItems = computed(() => {
+    const byId = new Map(this.animals().map((animal) => [animal.id, animal]));
+    return this.favoritesService
+      .favorites()
+      .filter((item) => byId.has(item.id))
+      .map((item) => ({ id: item.id, commonName: byId.get(item.id)!.commonName }));
+  });
   topSearches = signal<TopSearch[]>([]);
   topSearchDays = this.state.topSearchDays;
   topLoaded = signal(false);
@@ -97,7 +108,8 @@ export class AnimalsList {
       (this.filterType() === 'wild' ? 1 : 0) +
       (this.lengthFrom() !== null || this.lengthTo() !== null ? 1 : 0) +
       (this.weightFrom() !== null || this.weightTo() !== null ? 1 : 0) +
-      this.selectedHabitats().size,
+      this.selectedHabitats().size +
+      (this.favoritesOnly() ? 1 : 0),
   );
 
   searchMatches = computed(() => {
@@ -155,9 +167,12 @@ export class AnimalsList {
     const lengthTo = this.lengthTo();
     const weightFrom = this.weightFrom();
     const weightTo = this.weightTo();
+    const favoriteIds = this.favoritesOnly() ? this.favoriteIds() : null;
 
     return this.animals().filter((animal) => {
       if (hasQuery && !matches.has(animal.id)) return false;
+
+      if (favoriteIds && !favoriteIds.has(animal.id)) return false;
 
       if (classes.size > 0 && (!animal.taxonomicClass || !classes.has(animal.taxonomicClass))) {
         return false;
@@ -260,6 +275,9 @@ export class AnimalsList {
     this.animalsRequest = this.animalService.getAll(language).subscribe({
       next: (data) => {
         this.animals.set(data);
+        if (data.length > 0) {
+          this.favoritesService.pruneMissing(data.map((animal) => animal.id));
+        }
         this.loading.set(false);
         afterNextRender(() => window.scrollTo(0, this.state.scrollY()), {
           injector: this.injector,
@@ -338,6 +356,24 @@ export class AnimalsList {
     this.selectedHabitats.set(next);
   }
 
+  toggleFavoritesOnly(): void {
+    this.favoritesOnly.update((value) => !value);
+  }
+
+  isFavorite(id: number): boolean {
+    return this.favoriteIds().has(id);
+  }
+
+  toggleFavorite(animal: Animal): void {
+    this.favoritesService.toggle(animal.id, animal.commonName);
+  }
+
+  favoriteLabel(animal: Animal): string {
+    return this.i18n.t(this.isFavorite(animal.id) ? 'favorites.remove' : 'favorites.add', {
+      name: animal.commonName,
+    });
+  }
+
   toggleType(): void {
     this.filterType.update((current) => (current === 'all' ? 'wild' : 'all'));
   }
@@ -356,6 +392,7 @@ export class AnimalsList {
     this.lengthTo.set(null);
     this.weightFrom.set(null);
     this.weightTo.set(null);
+    this.favoritesOnly.set(false);
   }
 
   onSortChange(value: string): void {

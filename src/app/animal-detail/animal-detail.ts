@@ -13,6 +13,7 @@ import { AdminKeyService } from '../admin/admin-key.service';
 import { Language } from '../shared/i18n/languages';
 import { LanguageService } from '../shared/i18n/language.service';
 import { RecentlyViewedService } from '../animals-list/recently-viewed.service';
+import { FavoritesService } from '../animals-list/favorites.service';
 
 @Component({
   selector: 'app-animal-detail',
@@ -43,6 +44,7 @@ export class AnimalDetail {
   protected admin = inject(AdminKeyService);
   protected i18n = inject(LanguageService);
   private recentlyViewed = inject(RecentlyViewedService);
+  private favorites = inject(FavoritesService);
 
   animal = signal<Animal | null>(null);
   loading = signal(true);
@@ -63,6 +65,15 @@ export class AnimalDetail {
   });
   profileText = computed(() => this.profileParts().text);
   funFact = computed(() => this.profileParts().funFact);
+  isFavorite = computed(() => {
+    const animal = this.animal();
+    return !!animal && this.favorites.ids().has(animal.id);
+  });
+  favoriteLabel = computed(() =>
+    this.i18n.t(this.isFavorite() ? 'favorites.remove' : 'favorites.add', {
+      name: this.animal()?.commonName ?? '',
+    }),
+  );
   imagesLoading = signal(true);
   showDetails = signal(false);
   confirmOpen = signal(false);
@@ -121,6 +132,12 @@ export class AnimalDetail {
 
   onHeroError(): void {
     this.heroFailed.set(true);
+  }
+
+  toggleFavorite(): void {
+    const animal = this.animal();
+    if (!animal) return;
+    this.favorites.toggle(animal.id, animal.commonName);
   }
 
   toggleDetails(): void {

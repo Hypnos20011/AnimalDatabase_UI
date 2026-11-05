@@ -25,6 +25,7 @@ export class AnimalListState {
   weightFrom = signal<number | null>(null);
   weightTo = signal<number | null>(null);
   sortBy = signal<SortOption>('relevance');
+  favoritesOnly = signal(false);
   topSearchDays = signal<TopSearchDays>(DEFAULT_TOP_SEARCH_DAYS);
   randomPool = signal<number[]>([]);
   scrollY = signal<number>(0);

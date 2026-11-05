@@ -52,6 +52,13 @@
         <span class="badge">{{ activeFilterCount() }}</span>
       }
     </button>
+    <button
+      type="button"
+      class="chip favorites-chip"
+      [class.active]="favoritesOnly()"
+      [attr.aria-pressed]="favoritesOnly()"
+      (click)="toggleFavoritesOnly()"
+    >{{ i18n.t('list.filter.favoritesOnly') }}</button>
     @if (activeFilterCount() > 0) {
       <button type="button" class="chip clear" (click)="clearAll()">{{ i18n.t('list.clearAll') }}</button>
     }
@@ -218,6 +225,23 @@
   </section>
 }
 
+@if (!loading() && !error()) {
+  <section class="favorites" aria-labelledby="favorites-title">
+    <h3 id="favorites-title">{{ i18n.t('list.favorites') }}</h3>
+    @if (favoriteItems().length > 0) {
+      <ul>
+        @for (item of favoriteItems(); track item.id) {
+          <li>
+            <a class="favorite-link" [routerLink]="['/animals', item.id]">{{ item.commonName }}</a>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="favorites-empty">{{ i18n.t('list.favorites.empty') }}</p>
+    }
+  </section>
+}
+
 @if (recent().length > 0) {
   <section class="recently-viewed" aria-labelledby="recently-viewed-title">
     <h3 id="recently-viewed-title">{{ i18n.t('list.recentlyViewed') }}</h3>
@@ -289,6 +313,17 @@
               }}</span>
             <span class="visually-hidden">, {{ i18n.tValue('iucn', iucnLabel(animal.iucnStatus)) }}</span>
           </a>
+          <button
+            type="button"
+            class="favorite-toggle"
+            [class.is-favorite]="isFavorite(animal.id)"
+            [attr.aria-pressed]="isFavorite(animal.id)"
+            [attr.aria-label]="favoriteLabel(animal)"
+            [attr.title]="favoriteLabel(animal)"
+            (click)="toggleFavorite(animal)"
+          >
+            <span aria-hidden="true">{{ isFavorite(animal.id) ? '★' : '☆' }}</span>
+          </button>
         </li>
       }
     </ol>
