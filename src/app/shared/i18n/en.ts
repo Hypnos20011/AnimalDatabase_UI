@@ -10,6 +10,10 @@ export const en = {
   'footer.credits':
     'Texts and photos come from Wikipedia and Wikimedia Commons (CC BY-SA and other free licences). Trait data comes from AnAge (CC BY 3.0) and from FishBase and SeaLifeBase (CC BY-NC 4.0).',
   'language.label': 'Language',
+  'language.current': 'Language, {name}',
+  'language.en': 'English',
+  'language.de': 'Deutsch',
+  'language.fr': 'Français',
   'list.title': 'Animals',
   'list.search.label': 'Search animals',
   'list.search.placeholder': 'Search name, habitat or range...',

@@ -12,6 +12,10 @@ export const de: Record<TranslationKey, string> = {
   'footer.credits':
     'Texte und Fotos stammen aus Wikipedia und Wikimedia Commons (CC BY-SA und andere freie Lizenzen). Merkmalsdaten stammen aus AnAge (CC BY 3.0) sowie aus FishBase und SeaLifeBase (CC BY-NC 4.0).',
   'language.label': 'Sprache',
+  'language.current': 'Sprache, {name}',
+  'language.en': 'English',
+  'language.de': 'Deutsch',
+  'language.fr': 'Français',
   'list.title': 'Tiere',
   'list.search.label': 'Tiere durchsuchen',
   'list.search.placeholder': 'Name, Lebensraum oder Verbreitung suchen...',

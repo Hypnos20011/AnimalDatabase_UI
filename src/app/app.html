@@ -4,48 +4,104 @@
       <h1>{{ title() }}</h1>
     </a>
     <nav class="site-nav" [attr.aria-label]="i18n.t('nav.label')">
-      <button type="button" class="nav-link" (click)="openRandom()">{{ i18n.t('nav.random') }}</button>
+      <button type="button" class="nav-link" (click)="openRandom()">
+        {{ i18n.t('nav.random') }}
+      </button>
       @if (admin.unlocked()) {
         <a
           class="nav-link"
           routerLink="/animals/new"
           routerLinkActive="is-active"
           ariaCurrentWhenActive="page"
-        >{{ i18n.t('nav.add') }}</a
+          >{{ i18n.t('nav.add') }}</a
         >
       }
       @if (compare.count() > 0) {
-        <a class="nav-link"
-           routerLink="/compare"
-           routerLinkActive="is-active"
-           ariaCurrentWhenActive="page">{{ i18n.t('nav.compare', { count: compare.count() }) }}</a>
+        <a
+          class="nav-link"
+          routerLink="/compare"
+          routerLinkActive="is-active"
+          ariaCurrentWhenActive="page"
+          >{{ i18n.t('nav.compare', { count: compare.count() }) }}</a
+        >
       }
-      <a class="nav-link"
-         routerLink="/quiz"
-         routerLinkActive="is-active"
-         ariaCurrentWhenActive="page">{{ i18n.t('nav.quiz') }}</a>
-      <a class="nav-link"
-         routerLink="/stats"
-         routerLinkActive="is-active"
-         ariaCurrentWhenActive="page">{{ i18n.t('nav.stats') }}</a>
-      <select class="language-select" [attr.aria-label]="i18n.t('language.label')"
-              [value]="i18n.language()" (change)="i18n.setLanguage($any($event.target).value)">
-        @for (lang of languages; track lang) {
-          <option [selected]="lang === i18n.language()" [value]="lang">{{ lang | uppercase }}</option>
-        }
-      </select>
+      <a
+        class="nav-link"
+        routerLink="/quiz"
+        routerLinkActive="is-active"
+        ariaCurrentWhenActive="page"
+        >{{ i18n.t('nav.quiz') }}</a
+      >
+      <a
+        class="nav-link"
+        routerLink="/stats"
+        routerLinkActive="is-active"
+        ariaCurrentWhenActive="page"
+        >{{ i18n.t('nav.stats') }}</a
+      >
     </nav>
+    <div class="language" #languageRoot>
+      <button
+        #languageButton
+        type="button"
+        class="lang-button"
+        id="lang-button"
+        aria-haspopup="menu"
+        aria-controls="lang-menu"
+        [attr.aria-expanded]="languageOpen()"
+        [attr.aria-label]="languageLabel()"
+        (click)="toggleLanguageMenu()"
+        (keydown)="onLanguageButtonKey($event)"
+      >
+        <span aria-hidden="true">{{ languageCode() }}</span>
+        <svg aria-hidden="true" viewBox="0 0 12 12" width="12" height="12">
+          <path
+            d="M2.5 4.5 6 8l3.5-3.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+      <div
+        class="lang-menu"
+        id="lang-menu"
+        role="menu"
+        [class.is-open]="languageOpen()"
+        [attr.aria-label]="i18n.t('language.label')"
+        (keydown)="onLanguageMenuKey($event)"
+      >
+        @for (lang of languages; track lang) {
+          <button
+            #languageItem
+            type="button"
+            role="menuitemradio"
+            [attr.data-code]="lang"
+            [attr.aria-checked]="i18n.language() === lang"
+            [attr.aria-label]="languageName(lang)"
+            (click)="chooseLanguage(lang)"
+          >
+            <span>{{ languageName(lang) }}</span>
+            <span class="code" aria-hidden="true">{{ lang.toUpperCase() }}</span>
+          </button>
+        }
+      </div>
+    </div>
   </div>
 </header>
 <main class="container site-main">
-  <router-outlet/>
+  <router-outlet />
   <p class="site-credits">{{ i18n.t('footer.credits') }}</p>
 </main>
 <footer class="site-footer">
   <div class="container footer-inner">
     @if (admin.unlocked()) {
       <span class="footer-note">{{ i18n.t('footer.unlocked') }}</span>
-      <button type="button" class="footer-link lock" (click)="lock()">{{ i18n.t('footer.lock') }}</button>
+      <button type="button" class="footer-link lock" (click)="lock()">
+        {{ i18n.t('footer.lock') }}
+      </button>
     } @else {
       <a class="footer-link admin" routerLink="/admin">{{ i18n.t('footer.admin') }}</a>
     }
