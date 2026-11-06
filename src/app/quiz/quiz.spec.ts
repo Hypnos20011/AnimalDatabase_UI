@@ -321,7 +321,7 @@ describe('Quiz', () => {
     expect(photo().alt).toBe('Okapi');
     expect(element.querySelector('.fun-fact')!.textContent).toContain('Okapi fact.');
     expect(element.querySelector('button.show-solution')).toBeNull();
-    expect(element.querySelector('.result')!.textContent).toBe('Correct! It is the Okapi.');
+    expect(element.querySelector('.result')!.textContent!.trim()).toBe('Correct! It is the Okapi.');
     expect(choice('Okapi').classList).toContain('is-correct');
     expect(choices().every((b) => b.disabled)).toBe(true);
     expect(stat('score')).toBe('1/1');
@@ -344,7 +344,9 @@ describe('Quiz', () => {
 
     expect(wrong.classList).toContain('is-wrong');
     expect(choice('Axolotl').classList).toContain('is-correct');
-    expect(element.querySelector('.result')!.textContent).toBe('Not quite. It is the Axolotl.');
+    expect(element.querySelector('.result')!.textContent!.trim()).toBe(
+      'Not quite. It is the Axolotl.',
+    );
     expect(stat('score')).toBe('1/2');
     expect(stat('streak')).toBe('0');
     expect(stat('best')).toBe('1');
@@ -400,7 +402,7 @@ describe('Quiz', () => {
     element.querySelector<HTMLButtonElement>('button.show-solution')!.click();
     await refresh();
 
-    expect(element.querySelector('.result')!.textContent).toBe('It is the Okapi.');
+    expect(element.querySelector('.result')!.textContent!.trim()).toBe('It is the Okapi.');
     expect(element.querySelector('.fun-fact')!.textContent).toContain('Okapi fact.');
     expect(stat('score')).toBe('0/1');
     expect(stat('streak')).toBe('0');
