@@ -303,6 +303,18 @@ fieldset {
   color: var(--color-text);
 }
 
+.favorites-chip.active,
+.favorites-chip.active:hover {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-on-accent);
+}
+
+.favorites-chip.active:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
 .btn-danger {
   background: transparent;
   color: var(--color-danger);
