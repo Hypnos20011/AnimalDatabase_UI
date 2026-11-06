@@ -4,6 +4,7 @@ import { of } from 'rxjs';
 import { Animal } from '../animal-model/animal.model';
 import { AnimalService } from '../shared/animal.service';
 import { LanguageService } from '../shared/i18n/language.service';
+import { QUIZ_FACT_LIST } from './quiz-facts';
 import { buildDailyPlan, Quiz, QUIZ_DAILY_ROUNDS, QUIZ_RANDOM, quizDateKey } from './quiz';
 import {
   formatQuizDate,
@@ -223,7 +224,7 @@ describe('Quiz share card', () => {
   }
 
   async function finishDaily(ctx: Awaited<ReturnType<typeof setup>>, missLast = false) {
-    const plan = buildDailyPlan(many, quizDateKey())!;
+    const plan = buildDailyPlan(QUIZ_FACT_LIST, many, quizDateKey())!;
     ctx.element.querySelector<HTMLButtonElement>('button.daily-challenge')!.click();
     await ctx.refresh();
     for (let i = 0; i < plan.length; i++) {
