@@ -163,6 +163,8 @@ describe('AnimalsList favorites', () => {
     });
 
     expect(chip().textContent!.trim()).toBe('Favorites only');
+    expect(chip().classList.contains('btn')).toBe(true);
+    expect(chip().classList.contains('btn-secondary')).toBe(true);
     expect(rowNames()).toHaveLength(3);
 
     chip().click();
