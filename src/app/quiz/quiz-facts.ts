@@ -266,6 +266,356 @@ export const QUIZ_FACT_LIST: readonly QuizFact[] = [
       fr: 'Avec l’ornithorynque, les échidnés sont les seuls mammifères vivants qui pondent des œufs.',
     },
   },
+  {
+    scientificName: 'Inia geoffrensis',
+    commonName: 'Amazon river dolphin',
+    question: {
+      en: 'Which dolphin lives in the Amazon and Orinoco rivers rather than in the sea?',
+      de: 'Welcher Delfin lebt in den Flüssen Amazonas und Orinoko und nicht im Meer?',
+      fr: 'Quel dauphin vit dans les fleuves Amazone et Orénoque plutôt que dans la mer ?',
+    },
+    fact: {
+      en: 'Its neck vertebrae are not fused, so it can turn its head from side to side.',
+      de: 'Seine Halswirbel sind nicht verwachsen, deshalb kann es den Kopf zur Seite drehen.',
+      fr: 'Ses vertèbres du cou ne sont pas soudées, il peut donc tourner la tête sur les côtés.',
+    },
+  },
+  {
+    scientificName: 'Mungos mungo',
+    commonName: 'Banded mongoose',
+    question: {
+      en: 'Which mongoose forages in a pack and takes turns babysitting the pups?',
+      de: 'Welche Manguste sucht im Trupp nach Nahrung und wechselt sich bei der Jungenbetreuung ab?',
+      fr: 'Quelle mangouste cherche sa nourriture en groupe et se relaie pour garder les petits ?',
+    },
+    fact: {
+      en: 'Several females in a band give birth on the same night, and the pups are raised together.',
+      de: 'Mehrere Weibchen einer Gruppe bringen in derselben Nacht Junge zur Welt, und diese werden gemeinsam aufgezogen.',
+      fr: 'Plusieurs femelles d’un groupe mettent bas la même nuit, et les petits sont élevés ensemble.',
+    },
+  },
+  {
+    scientificName: 'Otocyon megalotis',
+    commonName: 'Bat-eared fox',
+    question: {
+      en: 'Which fox feeds mainly on termites?',
+      de: 'Welcher Fuchs ernährt sich vor allem von Termiten?',
+      fr: 'Quel renard se nourrit surtout de termites ?',
+    },
+    fact: {
+      en: 'It has more teeth than any other canid, which helps it chew insects.',
+      de: 'Er hat mehr Zähne als jeder andere Hundsartige, was ihm beim Kauen von Insekten hilft.',
+      fr: 'Il a plus de dents que tout autre canidé, ce qui l’aide à mâcher des insectes.',
+    },
+  },
+  {
+    scientificName: 'Arctictis binturong',
+    commonName: 'Binturong',
+    question: {
+      en: 'Which animal marks its route with urine that smells like popcorn?',
+      de: 'Welches Tier markiert seinen Weg mit Urin, der nach Popcorn riecht?',
+      fr: 'Quel animal marque son chemin avec une urine qui sent le pop-corn ?',
+    },
+    fact: {
+      en: 'It also has a prehensile tail that it uses as an extra grip in the trees.',
+      de: 'Er hat außerdem einen Greifschwanz, mit dem er sich in den Bäumen zusätzlich festhält.',
+      fr: 'Il a aussi une queue préhensile, dont il se sert comme prise supplémentaire dans les arbres.',
+    },
+  },
+  {
+    scientificName: 'Neofelis nebulosa',
+    commonName: 'Clouded leopard',
+    question: {
+      en: 'Which cat has the longest canine teeth for the size of its skull?',
+      de: 'Welche Katze hat im Verhältnis zum Schädel die längsten Eckzähne?',
+      fr: 'Quel félin a les plus longues canines par rapport à la taille de son crâne ?',
+    },
+    fact: {
+      en: 'It can rotate its hind ankles and climb down a tree head first.',
+      de: 'Sie kann die Hinterknöchel drehen und einen Baum mit dem Kopf voran hinabklettern.',
+      fr: 'Il peut tourner ses chevilles arrière et descendre d’un arbre la tête la première.',
+    },
+  },
+  {
+    scientificName: 'Grimpoteuthis',
+    commonName: 'Dumbo octopus',
+    question: {
+      en: 'Which octopus has a pair of fins that look like ears?',
+      de: 'Welcher Oktopus hat ein Paar Flossen, die wie Ohren aussehen?',
+      fr: 'Quelle pieuvre a une paire de nageoires qui ressemblent à des oreilles ?',
+    },
+    fact: {
+      en: 'The fins gave it the name Dumbo, after the elephant in the film.',
+      de: 'Die Flossen haben ihm den Namen Dumbo gegeben, nach dem Elefanten aus dem Film.',
+      fr: 'Ces nageoires lui ont valu le nom de Dumbo, d’après l’éléphant du film.',
+    },
+  },
+  {
+    scientificName: 'Vulpes zerda',
+    commonName: 'Fennec fox',
+    question: {
+      en: 'Which fox has very large ears and lives in the Sahara?',
+      de: 'Welcher Fuchs hat sehr große Ohren und lebt in der Sahara?',
+      fr: 'Quel renard a de très grandes oreilles et vit dans le Sahara ?',
+    },
+    fact: {
+      en: 'It is the smallest fox, and its ears also help it shed heat.',
+      de: 'Er ist der kleinste Fuchs, und die Ohren helfen ihm außerdem, Wärme abzugeben.',
+      fr: 'C’est le plus petit des renards, et ses oreilles l’aident aussi à évacuer la chaleur.',
+    },
+  },
+  {
+    scientificName: 'Hyalinobatrachium fleischmanni',
+    commonName: "Fleischmann's glass frog",
+    question: {
+      en: 'Which frog has a see-through belly that shows its organs?',
+      de: 'Welcher Frosch hat einen durchsichtigen Bauch, durch den man die Organe sieht?',
+      fr: 'Quelle grenouille a un ventre transparent qui laisse voir ses organes ?',
+    },
+    fact: {
+      en: 'The male stays with the eggs on a leaf above a stream and keeps them moist.',
+      de: 'Das Männchen bleibt bei den Eiern auf einem Blatt über einem Bach und hält sie feucht.',
+      fr: 'Le mâle reste auprès des œufs sur une feuille au-dessus d’un ruisseau et les garde humides.',
+    },
+  },
+  {
+    scientificName: 'Gavialis gangeticus',
+    commonName: 'Gharial',
+    question: {
+      en: 'Which crocodile has a long narrow snout used to catch fish?',
+      de: 'Welches Krokodil hat eine lange schmale Schnauze, mit der es Fische fängt?',
+      fr: 'Quel crocodile a un long museau étroit dont il se sert pour attraper des poissons ?',
+    },
+    fact: {
+      en: 'The adult male grows a round bulb, the ghara, on the tip of the snout.',
+      de: 'Das erwachsene Männchen trägt an der Schnauzenspitze einen runden Höcker, den Ghara.',
+      fr: 'Le mâle adulte porte une bosse ronde, le ghara, au bout du museau.',
+    },
+  },
+  {
+    scientificName: 'Myrmecophaga tridactyla',
+    commonName: 'Giant anteater',
+    question: {
+      en: 'Which anteater is the largest and has a bushy tail almost as long as its body?',
+      de: 'Welcher Ameisenbär ist der größte und hat einen buschigen Schwanz, fast so lang wie der Körper?',
+      fr: 'Quel fourmilier est le plus grand et a une queue touffue presque aussi longue que son corps ?',
+    },
+    fact: {
+      en: 'It has no teeth. A long sticky tongue flicks into ant and termite nests.',
+      de: 'Er hat keine Zähne. Eine lange klebrige Zunge schnellt in Ameisen- und Termitenbauten.',
+      fr: 'Il n’a pas de dents. Une longue langue collante plonge dans les nids de fourmis et de termites.',
+    },
+  },
+  {
+    scientificName: 'Heteropoda maxima',
+    commonName: 'Giant huntsman spider',
+    question: {
+      en: 'Which spider has the longest leg span, about 30 centimetres?',
+      de: 'Welche Spinne hat die größte Beinspannweite, etwa 30 Zentimeter?',
+      fr: 'Quelle araignée a la plus grande envergure de pattes, environ 30 centimètres ?',
+    },
+    fact: {
+      en: 'It was described in 2001 from a cave in Laos.',
+      de: 'Sie wurde 2001 aus einer Höhle in Laos beschrieben.',
+      fr: 'Elle a été décrite en 2001 à partir d’une grotte au Laos.',
+    },
+  },
+  {
+    scientificName: 'Phyllobates terribilis',
+    commonName: 'Golden poison frog',
+    question: {
+      en: 'Which frog’s skin carries enough poison to kill a person who handles it?',
+      de: 'Welcher Frosch trägt auf der Haut genug Gift, um einen Menschen zu töten, der ihn anfasst?',
+      fr: 'Quelle grenouille a sur la peau assez de poison pour tuer une personne qui la manipule ?',
+    },
+    fact: {
+      en: 'In the wild the poison comes from its diet. Frogs raised on other food are not toxic.',
+      de: 'In der Natur stammt das Gift aus der Nahrung. Frösche mit anderem Futter sind nicht giftig.',
+      fr: 'Dans la nature, le poison vient de sa nourriture. Élevées avec un autre régime, ces grenouilles ne sont pas toxiques.',
+    },
+  },
+  {
+    scientificName: 'Hapalochlaena lunulata',
+    commonName: 'Greater blue-ringed octopus',
+    question: {
+      en: 'Which octopus flashes blue rings when it is alarmed?',
+      de: 'Welcher Oktopus zeigt blaue Ringe, wenn er alarmiert ist?',
+      fr: 'Quelle pieuvre montre des anneaux bleus quand elle est alarmée ?',
+    },
+    fact: {
+      en: 'Its bite carries tetrodotoxin, and there is no antivenom.',
+      de: 'Sein Biss enthält Tetrodotoxin, und es gibt kein Gegengift.',
+      fr: 'Sa morsure contient de la tétrodotoxine, et il n’existe pas d’antidote.',
+    },
+  },
+  {
+    scientificName: 'Harpia harpyja',
+    commonName: 'Harpy eagle',
+    question: {
+      en: 'Which eagle is the largest in the Americas and often hunts sloths and monkeys?',
+      de: 'Welcher Adler ist der größte Amerikas und jagt oft Faultiere und Affen?',
+      fr: 'Quel aigle est le plus grand des Amériques et chasse souvent des paresseux et des singes ?',
+    },
+    fact: {
+      en: 'Its rear talons can be as long as a grizzly bear’s claws.',
+      de: 'Seine hinteren Krallen können so lang sein wie die Krallen eines Grizzlybären.',
+      fr: 'Ses serres arrière peuvent être aussi longues que les griffes d’un grizzli.',
+    },
+  },
+  {
+    scientificName: 'Dosidicus gigas',
+    commonName: 'Humboldt squid',
+    question: {
+      en: 'Which squid hunts in schools and can flash from red to white?',
+      de: 'Welcher Kalmar jagt in Schwärmen und kann von Rot zu Weiß aufblitzen?',
+      fr: 'Quel calmar chasse en bancs et peut passer du rouge au blanc en un éclair ?',
+    },
+    fact: {
+      en: 'The colour change comes from pigment cells in the skin.',
+      de: 'Der Farbwechsel kommt von Farbzellen in der Haut.',
+      fr: 'Ce changement de couleur vient de cellules pigmentaires de la peau.',
+    },
+  },
+  {
+    scientificName: 'Macrocheira kaempferi',
+    commonName: 'Japanese spider crab',
+    question: {
+      en: 'Which crab has the longest legs of any living crab?',
+      de: 'Welche Krabbe hat die längsten Beine aller lebenden Krabben?',
+      fr: 'Quel crabe a les plus longues pattes de tous les crabes vivants ?',
+    },
+    fact: {
+      en: 'From claw to claw the span can reach about 3.7 metres.',
+      de: 'Von Schere zu Schere kann die Spannweite etwa 3,7 Meter erreichen.',
+      fr: 'D’une pince à l’autre, l’envergure peut atteindre environ 3,7 mètres.',
+    },
+  },
+  {
+    scientificName: 'Chelus fimbriata',
+    commonName: 'Mata mata',
+    question: {
+      en: 'Which turtle sucks prey in by opening its wide mouth, instead of snapping at it?',
+      de: 'Welche Schildkröte saugt Beute ein, indem sie das breite Maul öffnet, statt zuzuschnappen?',
+      fr: 'Quelle tortue aspire sa proie en ouvrant sa large bouche, au lieu de la happer ?',
+    },
+    fact: {
+      en: 'Flaps of skin make its head look like dead leaves in the water.',
+      de: 'Hautlappen lassen den Kopf im Wasser wie abgestorbenes Laub aussehen.',
+      fr: 'Des lambeaux de peau font ressembler sa tête à des feuilles mortes dans l’eau.',
+    },
+  },
+  {
+    scientificName: 'Pachydactylus rangei',
+    commonName: 'Namib sand gecko',
+    question: {
+      en: 'Which gecko has webbed feet for running on loose desert sand?',
+      de: 'Welcher Gecko hat Schwimmhäute an den Füßen, um auf lockerem Wüstensand zu laufen?',
+      fr: 'Quel gecko a les pattes palmées pour courir sur le sable meuble du désert ?',
+    },
+    fact: {
+      en: 'It lives in the Namib and can drink dew that condenses on its body.',
+      de: 'Er lebt in der Namib und kann Tau trinken, der sich auf seinem Körper niederschlägt.',
+      fr: 'Il vit dans le Namib et peut boire la rosée qui se condense sur son corps.',
+    },
+  },
+  {
+    scientificName: 'Chrysopelea paradisi',
+    commonName: 'Paradise flying snake',
+    question: {
+      en: 'Which snake flattens its body and glides from tree to tree?',
+      de: 'Welche Schlange plattet den Körper ab und gleitet von Baum zu Baum?',
+      fr: 'Quel serpent aplatit son corps et plane d’arbre en arbre ?',
+    },
+    fact: {
+      en: 'In the air it forms a moving S-shape and can travel farther than the height it drops.',
+      de: 'In der Luft bildet sie ein bewegtes S und kann weiter gleiten, als sie an Höhe verliert.',
+      fr: 'En l’air, il forme un S mobile et peut parcourir plus de distance qu’il ne perd de hauteur.',
+    },
+  },
+  {
+    scientificName: 'Chlamyphorus truncatus',
+    commonName: 'Pink fairy armadillo',
+    question: {
+      en: 'Which armadillo is the smallest and has a pink shell?',
+      de: 'Welches Gürteltier ist das kleinste und hat einen rosa Panzer?',
+      fr: 'Quel tatou est le plus petit et a une carapace rose ?',
+    },
+    fact: {
+      en: 'It spends most of its life underground in dry parts of Argentina.',
+      de: 'Er verbringt den größten Teil seines Lebens unter der Erde in trockenen Gegenden Argentiniens.',
+      fr: 'Il passe la plus grande partie de sa vie sous terre dans des régions sèches d’Argentine.',
+    },
+  },
+  {
+    scientificName: 'Narcine entemedor',
+    commonName: 'Giant electric ray',
+    question: {
+      en: 'Which ray can give a strong electric shock?',
+      de: 'Welcher Rochen kann einen starken elektrischen Schlag abgeben?',
+      fr: 'Quelle raie peut donner une forte décharge électrique ?',
+    },
+    fact: {
+      en: 'The shock comes from organs on the sides of the head, made of modified muscle.',
+      de: 'Der Schlag kommt von Organen an den Kopfseiten, die aus umgewandelter Muskulatur bestehen.',
+      fr: 'La décharge vient d’organes sur les côtés de la tête, faits de muscle modifié.',
+    },
+  },
+  {
+    scientificName: 'Condylura cristata',
+    commonName: 'Star-nosed mole',
+    question: {
+      en: 'Which mole has a star of fleshy tentacles around its nose?',
+      de: 'Welcher Maulwurf hat einen Stern aus fleischigen Tentakeln um die Nase?',
+      fr: 'Quelle taupe a une étoile de tentacules charnus autour du nez ?',
+    },
+    fact: {
+      en: 'The 22 tentacles can identify prey in a fraction of a second.',
+      de: 'Die 22 Tentakel können Beute in einem Bruchteil einer Sekunde erkennen.',
+      fr: 'Les 22 tentacules peuvent identifier une proie en une fraction de seconde.',
+    },
+  },
+  {
+    scientificName: 'Nycticebus coucang',
+    commonName: 'Sunda slow loris',
+    question: {
+      en: 'Which primate has a venomous bite?',
+      de: 'Welcher Primat hat einen giftigen Biss?',
+      fr: 'Quel primate a une morsure venimeuse ?',
+    },
+    fact: {
+      en: 'It licks a gland on its arm, and that oil mixes with saliva to make the venom.',
+      de: 'Er leckt eine Drüse am Arm, und dieses Öl vermischt sich mit dem Speichel zum Gift.',
+      fr: 'Il lèche une glande sur son bras, et cette huile se mêle à la salive pour former le venin.',
+    },
+  },
+  {
+    scientificName: 'Sarcophilus harrisii',
+    commonName: 'Tasmanian devil',
+    question: {
+      en: 'Which marsupial is the largest living meat-eater and is found only in Tasmania?',
+      de: 'Welches Beuteltier ist der größte lebende Fleischfresser und kommt nur auf Tasmanien vor?',
+      fr: 'Quel marsupial est le plus grand carnivore vivant et ne se trouve qu’en Tasmanie ?',
+    },
+    fact: {
+      en: 'Its jaws can crush bone.',
+      de: 'Seine Kiefer können Knochen zerbrechen.',
+      fr: 'Ses mâchoires peuvent broyer des os.',
+    },
+  },
+  {
+    scientificName: 'Galeopterus variegatus',
+    commonName: 'Sunda flying lemur',
+    question: {
+      en: 'Which animal is called a flying lemur but is not a lemur and glides between trees?',
+      de: 'Welches Tier wird fliegender Lemur genannt, ist aber kein Lemur und gleitet von Baum zu Baum?',
+      fr: 'Quel animal est appelé lémur volant sans être un lémur, et plane d’arbre en arbre ?',
+    },
+    fact: {
+      en: 'A skin membrane runs from the neck to the tail and includes the fingers.',
+      de: 'Eine Hautmembran reicht vom Hals bis zum Schwanz und schließt die Finger ein.',
+      fr: 'Une membrane de peau va du cou à la queue et englobe les doigts.',
+    },
+  },
 ];
 
 export function quizFactText(text: QuizFactText, language: Language): string {

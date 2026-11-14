@@ -9,6 +9,7 @@ import {
   buildDailyPlan,
   buildFactRound,
   matchFactAnimal,
+  orderFactCycle,
   matchesFilter,
   mulberry32,
   Quiz,
@@ -88,6 +89,67 @@ const photos = [
   animal(6, 'Lion', 'https://example.org/lion.jpg'),
 ];
 
+const liveCatalog = [
+  'Ambystoma mexicanum',
+  'Daubentonia madagascariensis',
+  'Mungos mungo',
+  'Otocyon megalotis',
+  'Arctictis binturong',
+  'Psychrolutes marcidus',
+  'Neofelis nebulosa',
+  'Grimpoteuthis',
+  'Casuarius bennetti',
+  'Conger conger',
+  'Enchelycore anatina',
+  'Vulpes zerda',
+  'Hyalinobatrachium fleischmanni',
+  'Gavialis gangeticus',
+  'Archispirostreptus gigas',
+  'Myrmecophaga tridactyla',
+  'Narcine entemedor',
+  'Acerodon jubatus',
+  'Heteropoda maxima',
+  'Phyllobates terribilis',
+  'Hapalochlaena lunulata',
+  'Madoqua guentheri',
+  'Harpia harpyja',
+  'Dosidicus gigas',
+  'Ratufa indica',
+  'Manis crassicaudata',
+  'Hottentotta tamulus',
+  'Macrocheira kaempferi',
+  'Phycodurus eques',
+  'Pardofelis marmorata',
+  'Chelus fimbriata',
+  'Heterocephalus glaber',
+  'Pachydactylus rangei',
+  'Sciurillus pusillus',
+  'Aulacorhynchus prasinus',
+  'Tamandua mexicana',
+  'Okapia johnstoni',
+  'Solenostomus paradoxus',
+  'Chrysopelea paradisi',
+  'Scolopendra gigantea',
+  'Chlamyphorus truncatus',
+  'Ornithorhynchus anatinus',
+  'Sphinx ligustri',
+  'Petaurista alborufus',
+  'Solenostomus cyanopterus',
+  'Balaeniceps rex',
+  'Tachyglossus aculeatus',
+  'Cyclopes',
+  'Casuarius casuarius',
+  'Tamandua tetradactyla',
+  'Condylura cristata',
+  'Galeopterus variegatus',
+  'Nycticebus coucang',
+  'Sarcophilus harrisii',
+  'Cassiopea',
+  'Nasua narica',
+  'Heteroconger luteolus',
+  'Inia geoffrensis',
+];
+
 describe('curated facts', () => {
   it('has a reviewed fact in English, German, and French for each question', () => {
     expect(QUIZ_FACT_LIST.length).toBeGreaterThanOrEqual(15);
@@ -99,6 +161,37 @@ describe('curated facts', () => {
         expect(fact.question[language].trim().length).toBeGreaterThan(10);
         expect(fact.fact[language].trim().length).toBeGreaterThan(10);
       }
+    }
+  });
+
+  it('links at least 30 facts to the known live catalog', () => {
+    const animals = liveCatalog.map(
+      (scientificName, index) =>
+        ({
+          id: index + 1,
+          commonName: `Animal ${index}`,
+          scientificName,
+          thumbnailUrl: 'x',
+        }) as Animal,
+    );
+    const matched = QUIZ_FACT_LIST.filter((fact) => matchFactAnimal(fact, animals));
+    expect(matched.length).toBeGreaterThanOrEqual(30);
+    const dolphin = QUIZ_FACT_LIST.find((fact) => fact.scientificName === 'Inia geoffrensis')!;
+    expect(matchFactAnimal(dolphin, animals)?.scientificName).toBe('Inia geoffrensis');
+    const kept = [
+      'Monodon monoceros',
+      'Strigops habroptilus',
+      'Apteryx',
+      'Cryptoprocta ferox',
+      'Saiga tatarica',
+      'Nasalis larvatus',
+      'Opisthocomus hoazin',
+      'Synodontis nigriventris',
+    ];
+    for (const scientificName of kept) {
+      const fact = QUIZ_FACT_LIST.find((item) => item.scientificName === scientificName);
+      expect(fact).toBeTruthy();
+      expect(matchFactAnimal(fact!, animals)).toBeNull();
     }
   });
 });
@@ -166,6 +259,28 @@ describe('buildFactRound', () => {
   it('shuffles without losing items', () => {
     expect(shuffle([1, 2, 3, 4], () => 0)).toEqual([2, 3, 4, 1]);
     expect(shuffle([1, 2, 3, 4], () => 0.999)).toEqual([1, 2, 3, 4]);
+  });
+});
+
+describe('orderFactCycle', () => {
+  const ids = (n: number) => Array.from({ length: n }, (_, index) => ({ id: index + 1 }));
+
+  it('uses every fact once before the order repeats', () => {
+    const order = orderFactCycle(ids(5), () => 0.4);
+    expect(order.map((item) => item.id).sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('does not start a new cycle with the fact just shown', () => {
+    const identity = orderFactCycle(ids(4), () => 0.999, 1).map((item) => item.id);
+    expect(identity).toEqual([2, 3, 4, 1]);
+    const rotated = orderFactCycle(ids(4), () => 0, 2).map((item) => item.id);
+    expect(rotated[0]).not.toBe(2);
+    expect([...rotated].sort((a, b) => a - b)).toEqual([1, 2, 3, 4]);
+  });
+
+  it('keeps a one-fact pool playable', () => {
+    expect(orderFactCycle([{ id: 7 }], () => 0, 7)).toEqual([{ id: 7 }]);
+    expect(orderFactCycle([], () => 0)).toEqual([]);
   });
 });
 
@@ -258,7 +373,10 @@ describe('daily challenge helpers', () => {
 });
 describe('Quiz', () => {
   beforeEach(() => localStorage.clear());
-  afterEach(() => localStorage.clear());
+  afterEach(() => {
+    localStorage.clear();
+    TestBed.inject(LanguageService).setLanguage('en');
+  });
 
   async function setup(getAll = vi.fn((_lang?: string) => of(zoo))) {
     TestBed.configureTestingModule({
@@ -284,7 +402,25 @@ describe('Quiz', () => {
       element.querySelector(`[data-stat="${name}"]`)!.textContent!.trim();
     const photo = () => element.querySelector<HTMLImageElement>('.quiz-photo img')!;
     const practice = () => element.querySelector<HTMLButtonElement>('button.practice-missed');
-    return { fixture, element, refresh, choices, choice, stat, photo, practice, getAll };
+    const prompt = () => element.querySelector('.quiz-prompt')!.textContent!.trim();
+    const answerName = () => {
+      const matched = prompt().match(/(?:matches|zu|à) (.+?)\s*\?$/);
+      if (!matched) throw new Error(prompt());
+      return matched[1];
+    };
+    return {
+      fixture,
+      element,
+      refresh,
+      choices,
+      choice,
+      stat,
+      photo,
+      practice,
+      getAll,
+      prompt,
+      answerName,
+    };
   }
 
   it('shows a clear photo, a fact, and four answers', async () => {
@@ -292,11 +428,11 @@ describe('Quiz', () => {
 
     expect(getAll).toHaveBeenCalledWith('en');
     expect(element.querySelector('h2')!.textContent).toBe('Fact quiz');
-    expect(element.querySelector('.quiz-prompt')!.textContent).toBe('Which fact matches Okapi?');
+    expect(element.querySelector('.quiz-prompt')!.textContent).toBe('Which fact matches Axolotl?');
     expect(element.querySelector('button.show-solution')!.textContent!.trim()).toBe(
       'Show solution',
     );
-    expect(photo().getAttribute('src')).toBe('https://example.org/okapi.jpg');
+    expect(photo().getAttribute('src')).toBe('https://example.org/axolotl.jpg');
     expect(photo().alt).toBe('Photo shown with this question');
     expect(element.querySelector('.quiz-photo')!.classList.contains('is-blurred')).toBe(false);
     expect(choices().map((b) => b.querySelector('.choice-name')!.textContent)).toHaveLength(4);
@@ -312,40 +448,42 @@ describe('Quiz', () => {
   });
 
   it('reveals the photo and counts a right answer', async () => {
-    const { element, choice, choices, stat, photo, refresh } = await setup();
+    const { element, choice, choices, stat, photo, refresh, answerName } = await setup();
 
-    choice('Okapi').click();
+    choice(answerName()).click();
     await refresh();
 
     expect(element.querySelector('.quiz-photo')!.classList.contains('is-blurred')).toBe(false);
-    expect(photo().alt).toBe('Okapi');
-    expect(element.querySelector('.fun-fact')!.textContent).toContain('Okapi fact.');
+    expect(photo().alt).toBe('Axolotl');
+    expect(element.querySelector('.fun-fact')!.textContent).toContain('Axolotl fact.');
     expect(element.querySelector('button.show-solution')).toBeNull();
-    expect(element.querySelector('.result')!.textContent!.trim()).toBe('Correct! It is the Okapi.');
-    expect(choice('Okapi').classList).toContain('is-correct');
+    expect(element.querySelector('.result')!.textContent!.trim()).toBe(
+      'Correct! It is the Axolotl.',
+    );
+    expect(choice('Axolotl').classList).toContain('is-correct');
     expect(choices().every((b) => b.disabled)).toBe(true);
     expect(stat('score')).toBe('1/1');
     expect(stat('streak')).toBe('1');
     expect(stat('best')).toBe('1');
-    expect(element.querySelector('a.learn-more')!.getAttribute('href')).toBe('/animals/1');
+    expect(element.querySelector('a.learn-more')!.getAttribute('href')).toBe('/animals/2');
     expect(document.activeElement).toBe(element.querySelector('button.next'));
   });
 
   it('marks a wrong answer and resets the streak', async () => {
-    const { element, choice, choices, stat, refresh } = await setup();
-    choice('Okapi').click();
+    const { element, choice, choices, stat, refresh, answerName } = await setup();
+    choice(answerName()).click();
     await refresh();
     element.querySelector<HTMLButtonElement>('button.next')!.click();
     await refresh();
 
-    const wrong = choices().find((b) => !b.textContent!.includes('Axolotl'))!;
+    const wrong = choices().find((b) => !b.textContent!.includes(answerName()))!;
     wrong.click();
     await refresh();
 
     expect(wrong.classList).toContain('is-wrong');
-    expect(choice('Axolotl').classList).toContain('is-correct');
+    expect(choice('Aye-aye').classList).toContain('is-correct');
     expect(element.querySelector('.result')!.textContent!.trim()).toBe(
-      'Not quite. It is the Axolotl.',
+      'Not quite. It is the Aye-aye.',
     );
     expect(stat('score')).toBe('1/2');
     expect(stat('streak')).toBe('0');
@@ -353,16 +491,15 @@ describe('Quiz', () => {
   });
 
   it('starts a new blurred round with a different animal', async () => {
-    const { element, choice, choices, photo, refresh } = await setup();
-    choice('Okapi').click();
+    const { element, choice, choices, refresh, answerName } = await setup();
+    choice(answerName()).click();
     await refresh();
 
     element.querySelector<HTMLButtonElement>('button.next')!.click();
     await refresh();
 
-    expect(photo().getAttribute('src')).toBe('https://example.org/axolotl.jpg');
-    expect(element.querySelector('.quiz-photo')!.classList.contains('is-blurred')).toBe(false);
-    expect(element.querySelector('.quiz-prompt')!.textContent).toBe('Which fact matches Axolotl?');
+    expect(element.querySelector('.quiz-photo')).toBeNull();
+    expect(element.querySelector('.quiz-prompt')!.textContent).toBe('Which fact matches Aye-aye?');
     expect(choices().some((b) => b.disabled)).toBe(false);
     expect(element.querySelector('.result')).toBeNull();
     expect(document.activeElement).toBe(choices()[0]);
@@ -392,7 +529,7 @@ describe('Quiz', () => {
     await refresh();
 
     expect(element.querySelector('.quiz-photo')).toBeNull();
-    expect(element.querySelector('.quiz-prompt')!.textContent).toBe('Which fact matches Okapi?');
+    expect(element.querySelector('.quiz-prompt')!.textContent).toBe('Which fact matches Axolotl?');
     expect(element.querySelectorAll('button.choice')).toHaveLength(4);
   });
 
@@ -402,20 +539,20 @@ describe('Quiz', () => {
     element.querySelector<HTMLButtonElement>('button.show-solution')!.click();
     await refresh();
 
-    expect(element.querySelector('.result')!.textContent!.trim()).toBe('It is the Okapi.');
-    expect(element.querySelector('.fun-fact')!.textContent).toContain('Okapi fact.');
+    expect(element.querySelector('.result')!.textContent!.trim()).toBe('It is the Axolotl.');
+    expect(element.querySelector('.fun-fact')!.textContent).toContain('Axolotl fact.');
     expect(stat('score')).toBe('0/1');
     expect(stat('streak')).toBe('0');
-    expect(element.querySelector('button.choice.is-correct')!.textContent).toContain('Okapi');
+    expect(element.querySelector('button.choice.is-correct')!.textContent).toContain('Axolotl');
   });
 
   it('starts over with a clean score', async () => {
-    const { element, choice, stat, refresh } = await setup();
-    choice('Okapi').click();
+    const { element, choice, stat, refresh, answerName } = await setup();
+    choice(answerName()).click();
     await refresh();
     element.querySelector<HTMLButtonElement>('button.next')!.click();
     await refresh();
-    choice('Axolotl').click();
+    choice(answerName()).click();
     await refresh();
 
     element.querySelector<HTMLButtonElement>('button.restart')!.click();
@@ -452,18 +589,20 @@ describe('Quiz', () => {
     await refresh();
 
     expect(getAll).toHaveBeenCalledWith('de');
-    expect(photo().getAttribute('src')).toBe('https://example.org/okapi.jpg');
+    expect(photo().getAttribute('src')).toBe('https://example.org/axolotl.jpg');
     expect(choices().every((b) => b.textContent!.includes(' DE'))).toBe(true);
     expect(element.querySelector('h2')!.textContent).toBe('Faktenquiz');
-    expect(element.querySelector('.quiz-prompt')!.textContent).toBe('Welcher Fakt passt zu Okapi?');
+    expect(element.querySelector('.quiz-prompt')!.textContent).toBe(
+      'Welcher Fakt passt zu Axolotl?',
+    );
   });
 
   it('uses French labels', async () => {
     localStorage.setItem('language', 'fr');
-    const { element, choice, refresh } = await setup();
+    const { element, choice, refresh, answerName } = await setup();
 
     expect(element.querySelector('h2')!.textContent).toBe('Quiz des faits');
-    choice('Okapi').click();
+    choice(answerName()).click();
     await refresh();
     expect(element.querySelector('button.next')!.textContent!.trim()).toBe('Animal suivant');
   });
@@ -471,10 +610,10 @@ describe('Quiz', () => {
   describe('best streak', () => {
     it('restores the saved best streak', async () => {
       localStorage.setItem(QUIZ_BEST_STORAGE, '7');
-      const { choice, stat, refresh } = await setup();
+      const { choice, stat, refresh, answerName } = await setup();
 
       expect(stat('best')).toBe('7');
-      choice('Okapi').click();
+      choice(answerName()).click();
       await refresh();
 
       expect(stat('streak')).toBe('1');
@@ -484,14 +623,14 @@ describe('Quiz', () => {
 
     it('saves a new best streak and keeps it after a restart', async () => {
       localStorage.setItem(QUIZ_BEST_STORAGE, '1');
-      const { element, choice, stat, refresh } = await setup();
-      choice('Okapi').click();
+      const { element, choice, stat, refresh, answerName } = await setup();
+      choice(answerName()).click();
       await refresh();
       expect(localStorage.getItem(QUIZ_BEST_STORAGE)).toBe('1');
 
       element.querySelector<HTMLButtonElement>('button.next')!.click();
       await refresh();
-      choice('Axolotl').click();
+      choice(answerName()).click();
       await refresh();
 
       expect(stat('best')).toBe('2');
@@ -518,48 +657,51 @@ describe('Quiz', () => {
 
   describe('missed animals', () => {
     it('saves a missed id on a wrong answer and shows the practice control', async () => {
-      const { choices, practice, refresh } = await setup(vi.fn(() => of(photos)));
+      const { choices, practice, refresh, answerName } = await setup(vi.fn(() => of(photos)));
       expect(practice()).toBeNull();
 
       choices()
-        .find((b) => !b.textContent!.includes('Okapi'))!
+        .find((b) => !b.textContent!.includes(answerName()))!
         .click();
       await refresh();
 
-      expect(JSON.parse(localStorage.getItem(QUIZ_MISSED_STORAGE)!)).toEqual([1]);
+      expect(JSON.parse(localStorage.getItem(QUIZ_MISSED_STORAGE)!)).toEqual([2]);
       expect(practice()!.textContent!.trim()).toBe('Practice missed (1)');
       expect(practice()!.getAttribute('aria-pressed')).toBe('false');
     });
 
     it('does not duplicate a missed id on another wrong answer', async () => {
-      const { element, choice, choices, refresh } = await setup(vi.fn(() => of(photos)));
-      choices()
-        .find((b) => !b.textContent!.includes('Okapi'))!
-        .click();
+      const { element, choice, choices, refresh, answerName } = await setup(
+        vi.fn(() => of(photos)),
+      );
+      const wrong = () => choices().find((b) => !b.textContent!.includes(answerName()))!;
+      wrong().click();
+      await refresh();
+      const missed = JSON.parse(localStorage.getItem(QUIZ_MISSED_STORAGE)!) as number[];
+      element.querySelector<HTMLButtonElement>('button.next')!.click();
+      await refresh();
+      choice(answerName()).click();
       await refresh();
       element.querySelector<HTMLButtonElement>('button.next')!.click();
       await refresh();
-      choice('Axolotl').click();
-      await refresh();
-      element.querySelector<HTMLButtonElement>('button.next')!.click();
-      await refresh();
-      choices()
-        .find((b) => !b.textContent!.includes('Okapi'))!
-        .click();
+      wrong().click();
       await refresh();
 
-      expect(JSON.parse(localStorage.getItem(QUIZ_MISSED_STORAGE)!)).toEqual([1]);
+      const ids = JSON.parse(localStorage.getItem(QUIZ_MISSED_STORAGE)!) as number[];
+      expect(ids[0]).toBe(missed[0]);
+      expect(ids.filter((id) => id === missed[0])).toHaveLength(1);
+      expect(new Set(ids).size).toBe(ids.length);
     });
 
     it('removes a missed id after one correct answer', async () => {
       localStorage.setItem(QUIZ_MISSED_STORAGE, JSON.stringify([1, 2]));
-      const { choice, practice, refresh } = await setup(vi.fn(() => of(photos)));
+      const { choice, practice, refresh, answerName } = await setup(vi.fn(() => of(photos)));
 
       expect(practice()!.textContent!.trim()).toBe('Practice missed (2)');
-      choice('Okapi').click();
+      choice(answerName()).click();
       await refresh();
 
-      expect(JSON.parse(localStorage.getItem(QUIZ_MISSED_STORAGE)!)).toEqual([2]);
+      expect(JSON.parse(localStorage.getItem(QUIZ_MISSED_STORAGE)!)).toEqual([1]);
       expect(practice()!.textContent!.trim()).toBe('Practice missed (1)');
     });
 
@@ -577,7 +719,7 @@ describe('Quiz', () => {
 
       expect(practice()!.classList).toContain('is-active');
       expect(practice()!.getAttribute('aria-pressed')).toBe('true');
-      expect(photo().getAttribute('src')).toBe('https://example.org/axolotl.jpg');
+      expect(photo().getAttribute('src')).toBe('https://example.org/aye.jpg');
       expect(
         choices()
           .map((b) => b.querySelector('.choice-name')!.textContent)
@@ -588,8 +730,8 @@ describe('Quiz', () => {
 
     it('keeps the streak when entering practice mode', async () => {
       localStorage.setItem(QUIZ_MISSED_STORAGE, JSON.stringify([1, 2, 3, 4]));
-      const { choice, practice, refresh, stat } = await setup(vi.fn(() => of(photos)));
-      choice('Okapi').click();
+      const { choice, practice, refresh, stat, answerName } = await setup(vi.fn(() => of(photos)));
+      choice(answerName()).click();
       await refresh();
       expect(stat('streak')).toBe('1');
 
@@ -620,10 +762,10 @@ describe('Quiz', () => {
     });
 
     it('clears the last missed id and hides the practice control', async () => {
-      localStorage.setItem(QUIZ_MISSED_STORAGE, JSON.stringify([1]));
-      const { choice, practice, refresh } = await setup(vi.fn(() => of(photos)));
+      localStorage.setItem(QUIZ_MISSED_STORAGE, JSON.stringify([2]));
+      const { choice, practice, refresh, answerName } = await setup(vi.fn(() => of(photos)));
       expect(practice()!.textContent!.trim()).toBe('Practice missed (1)');
-      choice('Okapi').click();
+      choice(answerName()).click();
       await refresh();
 
       expect(localStorage.getItem(QUIZ_MISSED_STORAGE)).toBeNull();
@@ -643,7 +785,7 @@ describe('Quiz', () => {
 
       expect(practice()!.classList).toContain('is-active');
       expect(practice()!.textContent!.trim()).toBe('Fehler üben (4)');
-      expect(photo().getAttribute('src')).toBe('https://example.org/axolotl.jpg');
+      expect(photo().getAttribute('src')).toBe('https://example.org/aye.jpg');
       expect(choices().every((b) => b.textContent!.includes(' DE'))).toBe(true);
     });
 
@@ -665,10 +807,11 @@ describe('Quiz', () => {
       classSelect.dispatchEvent(new Event('change'));
       await refresh();
 
-      const names = choices()
-        .map((b) => b.querySelector('.choice-name')!.textContent)
-        .sort();
-      expect(names).toEqual(['Aye-aye', 'Lion', 'Okapi', 'Tapir']);
+      const names = choices().map((b) => b.querySelector('.choice-name')!.textContent);
+      expect(names).toHaveLength(4);
+      for (const name of names) {
+        expect(['Aye-aye', 'Lion', 'Okapi', 'Tapir', 'Wolf']).toContain(name);
+      }
     });
   });
 
@@ -883,9 +1026,42 @@ describe('Quiz', () => {
       expect(element.querySelector('button.reset-filters')).toBeNull();
     });
 
+    it('walks the matching facts once, then starts a new cycle on a different fact', async () => {
+      const { element, choice, refresh } = await setup();
+      const prompt = () => element.querySelector('.quiz-prompt')!.textContent!;
+      const seen: string[] = [];
+      for (let i = 0; i < zoo.length; i++) {
+        const text = prompt();
+        seen.push(text);
+        const name = text.slice('Which fact matches '.length, -1);
+        choice(name).click();
+        await refresh();
+        element.querySelector<HTMLButtonElement>('button.next')!.click();
+        await refresh();
+      }
+      expect(new Set(seen).size).toBe(zoo.length);
+      expect(prompt()).not.toBe(seen[seen.length - 1]);
+      expect(seen).toContain(prompt());
+    });
+
+    it('rebuilds the cycle for a filtered pool', async () => {
+      const { element, refresh } = await setup(vi.fn(() => of(wild)));
+      const select = element.querySelector<HTMLSelectElement>('select.filter-class')!;
+      select.value = 'mammal';
+      select.dispatchEvent(new Event('change'));
+      await refresh();
+
+      const text = element.querySelector('.quiz-prompt')!.textContent!;
+      expect(text).not.toContain('Axolotl');
+      expect(text).not.toContain('Shoebill');
+      expect(
+        ['Okapi', 'Aye-aye', 'Tapir', 'Lion', 'Wolf'].some((name) => text.includes(name)),
+      ).toBe(true);
+    });
+
     it('keeps the streak when the filter changes', async () => {
-      const { element, choice, stat, refresh } = await setup(vi.fn(() => of(wild)));
-      choice('Okapi').click();
+      const { element, choice, stat, refresh, answerName } = await setup(vi.fn(() => of(wild)));
+      choice(answerName()).click();
       await refresh();
 
       await change(select(element, 'class'), 'mammal', refresh);
