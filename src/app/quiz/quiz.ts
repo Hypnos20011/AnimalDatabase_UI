@@ -237,6 +237,19 @@ export function shuffle<T>(items: readonly T[], random: () => number = Math.rand
   return result;
 }
 
+export function orderFactCycle<T extends { id: number }>(
+  items: readonly T[],
+  random: () => number,
+  previousId?: number,
+): T[] {
+  if (items.length === 0) return [];
+  const order = shuffle(items, random);
+  if (previousId != null && order.length > 1 && order[0].id === previousId) {
+    order.push(order.shift()!);
+  }
+  return order;
+}
+
 export function buildFactRound(
   facts: readonly QuizFact[],
   animals: readonly Animal[],
@@ -319,6 +332,8 @@ export class Quiz {
   private resultCard = viewChild<ElementRef<HTMLElement>>('resultCard');
   private shareTimers = new Map<'daily' | 'best', ReturnType<typeof setTimeout>>();
   private shareLock: 'daily' | 'best' | null = null;
+  private factQueue: QuizFact[] = [];
+  private factQueueKey = '';
 
   round = signal<QuizRound | null>(null);
   picked = signal<number | null>(null);
@@ -566,10 +581,35 @@ export class Quiz {
 
   private startRound(): void {
     const previous = this.round()?.answer.id;
-    const avoid = new Set(previous === undefined ? [] : [previous]);
     this.solutionShown.set(false);
-    this.round.set(buildFactRound(this.facts, this.pool(), this.random, avoid));
     this.picked.set(null);
+    this.round.set(this.drawFactRound(previous));
+  }
+
+  private drawFactRound(previousId?: number): QuizRound | null {
+    const animals = this.pool();
+    const linked = linkedFacts(this.facts, animals);
+    const key = linked
+      .map((item) => item.answer.id)
+      .sort((a, b) => a - b)
+      .join(',');
+    if (key !== this.factQueueKey) {
+      this.factQueue = [];
+      this.factQueueKey = key;
+    }
+    if (this.factQueue.length === 0) {
+      this.factQueue = orderFactCycle(
+        linked.map((item) => ({ id: item.answer.id, fact: item.fact })),
+        this.random,
+        previousId,
+      ).map((item) => item.fact);
+    }
+    while (this.factQueue.length > 0) {
+      const fact = this.factQueue.shift()!;
+      const round = buildFactRound([fact], animals, this.random);
+      if (round) return round;
+    }
+    return null;
   }
 
   private focusLater(target: () => HTMLElement | undefined): void {

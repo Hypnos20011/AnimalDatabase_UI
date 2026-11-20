@@ -179,6 +179,7 @@ describe('Quiz share card', () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => {
     localStorage.clear();
+    TestBed.inject(LanguageService).setLanguage('en');
     vi.useRealTimers();
     for (const key of navigatorKeys) delete (navigator as unknown as Record<string, unknown>)[key];
   });
@@ -422,7 +423,7 @@ describe('Quiz share card', () => {
 
     expect(ctx.bestButton()).toBeNull();
     expect(ctx.card()).toBeNull();
-    ctx.choice('Okapi').click();
+    ctx.choice(ctx.component.round()!.answer.commonName).click();
     await ctx.refresh();
     ctx.element.querySelector<HTMLButtonElement>('button.next')!.click();
     await ctx.refresh();
