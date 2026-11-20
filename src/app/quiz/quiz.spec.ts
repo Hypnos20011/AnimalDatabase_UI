@@ -148,6 +148,15 @@ const liveCatalog = [
   'Nasua narica',
   'Heteroconger luteolus',
   'Inia geoffrensis',
+  'Monodon monoceros',
+  'Strigops habroptilus',
+  'Apteryx',
+  'Cryptoprocta ferox',
+  'Saiga tatarica',
+  'Nasalis larvatus',
+  'Opisthocomus hoazin',
+  'Synodontis nigriventris',
+  'Varanus komodoensis',
 ];
 
 describe('curated facts', () => {
@@ -175,24 +184,13 @@ describe('curated facts', () => {
         }) as Animal,
     );
     const matched = QUIZ_FACT_LIST.filter((fact) => matchFactAnimal(fact, animals));
-    expect(matched.length).toBeGreaterThanOrEqual(30);
+    expect(matched.length).toBe(QUIZ_FACT_LIST.length);
+    expect(matched.length).toBeGreaterThanOrEqual(44);
     const dolphin = QUIZ_FACT_LIST.find((fact) => fact.scientificName === 'Inia geoffrensis')!;
     expect(matchFactAnimal(dolphin, animals)?.scientificName).toBe('Inia geoffrensis');
-    const kept = [
-      'Monodon monoceros',
-      'Strigops habroptilus',
-      'Apteryx',
-      'Cryptoprocta ferox',
-      'Saiga tatarica',
-      'Nasalis larvatus',
-      'Opisthocomus hoazin',
-      'Synodontis nigriventris',
-    ];
-    for (const scientificName of kept) {
-      const fact = QUIZ_FACT_LIST.find((item) => item.scientificName === scientificName);
-      expect(fact).toBeTruthy();
-      expect(matchFactAnimal(fact!, animals)).toBeNull();
-    }
+    const komodo = QUIZ_FACT_LIST.find((fact) => fact.scientificName === 'Varanus komodoensis')!;
+    expect(matchFactAnimal(komodo, animals)?.scientificName).toBe('Varanus komodoensis');
+    expect(komodo.commonName).toBe('Komodo dragon');
   });
 });
 
