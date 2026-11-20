@@ -40,6 +40,11 @@ const animals = [animal(1, 'Okapi'), animal(2, 'Anglerfish'), animal(3, 'Tapir')
 describe('AnimalsList keyboard shortcuts', () => {
   const open = vi.fn();
 
+  afterEach(() => {
+    localStorage.removeItem('language');
+    TestBed.inject(LanguageService).setLanguage('en');
+  });
+
   beforeEach(() => {
     open.mockReset();
     TestBed.configureTestingModule({
@@ -142,7 +147,7 @@ describe('AnimalsList keyboard shortcuts', () => {
 
   it('exposes a tiny localized shortcut hint', async () => {
     const fixture = await render();
-    const input= searchInput(fixture.nativeElement);
+    const input = searchInput(fixture.nativeElement);
     const i18n = TestBed.inject(LanguageService);
 
     expect(input.getAttribute('aria-keyshortcuts')).toBe('/');
