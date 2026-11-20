@@ -37,6 +37,8 @@ const okapi = {
 } satisfies Animal;
 
 describe('AnimalDetail IUCN Red List link', () => {
+  beforeEach(() => localStorage.removeItem('language'));
+
   async function render(animal: Animal) {
     TestBed.configureTestingModule({
       imports: [AnimalDetail],
@@ -49,6 +51,8 @@ describe('AnimalDetail IUCN Red List link', () => {
         { provide: AdminKeyService, useValue: { unlocked: signal(false) } },
       ],
     });
+    const stored = localStorage.getItem('language');
+    TestBed.inject(LanguageService).setLanguage(stored === 'de' || stored === 'fr' ? stored : 'en');
     const fixture = TestBed.createComponent(AnimalDetail);
     fixture.componentRef.setInput('id', String(animal.id));
     fixture.detectChanges();
@@ -82,7 +86,9 @@ describe('AnimalDetail IUCN Red List link', () => {
   it('keeps a plain status when the scientific name is blank', async () => {
     const { element } = await render({ ...okapi, scientificName: '   ' });
     expect(element.querySelector('.facts .fact a.status')).toBeNull();
-    expect(element.querySelector('.facts .fact span.status')?.textContent?.trim()).toBe('Endangered');
+    expect(element.querySelector('.facts .fact span.status')?.textContent?.trim()).toBe(
+      'Endangered',
+    );
   });
 
   it('translates the link title in German', async () => {

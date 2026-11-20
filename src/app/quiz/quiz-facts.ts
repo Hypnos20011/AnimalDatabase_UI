@@ -616,6 +616,20 @@ export const QUIZ_FACT_LIST: readonly QuizFact[] = [
       fr: 'Une membrane de peau va du cou à la queue et englobe les doigts.',
     },
   },
+  {
+    scientificName: 'Varanus komodoensis',
+    commonName: 'Komodo dragon',
+    question: {
+      en: 'Which lizard can produce young from eggs that a male never fertilised?',
+      de: 'Welche Echse kann Junge aus Eiern hervorbringen, die nie von einem Männchen befruchtet wurden?',
+      fr: 'Quel lézard peut produire des petits à partir d’œufs qu’un mâle n’a jamais fécondés ?',
+    },
+    fact: {
+      en: 'It also has venom glands in the lower jaw. The venom lowers blood pressure and slows clotting.',
+      de: 'Er hat außerdem Giftdrüsen im Unterkiefer. Das Gift senkt den Blutdruck und verlangsamt die Gerinnung.',
+      fr: 'Il a aussi des glandes à venin dans la mâchoire inférieure. Ce venin baisse la pression sanguine et ralentit la coagulation.',
+    },
+  },
 ];
 
 export function quizFactText(text: QuizFactText, language: Language): string {

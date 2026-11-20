@@ -16,6 +16,7 @@ describe('French', () => {
 
   afterEach(() => {
     localStorage.clear();
+    TestBed.inject(LanguageService).setLanguage('en');
   });
 
   it('is a supported language', () => {
@@ -62,7 +63,9 @@ describe('French', () => {
   });
 
   it('asks the API for French animal texts', () => {
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
     const service = TestBed.inject(AnimalService);
     const http = TestBed.inject(HttpTestingController);
     service.getAll('fr').subscribe();
