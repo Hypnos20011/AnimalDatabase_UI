@@ -17,6 +17,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { isRateLimited, retryAfterSeconds } from '../shared/rate-limit';
 import { LanguageService } from '../shared/i18n/language.service';
 import { apiErrorMessage } from '../shared/api-error';
+import { preserveFunFactMarker } from '../shared/profile';
 
 const oneDecimal: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const value = control.value;
@@ -171,6 +172,10 @@ export class AnimalForm {
       habitatDe: ['', Validators.maxLength(255)],
       rangeRegionDe: ['', Validators.maxLength(255)],
       profileDe: [''],
+      commonNameFr: ['', Validators.maxLength(120)],
+      habitatFr: ['', Validators.maxLength(255)],
+      rangeRegionFr: ['', Validators.maxLength(255)],
+      profileFr: [''],
       maleImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
       femaleImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
       babyImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
@@ -179,10 +184,22 @@ export class AnimalForm {
       femaleImageAttribution: ['', Validators.maxLength(500)],
       babyImageAttribution: ['', Validators.maxLength(500)],
       otherImageAttribution: ['', Validators.maxLength(500)],
-      maleImageSourcePageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)]],
-      femaleImageSourcePageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)]],
-      babyImageSourcePageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)]],
-      otherImageSourcePageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)]],
+      maleImageSourcePageUrl: [
+        '',
+        [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)],
+      ],
+      femaleImageSourcePageUrl: [
+        '',
+        [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)],
+      ],
+      babyImageSourcePageUrl: [
+        '',
+        [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)],
+      ],
+      otherImageSourcePageUrl: [
+        '',
+        [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)],
+      ],
     },
     { validators: minNotAboveMax },
   );
@@ -267,13 +284,13 @@ export class AnimalForm {
     request
       .pipe(
         switchMap((saved) => {
-          const texts = this.germanTexts();
           const animalId = id ? Number(id) : saved.id;
-          const empty = !texts.commonName && !texts.habitat && !texts.rangeRegion && !texts.profile;
-          if (empty) {
-            return of(saved);
-          }
-          return this.animalService.saveTranslation(animalId, 'de', texts).pipe(map(() => saved));
+          const saves = [
+            this.translationSave(animalId, 'de', this.germanTexts()),
+            this.translationSave(animalId, 'fr', this.frenchTexts()),
+          ].filter((request): request is NonNullable<typeof request> => request !== null);
+          if (saves.length === 0) return of(saved);
+          return forkJoin(saves).pipe(map(() => saved));
         }),
       )
       .subscribe({
@@ -347,7 +364,7 @@ export class AnimalForm {
     });
   }
 
-  translateToGerman(): void {
+  translateTexts(): void {
     const texts = this.englishTextsForTranslate();
     if (!texts.commonName && !texts.habitat && !texts.rangeRegion && !texts.profile) {
       this.translateError.set(this.i18n.t('form.german.needEnglish'));
@@ -358,27 +375,26 @@ export class AnimalForm {
     this.translating.set(true);
     this.translateMessage.set('');
     this.translateError.set('');
-    this.animalService.translate(texts).subscribe({
-      next: (german) => {
-        this.form.patchValue({
-          commonNameDe: german.commonName ?? '',
-          habitatDe: german.habitat ?? '',
-          rangeRegionDe: german.rangeRegion ?? '',
-          profileDe: german.profile ?? '',
-        });
-        this.translateMessage.set(this.i18n.t('form.german.filled'));
-        this.translating.set(false);
-      },
-      error: (err) => {
-        this.translateError.set(
-          isRateLimited(err)
-            ? this.rateLimitText(err, 'form.rateLimit.translations')
-            : typeof err.error === 'string' && err.error
-              ? err.error
-              : this.i18n.t('form.german.error'),
-        );
-        this.translating.set(false);
-      },
+    const one = (language: 'de' | 'fr') =>
+      this.animalService.translate(texts, language).pipe(
+        map((value) => ({ ok: true as const, value })),
+        catchError((err: HttpErrorResponse) => of({ ok: false as const, err })),
+      );
+    forkJoin({ de: one('de'), fr: one('fr') }).subscribe(({ de, fr }) => {
+      if (de.ok) this.applyTranslation('de', de.value, texts);
+      if (fr.ok) this.applyTranslation('fr', fr.value, texts);
+      if (de.ok && fr.ok) {
+        this.translateMessage.set(this.i18n.t('form.translate.filled'));
+      } else if (de.ok && !fr.ok) {
+        this.translateMessage.set(this.i18n.t('form.translate.filledGerman'));
+        this.translateError.set(this.translateFailure(fr.err));
+      } else if (!de.ok && fr.ok) {
+        this.translateMessage.set(this.i18n.t('form.translate.filledFrench'));
+        this.translateError.set(this.translateFailure(de.err));
+      } else if (!de.ok && !fr.ok) {
+        this.translateError.set(this.translateFailure(de.err));
+      }
+      this.translating.set(false);
     });
   }
 
@@ -454,14 +470,17 @@ export class AnimalForm {
   private loadAnimal(id: number): void {
     this.loadingAnimal.set(true);
     this.error.set('');
+    const translation = (language: 'de' | 'fr') =>
+      this.animalService
+        .getTranslation(id, language)
+        .pipe(catchError((err) => (err.status === 404 ? of(null) : throwError(() => err))));
     forkJoin({
       animal: this.animalService.getById(id),
       images: this.animalService.getImages(id),
-      translation: this.animalService
-        .getTranslation(id, 'de')
-        .pipe(catchError((err) => (err.status === 404 ? of(null) : throwError(() => err)))),
+      german: translation('de'),
+      french: translation('fr'),
     }).subscribe({
-      next: ({ animal, images, translation }) => {
+      next: ({ animal, images, german, french }) => {
         this.form.patchValue({
           commonName: animal.commonName,
           scientificName: animal.scientificName ?? '',
@@ -493,10 +512,14 @@ export class AnimalForm {
           if (image) this.originalCaptions.set(image.url, image.caption);
         }
         this.form.patchValue({
-          commonNameDe: translation?.commonName ?? '',
-          habitatDe: translation?.habitat ?? '',
-          profileDe: translation?.profile ?? '',
-          rangeRegionDe: translation?.rangeRegion ?? '',
+          commonNameDe: german?.commonName ?? '',
+          habitatDe: german?.habitat ?? '',
+          profileDe: german?.profile ?? '',
+          rangeRegionDe: german?.rangeRegion ?? '',
+          commonNameFr: french?.commonName ?? '',
+          habitatFr: french?.habitat ?? '',
+          profileFr: french?.profile ?? '',
+          rangeRegionFr: french?.rangeRegion ?? '',
         });
 
         this.savedScientificName = animal.scientificName ?? '';
@@ -556,6 +579,42 @@ export class AnimalForm {
     return trimmed.length > 0 ? trimmed : null;
   }
 
+  private translationSave(animalId: number, language: 'de' | 'fr', texts: AnimalTexts) {
+    if (!texts.commonName && !texts.habitat && !texts.rangeRegion && !texts.profile) return null;
+    return this.animalService.saveTranslation(animalId, language, texts);
+  }
+
+  private translateFailure(err: unknown): string {
+    if (isRateLimited(err)) return this.rateLimitText(err, 'form.rateLimit.translations');
+    if (err instanceof HttpErrorResponse && typeof err.error === 'string' && err.error) {
+      return err.error;
+    }
+    return this.i18n.t('form.german.error');
+  }
+
+  private applyTranslation(
+    language: 'de' | 'fr',
+    translated: AnimalTexts,
+    english: AnimalTexts,
+  ): void {
+    const profile = preserveFunFactMarker(english.profile, translated.profile);
+    if (language === 'de') {
+      this.form.patchValue({
+        commonNameDe: translated.commonName ?? '',
+        habitatDe: translated.habitat ?? '',
+        rangeRegionDe: translated.rangeRegion ?? '',
+        profileDe: profile,
+      });
+      return;
+    }
+    this.form.patchValue({
+      commonNameFr: translated.commonName ?? '',
+      habitatFr: translated.habitat ?? '',
+      rangeRegionFr: translated.rangeRegion ?? '',
+      profileFr: profile,
+    });
+  }
+
   private germanTexts(): AnimalTexts {
     const v = this.form.getRawValue();
     return {
@@ -563,6 +622,16 @@ export class AnimalForm {
       habitat: this.text(v.habitatDe),
       rangeRegion: this.text(v.rangeRegionDe),
       profile: this.text(v.profileDe),
+    };
+  }
+
+  private frenchTexts(): AnimalTexts {
+    const v = this.form.getRawValue();
+    return {
+      commonName: this.text(v.commonNameFr),
+      habitat: this.text(v.habitatFr),
+      rangeRegion: this.text(v.rangeRegionFr),
+      profile: this.text(v.profileFr),
     };
   }
 

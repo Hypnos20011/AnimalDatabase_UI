@@ -40,7 +40,7 @@
 <form [formGroup]="form" (ngSubmit)="submit()">
   <label>
     {{ i18n.t('form.commonName') }}
-    <input type="text" formControlName="commonName"/>
+    <input type="text" formControlName="commonName" />
   </label>
   @if (form.controls.commonName.touched && form.controls.commonName.invalid) {
     <p class="field-error">{{ i18n.t('form.commonName.required') }}</p>
@@ -59,12 +59,12 @@
 
   <label>
     {{ i18n.t('form.scientificName') }}
-    <input type="text" formControlName="scientificName"/>
+    <input type="text" formControlName="scientificName" />
   </label>
 
   <label>
     {{ i18n.t('form.family') }}
-    <input type="text" formControlName="family"/>
+    <input type="text" formControlName="family" />
   </label>
 
   <label>
@@ -78,14 +78,26 @@
   </label>
 
   <label class="checkbox">
-    <input type="checkbox" formControlName="isDomesticated"/>
+    <input type="checkbox" formControlName="isDomesticated" />
     {{ i18n.t('form.domesticated') }}
   </label>
 
   <div class="range">
     <span>{{ i18n.t('form.length') }}</span>
-    <input type="number" min="0" step="0.1" [placeholder]="i18n.t('form.min')" formControlName="sizeLengthCmMin"/>
-    <input type="number" min="0" step="0.1" [placeholder]="i18n.t('form.max')" formControlName="sizeLengthCmMax"/>
+    <input
+      type="number"
+      min="0"
+      step="0.1"
+      [placeholder]="i18n.t('form.min')"
+      formControlName="sizeLengthCmMin"
+    />
+    <input
+      type="number"
+      min="0"
+      step="0.1"
+      [placeholder]="i18n.t('form.max')"
+      formControlName="sizeLengthCmMax"
+    />
   </div>
   @if (rangeInvalid('sizeLengthCmMin', 'sizeLengthCmMax')) {
     <p class="field-error">{{ i18n.t('form.error.size') }}</p>
@@ -96,8 +108,20 @@
 
   <div class="range">
     <span>{{ i18n.t('form.height') }}</span>
-    <input type="number" min="0" step="0.1" [placeholder]="i18n.t('form.min')" formControlName="sizeHeightCmMin"/>
-    <input type="number" min="0" step="0.1" [placeholder]="i18n.t('form.max')" formControlName="sizeHeightCmMax"/>
+    <input
+      type="number"
+      min="0"
+      step="0.1"
+      [placeholder]="i18n.t('form.min')"
+      formControlName="sizeHeightCmMin"
+    />
+    <input
+      type="number"
+      min="0"
+      step="0.1"
+      [placeholder]="i18n.t('form.max')"
+      formControlName="sizeHeightCmMax"
+    />
   </div>
   @if (rangeInvalid('sizeHeightCmMin', 'sizeHeightCmMax')) {
     <p class="field-error">{{ i18n.t('form.error.size') }}</p>
@@ -108,8 +132,20 @@
 
   <div class="range">
     <span>{{ i18n.t('form.weight') }}</span>
-    <input type="number" min="0" step="0.01" [placeholder]="i18n.t('form.min')" formControlName="weightKgMin"/>
-    <input type="number" min="0" step="0.01" [placeholder]="i18n.t('form.max')" formControlName="weightKgMax"/>
+    <input
+      type="number"
+      min="0"
+      step="0.01"
+      [placeholder]="i18n.t('form.min')"
+      formControlName="weightKgMin"
+    />
+    <input
+      type="number"
+      min="0"
+      step="0.01"
+      [placeholder]="i18n.t('form.max')"
+      formControlName="weightKgMax"
+    />
   </div>
   @if (rangeInvalid('weightKgMin', 'weightKgMax')) {
     <p class="field-error">{{ i18n.t('form.error.weight') }}</p>
@@ -120,8 +156,20 @@
 
   <div class="range">
     <span>{{ i18n.t('form.lifespan') }}</span>
-    <input type="number" min="0" step="1" [placeholder]="i18n.t('form.min')" formControlName="lifespanYearsMin"/>
-    <input type="number" min="0" step="1" [placeholder]="i18n.t('form.max')" formControlName="lifespanYearsMax"/>
+    <input
+      type="number"
+      min="0"
+      step="1"
+      [placeholder]="i18n.t('form.min')"
+      formControlName="lifespanYearsMin"
+    />
+    <input
+      type="number"
+      min="0"
+      step="1"
+      [placeholder]="i18n.t('form.max')"
+      formControlName="lifespanYearsMax"
+    />
   </div>
   @if (rangeInvalid('lifespanYearsMin', 'lifespanYearsMax')) {
     <p class="field-error">{{ i18n.t('form.error.lifespan') }}</p>
@@ -142,7 +190,7 @@
 
   <label>
     {{ i18n.t('form.habitat') }}
-    <input type="text" formControlName="habitat"/>
+    <input type="text" formControlName="habitat" />
   </label>
 
   <label>
@@ -157,7 +205,7 @@
 
   <label>
     {{ i18n.t('form.range') }}
-    <input type="text" formControlName="rangeRegion"/>
+    <input type="text" formControlName="rangeRegion" />
   </label>
 
   <label>
@@ -168,15 +216,14 @@
     <p class="field-error">{{ i18n.t('form.error.profileTooLong') }}</p>
   }
 
-  <div class="german-texts">
-    <h3>{{ i18n.t('form.german.title') }}</h3>
+  <div class="translation-actions">
     <button
       type="button"
       class="btn btn-primary"
       [disabled]="translating() || !form.controls.commonName.value?.trim()"
-      (click)="translateToGerman()"
+      (click)="translateTexts()"
     >
-      {{ translating() ? i18n.t('form.german.translating') : i18n.t('form.german.translate') }}
+      {{ translating() ? i18n.t('form.translate.translating') : i18n.t('form.translate.action') }}
     </button>
     @if (translateMessage()) {
       <p class="hint">{{ translateMessage() }}</p>
@@ -184,18 +231,22 @@
     @if (translateError()) {
       <p class="field-error">{{ translateError() }}</p>
     }
+  </div>
+
+  <div class="translation-texts">
+    <h3>{{ i18n.t('form.german.title') }}</h3>
 
     <label>
       {{ i18n.t('form.german.commonName') }}
-      <input type="text" formControlName="commonNameDe"/>
+      <input type="text" formControlName="commonNameDe" />
     </label>
     <label>
       {{ i18n.t('form.german.habitat') }}
-      <input type="text" formControlName="habitatDe"/>
+      <input type="text" formControlName="habitatDe" />
     </label>
     <label>
       {{ i18n.t('form.german.range') }}
-      <input type="text" formControlName="rangeRegionDe"/>
+      <input type="text" formControlName="rangeRegionDe" />
     </label>
     <label>
       {{ i18n.t('form.german.profile') }}
@@ -203,9 +254,29 @@
     </label>
   </div>
 
+  <div class="translation-texts">
+    <h3>{{ i18n.t('form.french.title') }}</h3>
+    <label>
+      {{ i18n.t('form.french.commonName') }}
+      <input type="text" formControlName="commonNameFr" />
+    </label>
+    <label>
+      {{ i18n.t('form.french.habitat') }}
+      <input type="text" formControlName="habitatFr" />
+    </label>
+    <label>
+      {{ i18n.t('form.french.range') }}
+      <input type="text" formControlName="rangeRegionFr" />
+    </label>
+    <label>
+      {{ i18n.t('form.french.profile') }}
+      <textarea rows="5" formControlName="profileFr"></textarea>
+    </label>
+  </div>
+
   <label>
     {{ i18n.t('form.sourceUrl') }}
-    <input type="url" placeholder="https://en.wikipedia.org/wiki/..." formControlName="sourceUrl"/>
+    <input type="url" placeholder="https://en.wikipedia.org/wiki/..." formControlName="sourceUrl" />
   </label>
   @if (imageInvalid('sourceUrl')) {
     <p class="field-error">{{ i18n.t('form.error.httpsLink') }}</p>
@@ -272,6 +343,8 @@
     <button type="submit" class="btn btn-primary" [disabled]="saving()">
       {{ saving() ? i18n.t('form.saving') : i18n.t('form.save') }}
     </button>
-    <a class="btn btn-secondary" [routerLink]="editing() ? ['/animals', id()] : '/'">{{ i18n.t('form.cancel') }}</a>
+    <a class="btn btn-secondary" [routerLink]="editing() ? ['/animals', id()] : '/'">{{
+      i18n.t('form.cancel')
+    }}</a>
   </div>
 </form>

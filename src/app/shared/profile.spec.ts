@@ -1,4 +1,4 @@
-import { profileSnippet, splitProfile } from './profile';
+import { preserveFunFactMarker, profileSnippet, splitProfile } from './profile';
 
 describe('splitProfile', () => {
   it('splits the fun fact from the profile text', () => {
@@ -17,6 +17,22 @@ describe('splitProfile', () => {
 
   it('handles a missing profile', () => {
     expect(splitProfile(null)).toEqual({ text: '', funFact: '' });
+  });
+});
+
+describe('preserveFunFactMarker', () => {
+  it('puts the original marker back when the translation changes its spelling', () => {
+    const source = 'A salamander. Fun fact: It keeps its gills.';
+    expect(preserveFunFactMarker(source, 'Une salamandre. fun fact: Il garde ses branchies.')).toBe(
+      'Une salamandre. Fun fact: Il garde ses branchies.',
+    );
+  });
+
+  it('leaves a profile alone when the marker is already exact', () => {
+    const translated = 'Une salamandre. Fun fact: Il garde ses branchies.';
+    expect(preserveFunFactMarker('A salamander. Fun fact: It keeps its gills.', translated)).toBe(
+      translated,
+    );
   });
 });
 
