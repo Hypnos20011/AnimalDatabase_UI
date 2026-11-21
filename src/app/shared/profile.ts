@@ -5,6 +5,18 @@ export interface ProfileParts {
 
 export const SNIPPET_LENGTH = 220;
 
+export function preserveFunFactMarker(
+  source: string | null | undefined,
+  translated: string | null | undefined,
+): string {
+  const value = translated ?? '';
+  const match = (source ?? '').match(/\s*Fun fact:\s*/i);
+  if (!match) return value;
+  if (value.includes(match[0])) return value;
+  const loose = value.match(/\s*fun fact\s*:\s*/i);
+  return loose ? value.replace(loose[0], match[0]) : value;
+}
+
 export function splitProfile(profile: string | null | undefined): ProfileParts {
   const value = profile ?? '';
   const match = value.match(/\s*Fun fact:\s*/i);
