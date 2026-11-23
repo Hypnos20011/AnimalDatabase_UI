@@ -1,0 +1,46 @@
+<section class="missing">
+  <h2>{{ i18n.t('admin.missing.title') }}</h2>
+  <p class="lead">{{ i18n.t('admin.missing.lead') }}</p>
+  <p class="links"><a routerLink="/admin">{{ i18n.t('footer.admin') }}</a></p>
+
+  @if (loading()) {
+    <p>{{ i18n.t('admin.missing.loading') }}</p>
+  } @else if (error() && rows().length === 0) {
+    <p class="field-error" role="alert">{{ error() }}</p>
+  } @else if (rows().length === 0) {
+    <p>{{ i18n.t('admin.missing.empty') }}</p>
+  } @else {
+    @if (error()) {
+      <p class="field-error" role="alert">{{ error() }}</p>
+    }
+    <ul class="gaps">
+      @for (animal of rows(); track animal.id) {
+        <li>
+          <div class="gap-head">
+            <a [routerLink]="['/animals', animal.id, 'edit']">{{ animal.commonName }}</a>
+            <a class="edit" [routerLink]="['/animals', animal.id, 'edit']">{{
+              i18n.t('admin.missing.edit')
+            }}</a>
+          </div>
+          <ul>
+            @for (language of animal.languages; track language.language) {
+              <li>{{ languageLabel(language.language) }}: {{ fields(language.fields) }}</li>
+            }
+          </ul>
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="busy() !== null"
+            (click)="translate(animal)"
+          >
+            {{
+              busy() === animal.id
+                ? i18n.t('admin.missing.translating')
+                : i18n.t('admin.missing.translate')
+            }}
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</section>

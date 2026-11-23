@@ -82,6 +82,20 @@ describe('AnimalService language', () => {
     req.flush({ commonName: 'Okapi', habitat: null, rangeRegion: null, profile: null });
   });
 
+  it('missingTranslations gets the admin list', () => {
+    service.missingTranslations().subscribe();
+    const req = http.expectOne(`${environment.apiUrl}/admin/missing-translations`);
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+  });
+
+  it('translateMissing posts to the animal endpoint', () => {
+    service.translateMissing(4).subscribe();
+    const req = http.expectOne(`${url}/4/translate-missing`);
+    expect(req.request.method).toBe('POST');
+    req.flush({ id: 4, commonName: 'Okapi', languages: [] });
+  });
+
   it('saveTranslation puts /animals/:id/translations/:language', () => {
     const texts = { commonName: 'Okapi', habitat: 'Regenwald', rangeRegion: null, profile: null };
     service.saveTranslation(7, 'de', texts).subscribe();

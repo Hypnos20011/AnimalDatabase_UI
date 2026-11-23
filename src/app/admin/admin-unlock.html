@@ -3,6 +3,7 @@
   @if (admin.unlocked()) {
     <p class="lead">Editing is unlocked for this browser tab.</p>
     <p class="links">
+      <a routerLink="/admin/missing">{{ i18n.t('admin.missing.link') }}</a>
       <a routerLink="/">Back to the list</a>
       <button type="button" class="text-link lock" (click)="lock()">Lock</button>
     </p>

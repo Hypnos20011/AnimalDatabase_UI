@@ -10,6 +10,13 @@ export const routes: Routes = [
     title: 'Admin · Unusual Animals',
   },
   {
+    path: 'admin/missing',
+    loadComponent: () =>
+      import('./admin/missing-translations').then((m) => m.MissingTranslations),
+    canActivate: [adminGuard],
+    title: 'Missing translations · Unusual Animals',
+  },
+  {
     path: 'animals/new',
     loadComponent: () => import('./animal-form/animal-form').then((m) => m.AnimalForm),
     canActivate: [adminGuard],
