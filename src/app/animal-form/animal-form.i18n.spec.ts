@@ -46,7 +46,9 @@ describe('AnimalForm i18n', () => {
       getAll: vi.fn(() => of([])),
       create: vi.fn((): Observable<unknown> => of({ id: 5 })),
       importFromWikipedia: vi.fn(() => of(okapi())),
-      translate: vi.fn(() => of({ commonName: 'Okapi', habitat: null, rangeRegion: null, profile: null })),
+      translate: vi.fn(() =>
+        of({ commonName: 'Okapi', habitat: null, rangeRegion: null, profile: null }),
+      ),
       saveTranslation: vi.fn(() => of(undefined)),
       ...overrides,
     };
@@ -116,7 +118,9 @@ describe('AnimalForm i18n', () => {
     const { form } = setup('de');
     form.wikiUrl.set('Okapi');
     form.importFromWikipedia();
-    expect(form.importMessage()).toBe('2 Felder aus Wikipedia ausgefüllt. Bitte vor dem Speichern prüfen.');
+    expect(form.importMessage()).toBe(
+      '2 Felder aus Wikipedia ausgefüllt. Bitte vor dem Speichern prüfen.',
+    );
   });
 
   it('uses the singular for one filled field', () => {
@@ -133,23 +137,28 @@ describe('AnimalForm i18n', () => {
       importFromWikipedia: vi.fn(() =>
         throwError(
           () =>
-            new HttpErrorResponse({ status: 429, headers: new HttpHeaders({ 'Retry-After': '20' }) }),
+            new HttpErrorResponse({
+              status: 429,
+              headers: new HttpHeaders({ 'Retry-After': '20' }),
+            }),
         ),
       ),
     });
     form.wikiUrl.set('Okapi');
     form.importFromWikipedia();
-    expect(form.importError()).toBe('Zu viele Abfragen. Bitte in 20 Sekunden noch einmal versuchen.');
+    expect(form.importError()).toBe(
+      'Zu viele Abfragen. Bitte in 20 Sekunden noch einmal versuchen.',
+    );
   });
 
   it('localizes the translate hint and fallback errors', () => {
     const { form } = setup('de', {
       translate: vi.fn(() => throwError(() => new HttpErrorResponse({ status: 500 }))),
     });
-    form.translateToGerman();
+    form.translateTexts();
     expect(form.translateError()).toBe('Bitte zuerst englischen Text eingeben');
     form.form.controls.commonName.setValue('Okapi');
-    form.translateToGerman();
+    form.translateTexts();
     expect(form.translateError()).toBe('Übersetzen ist gerade nicht möglich');
   });
 

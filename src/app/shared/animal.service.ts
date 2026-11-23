@@ -44,8 +44,10 @@ export class AnimalService {
     });
   }
 
-  translate(texts: AnimalTexts): Observable<AnimalTexts> {
-    return this.http.post<AnimalTexts>(`${environment.apiUrl}/translate`, texts);
+  translate(texts: AnimalTexts, language: Language = 'de'): Observable<AnimalTexts> {
+    return this.http.post<AnimalTexts>(`${environment.apiUrl}/translate`, texts, {
+      params: { lang: language },
+    });
   }
 
   getTranslation(id: number, language: Language): Observable<AnimalTexts> {

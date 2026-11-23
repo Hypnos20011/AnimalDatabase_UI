@@ -57,12 +57,21 @@ describe('AnimalService language', () => {
     req.flush([]);
   });
 
-  it('translate posts to /translate', () => {
+  it('translate posts to /translate in the requested language', () => {
+    const texts = { commonName: 'Okapi', habitat: null, rangeRegion: null, profile: null };
+    service.translate(texts, 'fr').subscribe();
+    const req = http.expectOne((r) => r.url === `${environment.apiUrl}/translate`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.params.get('lang')).toBe('fr');
+    expect(req.request.body).toEqual(texts);
+    req.flush({ commonName: 'Okapi', habitat: null, rangeRegion: null, profile: null });
+  });
+
+  it('translate defaults to German', () => {
     const texts = { commonName: 'Okapi', habitat: null, rangeRegion: null, profile: null };
     service.translate(texts).subscribe();
-    const req = http.expectOne(`${environment.apiUrl}/translate`);
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual(texts);
+    const req = http.expectOne((r) => r.url === `${environment.apiUrl}/translate`);
+    expect(req.request.params.get('lang')).toBe('de');
     req.flush({ commonName: 'Okapi', habitat: null, rangeRegion: null, profile: null });
   });
 
