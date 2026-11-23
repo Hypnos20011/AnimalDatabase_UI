@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AnimalService } from './animal.service';
 import { AnimalListState } from '../animals-list/animal-list-state';
+import { LanguageService } from './i18n/language.service';
 
 export function pickRandom(
   ids: readonly number[],
@@ -16,6 +17,7 @@ export class RandomAnimalService {
   private animalService = inject(AnimalService);
   private router = inject(Router);
   private state = inject(AnimalListState);
+  private i18n = inject(LanguageService);
 
   open(): void {
     const id = pickRandom(this.state.randomPool());
@@ -23,7 +25,7 @@ export class RandomAnimalService {
       this.router.navigate(['/animals', id]);
       return;
     }
-    this.animalService.getAll().subscribe({
+    this.animalService.getAll(this.i18n.language()).subscribe({
       next: (animals) => {
         const fallback = pickRandom(animals.map((animal) => animal.id));
         if (fallback !== null) this.router.navigate(['/animals', fallback]);

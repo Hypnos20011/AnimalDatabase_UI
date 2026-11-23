@@ -5,6 +5,7 @@ import { RandomAnimalService, pickRandom } from './random-animal.service';
 import { AnimalService } from './animal.service';
 import { AnimalListState } from '../animals-list/animal-list-state';
 import { Animal } from '../animal-model/animal.model';
+import { LanguageService } from './i18n/language.service';
 
 describe('pickRandom', () => {
   it('returns null for an empty pool', () => {
@@ -19,6 +20,11 @@ describe('pickRandom', () => {
 });
 
 describe('RandomAnimalService', () => {
+  afterEach(() => {
+    TestBed.inject(LanguageService).setLanguage('en');
+    localStorage.removeItem('language');
+  });
+
   function setup(all: Partial<Animal>[]) {
     const getAll = vi.fn(() => of(all as Animal[]));
     TestBed.configureTestingModule({
@@ -38,12 +44,14 @@ describe('RandomAnimalService', () => {
     expect(getAll).not.toHaveBeenCalled();
   });
 
-  it('loads all animals when the list page has not shared a pool yet', () => {
+  it('loads all animals in the current language when the list page has not shared a pool yet', () => {
     const { service, getAll, navigate } = setup([{ id: 12 }]);
+    TestBed.inject(LanguageService).setLanguage('fr');
 
     service.open();
 
     expect(getAll).toHaveBeenCalledTimes(1);
+    expect(getAll).toHaveBeenCalledWith('fr');
     expect(navigate).toHaveBeenCalledWith(['/animals', 12]);
   });
 
