@@ -7,6 +7,17 @@ import { WikipediaImport } from '../animal-model/wikipedia-import.model';
 import { environment } from '../../environments/environment';
 import { Language } from './i18n/languages';
 
+export interface MissingTranslationLanguage {
+  language: string;
+  fields: string[];
+}
+
+export interface MissingTranslation {
+  id: number;
+  commonName: string;
+  languages: MissingTranslationLanguage[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class AnimalService {
   private http = inject(HttpClient);
@@ -56,5 +67,13 @@ export class AnimalService {
 
   saveTranslation(id: number, language: Language, texts: AnimalTexts): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}/translations/${language}`, texts);
+  }
+
+  missingTranslations(): Observable<MissingTranslation[]> {
+    return this.http.get<MissingTranslation[]>(`${environment.apiUrl}/admin/missing-translations`);
+  }
+
+  translateMissing(id: number): Observable<MissingTranslation> {
+    return this.http.post<MissingTranslation>(`${this.apiUrl}/${id}/translate-missing`, null);
   }
 }

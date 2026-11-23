@@ -2,6 +2,7 @@ import { Component, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AdminKeyService } from './admin-key.service';
+import { LanguageService } from '../shared/i18n/language.service';
 import { isRateLimited, rateLimitMessage } from '../shared/rate-limit';
 
 @Component({
@@ -14,6 +15,7 @@ export class AdminUnlock {
   returnUrl = input<string>();
 
   protected admin = inject(AdminKeyService);
+  protected i18n = inject(LanguageService);
   private router = inject(Router);
 
   key = signal('');
