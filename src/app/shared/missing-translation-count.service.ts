@@ -31,9 +31,7 @@ export class MissingTranslationCountService {
       next: (rows) => {
         if (this.unlocked && requestId === this.requestId) this.count.set(rows.length);
       },
-      error: () => {
-        if (this.unlocked && requestId === this.requestId) this.count.set(0);
-      },
+      error: () => undefined,
     });
   }
 }

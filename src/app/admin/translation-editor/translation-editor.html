@@ -9,7 +9,7 @@
     @if (error()) {
       <p class="field-error" role="alert">{{ error() }}</p>
     }
-    <fieldset class="translation-editor-language" formGroupName="de">
+    <fieldset class="translation-editor-language" formGroupName="de" [disabled]="loading()">
       <legend>{{ i18n.t('form.german.title') }}</legend>
       <label>
         {{ i18n.t('form.german.commonName') }}
@@ -28,7 +28,7 @@
         <textarea rows="5" formControlName="profile"></textarea>
       </label>
     </fieldset>
-    <fieldset class="translation-editor-language" formGroupName="fr">
+    <fieldset class="translation-editor-language" formGroupName="fr" [disabled]="loading()">
       <legend>{{ i18n.t('form.french.title') }}</legend>
       <label>
         {{ i18n.t('form.french.commonName') }}

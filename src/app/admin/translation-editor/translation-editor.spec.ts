@@ -125,8 +125,14 @@ describe('TranslationEditor', () => {
   });
 
   it('shows a localized load error and clears it when another animal is selected', async () => {
-    const getTranslation = vi.fn((id: number) =>
-      id === 1 ? throwError(() => new HttpErrorResponse({ status: 500 })) : of(emptyTexts),
+    const translations = {
+      de: new Subject<AnimalTexts>(),
+      fr: new Subject<AnimalTexts>(),
+    };
+    const getTranslation = vi.fn((id: number, language: 'de' | 'fr') =>
+      id === 1
+        ? throwError(() => new HttpErrorResponse({ status: 500 }))
+        : translations[language],
     );
     const { fixture, element } = await setup({ animalId: 1 }, getTranslation);
     const component = fixture.componentInstance;
@@ -135,13 +141,27 @@ describe('TranslationEditor', () => {
     expect(element.querySelector('[role="alert"]')?.textContent?.trim()).toBe(
       language.t('admin.missing.error'),
     );
+    expect(component.loading()).toBe(false);
+    expect(element.querySelector('fieldset[formGroupName="de"]')!.matches(':disabled')).toBe(false);
 
     fixture.componentRef.setInput('animalId', 2);
     fixture.detectChanges();
     await fixture.whenStable();
 
+    expect(component.loading()).toBe(true);
+    expect(element.querySelector('fieldset[formGroupName="de"]')!.matches(':disabled')).toBe(true);
     expect(component.error()).toBe('');
+
+    translations.de.next(emptyTexts);
+    translations.de.complete();
+    expect(component.loading()).toBe(true);
+    translations.fr.next(emptyTexts);
+    translations.fr.complete();
+    fixture.detectChanges();
+
+    expect(component.loading()).toBe(false);
     expect(element.querySelector('[role="alert"]')).toBeNull();
+    expect(element.querySelector('fieldset[formGroupName="de"]')!.matches(':disabled')).toBe(false);
   });
 
   it('waits for both translations before patching the form', async () => {
@@ -158,6 +178,18 @@ describe('TranslationEditor', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
+    const germanFieldset = fixture.nativeElement.querySelector(
+      'fieldset[formGroupName="de"]',
+    ) as HTMLFieldSetElement;
+    const frenchFieldset = fixture.nativeElement.querySelector(
+      'fieldset[formGroupName="fr"]',
+    ) as HTMLFieldSetElement;
+    expect(component.loading()).toBe(true);
+    expect(germanFieldset.matches(':disabled')).toBe(true);
+    expect(frenchFieldset.matches(':disabled')).toBe(true);
+    expect(germanFieldset.querySelector('input')!.matches(':disabled')).toBe(true);
+    expect(frenchFieldset.querySelector('textarea')!.matches(':disabled')).toBe(true);
+    expect(fixture.nativeElement.querySelector('button[type="button"]').disabled).toBe(false);
     expect(component.form.getRawValue()).toEqual({
       de: emptyTextsAfterReset(),
       fr: emptyTextsAfterReset(),
@@ -168,10 +200,14 @@ describe('TranslationEditor', () => {
 
     french.next({ ...emptyTexts, commonName: 'Ocapí' });
     french.complete();
+    fixture.detectChanges();
     expect(component.form.getRawValue()).toEqual({
       de: { ...emptyTexts, commonName: 'Okapi' },
       fr: { ...emptyTexts, commonName: 'Ocapí' },
     });
+    expect(component.loading()).toBe(false);
+    expect(germanFieldset.matches(':disabled')).toBe(false);
+    expect(frenchFieldset.matches(':disabled')).toBe(false);
   });
 
   it('ignores responses for a previous animal after selection changes', async () => {

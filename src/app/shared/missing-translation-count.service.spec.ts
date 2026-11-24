@@ -60,11 +60,24 @@ describe('MissingTranslationCountService', () => {
     expect(count.count()).toBe(0);
   });
 
-  it('clears the count when refreshing fails', () => {
-    const { count } = setup(vi.fn(() => throwError(() => new Error('offline'))));
+  it('keeps the last successful count when refreshing fails', () => {
+    const missingTranslations = vi
+      .fn()
+      .mockReturnValueOnce(of(missing))
+      .mockReturnValueOnce(throwError(() => new Error('offline')));
+    const { count } = setup(missingTranslations);
 
     count.setUnlocked(true);
+    expect(count.count()).toBe(2);
+    count.refresh();
+    expect(count.count()).toBe(2);
+  });
 
+  it('keeps the initial count at zero when the first load fails', () => {
+    const { count } = setup(vi.fn(() => throwError(() => new Error('offline'))));
+
+    expect(count.count()).toBe(0);
+    count.setUnlocked(true);
     expect(count.count()).toBe(0);
   });
 });

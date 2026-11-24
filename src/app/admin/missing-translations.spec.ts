@@ -238,7 +238,7 @@ describe('MissingTranslations', () => {
     expect(refresh).toHaveBeenCalledOnce();
   });
 
-  it('removes an animal after the missing text is filled', () => {
+  it('keeps an animal in entries after its missing text is filled', () => {
     const translate = vi.fn(() => of({ id: 4, commonName: 'Okapi', languages: [] }));
     const { element, fixture } = setup(undefined, translate);
 
