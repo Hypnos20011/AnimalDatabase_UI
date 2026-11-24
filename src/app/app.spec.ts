@@ -4,6 +4,9 @@ import { provideRouter } from '@angular/router';
 import { App } from './app';
 import { RandomAnimalService } from './shared/random-animal.service';
 import { AdminKeyService } from './admin/admin-key.service';
+import { AnimalService } from './shared/animal.service';
+import { of } from 'rxjs';
+import { MissingTranslationCountService } from './shared/missing-translation-count.service';
 
 describe('App', () => {
   const open = vi.fn();
@@ -22,6 +25,18 @@ describe('App', () => {
         provideRouter([]),
         { provide: RandomAnimalService, useValue: { open } },
         { provide: AdminKeyService, useValue: { unlocked, clear } },
+        {
+          provide: AnimalService,
+          useValue: {
+            missingTranslations: vi.fn(() =>
+              of([
+                { id: 1, commonName: 'Okapi', languages: [] },
+                { id: 2, commonName: 'Shoebill', languages: [] },
+                { id: 3, commonName: 'Aye-aye', languages: [] },
+              ]),
+            ),
+          },
+        },
       ],
     }).compileComponents();
   });
@@ -83,15 +98,33 @@ describe('App', () => {
     expect(element.querySelector('.site-footer .lock')).toBeNull();
   });
 
-  it('swaps the footer link for Lock once unlocked', async () => {
+  it('keeps the Admin footer link and shows Lock once unlocked', async () => {
     unlocked.set(true);
     const { element } = await render();
     const lock = element.querySelector<HTMLButtonElement>('.site-footer .lock')!;
 
     expect(lock.textContent!.trim()).toBe('Lock');
-    expect(element.querySelector('.site-footer .admin')).toBeNull();
+    expect(element.querySelector('.site-footer .admin')?.getAttribute('href')).toBe('/admin');
     lock.click();
     expect(clear).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the unlocked missing-translation badge only for positive counts', async () => {
+    const { fixture, element } = await render();
+    const count = TestBed.inject(MissingTranslationCountService).count;
+
+    expect(element.querySelector('.site-footer .missing-count')).toBeNull();
+
+    unlocked.set(true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const unlockedBadge = element.querySelector('.site-footer .missing-count');
+    expect(unlockedBadge?.textContent?.trim()).toBe('3');
+
+    count.set(0);
+    fixture.detectChanges();
+    expect(element.querySelector('.site-footer .missing-count')).toBeNull();
   });
 
   describe('language switch', () => {

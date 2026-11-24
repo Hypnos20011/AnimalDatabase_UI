@@ -2,6 +2,7 @@ import {
   afterNextRender,
   Component,
   computed,
+  effect,
   ElementRef,
   inject,
   Injector,
@@ -16,6 +17,7 @@ import { LanguageService } from './shared/i18n/language.service';
 import { Language, SUPPORTED_LANGUAGES } from './shared/i18n/languages';
 import { TranslationKey } from './shared/i18n/en';
 import { CompareService } from './compare/compare.service';
+import { MissingTranslationCountService } from './shared/missing-translation-count.service';
 
 @Component({
   selector: 'app-root',
@@ -33,6 +35,7 @@ export class App {
   protected admin = inject(AdminKeyService);
   protected i18n = inject(LanguageService);
   protected compare = inject(CompareService);
+  protected translationCount = inject(MissingTranslationCountService);
   protected readonly languages = SUPPORTED_LANGUAGES;
   protected readonly title = signal('Unusual Animals');
   protected languageOpen = signal(false);
@@ -42,6 +45,10 @@ export class App {
   protected languageLabel = computed(() =>
     this.i18n.t('language.current', { name: this.languageName(this.i18n.language()) }),
   );
+
+  constructor() {
+    effect(() => this.translationCount.setUnlocked(this.admin.unlocked()));
+  }
 
   openRandom(): void {
     this.random.open();

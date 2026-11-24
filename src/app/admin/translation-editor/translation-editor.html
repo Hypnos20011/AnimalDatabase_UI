@@ -1,0 +1,59 @@
+<dialog
+  #dialog
+  class="translation-editor"
+  [attr.aria-labelledby]="titleId"
+  (cancel)="onNativeCancel($event)"
+>
+  <h2 class="translation-editor-title" [id]="titleId">{{ animalName() }}</h2>
+  <form class="translation-editor-form" [formGroup]="form" (ngSubmit)="save()">
+    @if (error()) {
+      <p class="field-error" role="alert">{{ error() }}</p>
+    }
+    <fieldset class="translation-editor-language" formGroupName="de">
+      <legend>{{ i18n.t('form.german.title') }}</legend>
+      <label>
+        {{ i18n.t('form.german.commonName') }}
+        <input type="text" formControlName="commonName"/>
+      </label>
+      <label>
+        {{ i18n.t('form.german.habitat') }}
+        <input type="text" formControlName="habitat"/>
+      </label>
+      <label>
+        {{ i18n.t('form.german.range') }}
+        <input type="text" formControlName="rangeRegion"/>
+      </label>
+      <label>
+        {{ i18n.t('form.german.profile') }}
+        <textarea rows="5" formControlName="profile"></textarea>
+      </label>
+    </fieldset>
+    <fieldset class="translation-editor-language" formGroupName="fr">
+      <legend>{{ i18n.t('form.french.title') }}</legend>
+      <label>
+        {{ i18n.t('form.french.commonName') }}
+        <input type="text" formControlName="commonName"/>
+      </label>
+      <label>
+        {{ i18n.t('form.french.habitat') }}
+        <input type="text" formControlName="habitat"/>
+      </label>
+      <label>
+        {{ i18n.t('form.french.range') }}
+        <input type="text" formControlName="rangeRegion"/>
+      </label>
+      <label>
+        {{ i18n.t('form.french.profile') }}
+        <textarea rows="5" formControlName="profile"></textarea>
+      </label>
+    </fieldset>
+    <div class="translation-editor-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()">
+        {{ i18n.t('form.cancel') }}
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="loading() || saving()">
+        {{ saving() ? i18n.t('form.saving') : i18n.t('form.save') }}
+      </button>
+    </div>
+  </form>
+</dialog>

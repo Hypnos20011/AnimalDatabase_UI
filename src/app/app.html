@@ -97,13 +97,19 @@
 </main>
 <footer class="site-footer">
   <div class="container footer-inner">
+    <a class="footer-link admin" routerLink="/admin">
+      {{ i18n.t('footer.admin') }}
+      @if (admin.unlocked() && translationCount.count() > 0) {
+        <span class="missing-count" [attr.aria-label]="i18n.t('admin.missing.count', { count: translationCount.count() })">
+          {{ translationCount.count() }}
+        </span>
+      }
+    </a>
     @if (admin.unlocked()) {
       <span class="footer-note">{{ i18n.t('footer.unlocked') }}</span>
       <button type="button" class="footer-link lock" (click)="lock()">
         {{ i18n.t('footer.lock') }}
       </button>
-    } @else {
-      <a class="footer-link admin" routerLink="/admin">{{ i18n.t('footer.admin') }}</a>
     }
   </div>
 </footer>

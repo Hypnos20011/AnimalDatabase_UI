@@ -46,10 +46,6 @@ describe('AnimalForm i18n', () => {
       getAll: vi.fn(() => of([])),
       create: vi.fn((): Observable<unknown> => of({ id: 5 })),
       importFromWikipedia: vi.fn(() => of(okapi())),
-      translate: vi.fn(() =>
-        of({ commonName: 'Okapi', habitat: null, rangeRegion: null, profile: null }),
-      ),
-      saveTranslation: vi.fn(() => of(undefined)),
       ...overrides,
     };
     TestBed.configureTestingModule({
@@ -151,15 +147,12 @@ describe('AnimalForm i18n', () => {
     );
   });
 
-  it('localizes the translate hint and fallback errors', () => {
-    const { form } = setup('de', {
-      translate: vi.fn(() => throwError(() => new HttpErrorResponse({ status: 500 }))),
-    });
-    form.translateTexts();
-    expect(form.translateError()).toBe('Bitte zuerst englischen Text eingeben');
-    form.form.controls.commonName.setValue('Okapi');
-    form.translateTexts();
-    expect(form.translateError()).toBe('Übersetzen ist gerade nicht möglich');
+  it('does not render manual translation fields or a translate action', () => {
+    const { element } = setup('de');
+
+    expect(element.querySelector('[formControlName="commonNameDe"]')).toBeNull();
+    expect(element.querySelector('[formControlName="commonNameFr"]')).toBeNull();
+    expect(element.textContent).not.toContain('Ins Deutsche und Französische übersetzen');
   });
 
   it('localizes the save fallback error', () => {

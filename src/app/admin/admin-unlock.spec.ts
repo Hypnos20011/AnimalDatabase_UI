@@ -4,6 +4,7 @@ import { Observable, of, throwError } from 'rxjs';
 import { AdminUnlock } from './admin-unlock';
 import { AdminKeyService } from './admin-key.service';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
 
 describe('AdminUnlock', () => {
   async function setup(verify: (key: string) => Observable<boolean>, returnUrl?: string) {
@@ -98,5 +99,21 @@ describe('AdminUnlock', () => {
     await settle();
     expect(admin.unlocked()).toBe(false);
     expect(element.querySelector('input[type="password"]')).not.toBeNull();
+  });
+
+  it('shows the translation badge only while unlocked and the count is positive', async () => {
+    const { admin, element, settle } = await setup(() => of(true));
+    const count = TestBed.inject(MissingTranslationCountService).count;
+    count.set(2);
+
+    expect(element.querySelector('.missing-count')).toBeNull();
+
+    admin.set('right');
+    await settle();
+    expect(element.querySelector('.missing-count')?.textContent?.trim()).toBe('2');
+
+    count.set(0);
+    await settle();
+    expect(element.querySelector('.missing-count')).toBeNull();
   });
 });

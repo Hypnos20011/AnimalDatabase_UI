@@ -7,40 +7,51 @@
     <p>{{ i18n.t('admin.missing.loading') }}</p>
   } @else if (error() && rows().length === 0) {
     <p class="field-error" role="alert">{{ error() }}</p>
-  } @else if (rows().length === 0) {
-    <p>{{ i18n.t('admin.missing.empty') }}</p>
   } @else {
     @if (error()) {
       <p class="field-error" role="alert">{{ error() }}</p>
     }
+    @if (rows().length === 0) {
+      <p>{{ i18n.t('admin.missing.empty') }}</p>
+    }
     <ul class="gaps">
-      @for (animal of rows(); track animal.id) {
+      @for (animal of entries(); track animal.id) {
         <li>
           <div class="gap-head">
             <a [routerLink]="['/animals', animal.id, 'edit']">{{ animal.commonName }}</a>
-            <a class="edit" [routerLink]="['/animals', animal.id, 'edit']">{{
+            <button type="button" class="edit" (click)="editing.set(animal)">{{
               i18n.t('admin.missing.edit')
-            }}</a>
+            }}</button>
           </div>
-          <ul>
-            @for (language of animal.languages; track language.language) {
-              <li>{{ languageLabel(language.language) }}: {{ fields(language.fields) }}</li>
-            }
-          </ul>
-          <button
-            type="button"
-            class="btn btn-primary"
-            [disabled]="busy() !== null"
-            (click)="translate(animal)"
-          >
-            {{
-              busy() === animal.id
-                ? i18n.t('admin.missing.translating')
-                : i18n.t('admin.missing.translate')
-            }}
-          </button>
+          @if (animal.languages.length > 0) {
+            <ul>
+              @for (language of animal.languages; track language.language) {
+                <li>{{ languageLabel(language.language) }}: {{ fields(language.fields) }}</li>
+              }
+            </ul>
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="busy() !== null"
+              (click)="translate(animal)"
+            >
+              {{
+                busy() === animal.id
+                  ? i18n.t('admin.missing.translating')
+                  : i18n.t('admin.missing.translate')
+              }}
+            </button>
+          } @else {
+            <p>{{ i18n.t('admin.missing.complete') }}</p>
+          }
         </li>
       }
     </ul>
   }
+  <app-translation-editor
+    [animalId]="editing()?.id ?? null"
+    [animalName]="editing()?.commonName ?? ''"
+    (closed)="editing.set(null)"
+    (saved)="onEditorSaved()"
+  />
 </section>

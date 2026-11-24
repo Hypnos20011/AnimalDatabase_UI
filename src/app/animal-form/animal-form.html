@@ -216,63 +216,6 @@
     <p class="field-error">{{ i18n.t('form.error.profileTooLong') }}</p>
   }
 
-  <div class="translation-actions">
-    <button
-      type="button"
-      class="btn btn-primary"
-      [disabled]="translating() || !form.controls.commonName.value?.trim()"
-      (click)="translateTexts()"
-    >
-      {{ translating() ? i18n.t('form.translate.translating') : i18n.t('form.translate.action') }}
-    </button>
-    @if (translateMessage()) {
-      <p class="hint">{{ translateMessage() }}</p>
-    }
-    @if (translateError()) {
-      <p class="field-error">{{ translateError() }}</p>
-    }
-  </div>
-
-  <div class="translation-texts">
-    <h3>{{ i18n.t('form.german.title') }}</h3>
-
-    <label>
-      {{ i18n.t('form.german.commonName') }}
-      <input type="text" formControlName="commonNameDe"/>
-    </label>
-    <label>
-      {{ i18n.t('form.german.habitat') }}
-      <input type="text" formControlName="habitatDe"/>
-    </label>
-    <label>
-      {{ i18n.t('form.german.range') }}
-      <input type="text" formControlName="rangeRegionDe"/>
-    </label>
-    <label>
-      {{ i18n.t('form.german.profile') }}
-      <textarea rows="5" formControlName="profileDe"></textarea>
-    </label>
-  </div>
-
-  <div class="translation-texts">
-    <h3>{{ i18n.t('form.french.title') }}</h3>
-    <label>
-      {{ i18n.t('form.french.commonName') }}
-      <input type="text" formControlName="commonNameFr"/>
-    </label>
-    <label>
-      {{ i18n.t('form.french.habitat') }}
-      <input type="text" formControlName="habitatFr"/>
-    </label>
-    <label>
-      {{ i18n.t('form.french.range') }}
-      <input type="text" formControlName="rangeRegionFr"/>
-    </label>
-    <label>
-      {{ i18n.t('form.french.profile') }}
-      <textarea rows="5" formControlName="profileFr"></textarea>
-    </label>
-  </div>
 
   <label>
     {{ i18n.t('form.sourceUrl') }}
