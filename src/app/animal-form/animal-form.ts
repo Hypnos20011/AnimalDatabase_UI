@@ -1,9 +1,12 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 import {
   AbstractControl,
+  FormArray,
   FormBuilder,
+  FormGroup,
   ReactiveFormsModule,
   ValidationErrors,
   ValidatorFn,
@@ -58,7 +61,7 @@ const minNotAboveMax: ValidatorFn = (group: AbstractControl): ValidationErrors |
 
 @Component({
   selector: 'app-animal-form',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, NgOptimizedImage],
   templateUrl: './animal-form.html',
   styleUrl: './animal-form.css',
 })
@@ -94,41 +97,6 @@ export class AnimalForm {
     'underground',
   ];
 
-  readonly imageFields = [
-    {
-      key: 'maleImageUrl',
-      attributionKey: 'maleImageAttribution',
-      sourcePageKey: 'maleImageSourcePageUrl',
-      kind: 'male',
-      label: 'Male',
-      labelKey: 'form.image.male',
-    },
-    {
-      key: 'femaleImageUrl',
-      attributionKey: 'femaleImageAttribution',
-      sourcePageKey: 'femaleImageSourcePageUrl',
-      kind: 'female',
-      label: 'Female',
-      labelKey: 'form.image.female',
-    },
-    {
-      key: 'babyImageUrl',
-      attributionKey: 'babyImageAttribution',
-      sourcePageKey: 'babyImageSourcePageUrl',
-      kind: 'baby',
-      label: 'Baby',
-      labelKey: 'form.image.baby',
-    },
-    {
-      key: 'otherImageUrl',
-      attributionKey: 'otherImageAttribution',
-      sourcePageKey: 'otherImageSourcePageUrl',
-      kind: 'unspecified',
-      label: 'Other',
-      labelKey: 'form.image.other',
-    },
-  ] as const;
-
   editing = computed(() => !!this.id());
   loadingAnimal = signal(false);
   saving = signal(false);
@@ -140,12 +108,13 @@ export class AnimalForm {
   translating = signal(false);
   translateMessage = signal('');
   translateError = signal('');
+  error = signal('');
+
   private originalCaptions = new Map<string, string | null>();
   private importedImageUrl = '';
   private savedImageUrl = '';
   private savedScientificName = '';
   private importedValues = new Map<string, unknown>();
-  error = signal('');
 
   form = this.fb.group(
     {
@@ -176,30 +145,7 @@ export class AnimalForm {
       habitatFr: ['', Validators.maxLength(255)],
       rangeRegionFr: ['', Validators.maxLength(255)],
       profileFr: [''],
-      maleImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
-      femaleImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
-      babyImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
-      otherImageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
-      maleImageAttribution: ['', Validators.maxLength(500)],
-      femaleImageAttribution: ['', Validators.maxLength(500)],
-      babyImageAttribution: ['', Validators.maxLength(500)],
-      otherImageAttribution: ['', Validators.maxLength(500)],
-      maleImageSourcePageUrl: [
-        '',
-        [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)],
-      ],
-      femaleImageSourcePageUrl: [
-        '',
-        [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)],
-      ],
-      babyImageSourcePageUrl: [
-        '',
-        [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)],
-      ],
-      otherImageSourcePageUrl: [
-        '',
-        [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)],
-      ],
+      images: this.fb.array([this.createImageRow()]),
     },
     { validators: minNotAboveMax },
   );
@@ -294,7 +240,7 @@ export class AnimalForm {
         }),
       )
       .subscribe({
-        next: (saved) => this.router.navigate(id ? ['/animals', id] : ['/']),
+        next: () => this.router.navigate(id ? ['/animals', id] : ['/']),
         error: (err) => {
           this.error.set(apiErrorMessage(err, this.i18n.t('form.error.save')));
           this.saving.set(false);
@@ -433,8 +379,12 @@ export class AnimalForm {
       }
     }
     if (data.sourceUrl) this.form.controls.sourceUrl.setValue(data.sourceUrl);
-    const imageControl = this.form.controls.otherImageUrl;
+    const firstRow = this.imageRows.at(0);
+    const imageControl = firstRow.get('url');
+
+    if (!imageControl) return filled;
     const current = (imageControl.value ?? '').trim();
+
     if (
       !current ||
       current === this.importedImageUrl ||
@@ -455,16 +405,38 @@ export class AnimalForm {
         filled++;
         const attribution = (data.attribution ?? '').trim();
         const sourcePageUrl = (data.sourcePageUrl ?? '').trim();
-        this.form.controls.otherImageAttribution.setValue(attribution);
-        this.form.controls.otherImageSourcePageUrl.setValue(sourcePageUrl);
+        firstRow.get('attribution')?.setValue(attribution);
+        firstRow.get('sourcePageUrl')?.setValue(sourcePageUrl);
         if (attribution) filled++;
         if (sourcePageUrl) filled++;
       } else {
-        this.form.controls.otherImageAttribution.setValue('');
-        this.form.controls.otherImageSourcePageUrl.setValue('');
+        firstRow.get('attribution')?.setValue('');
+        firstRow.get('sourcePageUrl')?.setValue('');
       }
     }
     return filled;
+  }
+
+  private createImageRow(): FormGroup {
+    return this.fb.group({
+      url: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
+      attribution: ['', [Validators.maxLength(500)]],
+      sourcePageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)]],
+    });
+  }
+
+  addImageRow(): void {
+    this.imageRows.push(this.createImageRow());
+  }
+
+  removeImageRow(index: number): void {
+    if (index > 0 && index < this.imageRows.length) {
+      this.imageRows.removeAt(index);
+    }
+  }
+
+  get imageRows(): FormArray {
+    return this.form.get('images') as FormArray;
   }
 
   private loadAnimal(id: number): void {
@@ -503,14 +475,18 @@ export class AnimalForm {
           sourceUrl: animal.sourceUrl ?? '',
         });
         this.originalCaptions.clear();
-
-        for (const field of this.imageFields) {
-          const image = images.find((i) => i.kind === field.kind);
-          this.form.get(field.key)?.setValue(image?.url ?? '');
-          this.form.get(field.attributionKey)?.setValue(image?.attribution ?? '');
-          this.form.get(field.sourcePageKey)?.setValue(image?.sourcePageUrl ?? '');
-          if (image) this.originalCaptions.set(image.url, image.caption);
+        this.imageRows.clear();
+        for (const image of images) {
+          const row = this.createImageRow();
+          row.patchValue({
+            url: image.url,
+            attribution: image.attribution ?? '',
+            sourcePageUrl: image.sourcePageUrl ?? '',
+          });
+          this.imageRows.push(row);
+          this.originalCaptions.set(image.url, image.caption);
         }
+        if (this.imageRows.length === 0) this.imageRows.push(this.createImageRow());
         this.form.patchValue({
           commonNameDe: german?.commonName ?? '',
           habitatDe: german?.habitat ?? '',
@@ -523,7 +499,7 @@ export class AnimalForm {
         });
 
         this.savedScientificName = animal.scientificName ?? '';
-        this.savedImageUrl = this.form.controls.otherImageUrl.value ?? '';
+        this.savedImageUrl = this.imageRows.at(0).get('url')?.value ?? '';
 
         this.loadingAnimal.set(false);
       },
@@ -536,18 +512,16 @@ export class AnimalForm {
 
   private collectImages(): NewAnimalImage[] {
     const images: NewAnimalImage[] = [];
-    for (const field of this.imageFields) {
-      const url = this.imageUrl(field.key);
-      if (url) {
-        const caption = this.originalCaptions.has(url)
-          ? this.originalCaptions.get(url)!
-          : field.label;
+    for (const field of this.imageRows.controls) {
+      const url = this.text(field.get('url')?.value as string | null);
+      if (url != null) {
+        const caption = this.originalCaptions.has(url) ? this.originalCaptions.get(url)! : null;
         images.push({
-          kind: field.kind,
+          kind: 'unspecified',
           url,
           caption,
-          attribution: this.text(this.form.get(field.attributionKey)?.value as string | null),
-          sourcePageUrl: this.text(this.form.get(field.sourcePageKey)?.value as string | null),
+          attribution: this.text(field.get('attribution')?.value as string | null),
+          sourcePageUrl: this.text(field.get('sourcePageUrl')?.value as string | null),
         });
       }
     }

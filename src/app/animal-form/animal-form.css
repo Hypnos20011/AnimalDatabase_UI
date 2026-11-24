@@ -88,15 +88,51 @@ form > .field-error {
   font-weight: 700;
 }
 
-.preview {
-  display: block;
-  align-self: flex-start;
-  width: auto;
-  height: auto;
-  max-width: min(100%, 280px);
-  max-height: 200px;
+.image-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.image-row > .btn {
+  align-self: flex-start;
+}
+
+.image-row > .btn-danger {
+  background: transparent;
+  color: var(--color-text);
+  border-color: var(--color-border-strong);
+}
+
+.image-row > .btn-danger:hover:not(:disabled) {
+  background: var(--color-surface-muted);
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.image-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.preview-frame {
+  position: relative;
+  display: block;
+  align-self: flex-start;
+  width: min(100%, 280px);
+  aspect-ratio: 7 / 5;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.preview {
+  object-fit: contain;
 }
 
 .actions {

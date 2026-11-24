@@ -201,10 +201,13 @@
     @if (photoUrl(r); as src) {
       <figure class="quiz-photo">
         <img
-          [src]="src"
+          [ngSrc]="src"
           [attr.srcset]="srcset(src)"
-          sizes="(max-width: 600px) 100vw, 40rem"
+          sizes="(max-width: 600px) 100vw, 60vw"
           [alt]="answered() ? r.answer.commonName : i18n.t('quiz.photoAlt')"
+          fill
+          disableOptimizedSrcset
+          priority
           decoding="async"
           (error)="photoFailed()"
         />

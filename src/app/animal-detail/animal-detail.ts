@@ -1,5 +1,5 @@
 import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { Title } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
@@ -22,7 +22,7 @@ export const SHARE_STATUS_MS = 3000;
 
 @Component({
   selector: 'app-animal-detail',
-  imports: [CommonModule, RouterLink, RangePipe, ConfirmDialog],
+  imports: [CommonModule, NgOptimizedImage, RouterLink, RangePipe, ConfirmDialog],
   templateUrl: './animal-detail.html',
   styleUrl: './animal-detail.css',
 })
@@ -58,7 +58,9 @@ export class AnimalDetail {
   heroImage = computed(() => this.images()[0] ?? null);
   moreImages = computed(() => this.images().slice(1));
   heroFailed = signal(false);
-  noPhoto = computed(() => !this.imagesLoading() && (!this.heroImage() || this.heroFailed()));
+  noPhoto = computed(
+    () => !this.imagesLoading() && (!this.heroImage()?.url?.trim() || this.heroFailed()),
+  );
 
   private profileParts = computed(() => splitProfile(this.animal()?.profile));
   profileText = computed(() => this.profileParts().text);

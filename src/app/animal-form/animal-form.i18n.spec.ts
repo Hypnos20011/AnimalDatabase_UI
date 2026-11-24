@@ -75,7 +75,7 @@ describe('AnimalForm i18n', () => {
     expect(element.querySelector('h2')?.textContent).toBe('Tier hinzufügen');
     expect(element.textContent).toContain('Wissenschaftlicher Name');
     expect(element.textContent).toContain('Lebensdauer (Jahre)');
-    expect(element.textContent).toContain('Männchen');
+    expect(element.textContent).toContain('Bildnachweis');
     expect(element.querySelector('legend')?.textContent).toBe('Bilder');
     expect(element.querySelector('button[type=submit]')?.textContent?.trim()).toBe('Speichern');
     expect(element.querySelector('a.btn-secondary')?.textContent).toBe('Abbrechen');
@@ -171,14 +171,14 @@ describe('AnimalForm i18n', () => {
     expect(form.error()).toBe('Das Tier konnte nicht gespeichert werden');
   });
 
-  it('keeps saving English image captions in German', () => {
+  it('saves an unspecified image without a generated caption in German', () => {
     const { form, service } = setup('de');
     form.form.controls.commonName.setValue('Okapi');
-    form.form.controls.maleImageUrl.setValue('https://upload.wikimedia.org/okapi.jpg');
+    form.imageRows.at(0).get('url')?.setValue('https://upload.wikimedia.org/okapi.jpg');
     form.submit();
     expect(service.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        images: [expect.objectContaining({ kind: 'male', caption: 'Male' })],
+        images: [expect.objectContaining({ kind: 'unspecified', caption: null })],
       }),
     );
   });

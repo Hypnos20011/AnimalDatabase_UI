@@ -10,7 +10,7 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { NavigationStart, Router, RouterLink } from '@angular/router';
 import { AnimalService } from '../shared/animal.service';
 import { Animal } from '../animal-model/animal.model';
@@ -34,7 +34,7 @@ import { RandomAnimalService } from '../shared/random-animal.service';
 
 @Component({
   selector: 'app-animals-list',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, NgOptimizedImage, RouterLink],
   templateUrl: './animals-list.html',
   styleUrl: './animals-list.css',
   host: {

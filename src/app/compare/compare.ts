@@ -8,6 +8,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -33,7 +34,7 @@ type LoadResult = { id: number; animal: Animal | null; missing: boolean };
 
 @Component({
   selector: 'app-compare',
-  imports: [RouterLink],
+  imports: [NgOptimizedImage, RouterLink],
   templateUrl: './compare.html',
   styleUrl: './compare.css',
 })

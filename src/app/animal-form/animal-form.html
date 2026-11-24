@@ -40,7 +40,7 @@
 <form [formGroup]="form" (ngSubmit)="submit()">
   <label>
     {{ i18n.t('form.commonName') }}
-    <input type="text" formControlName="commonName" />
+    <input type="text" formControlName="commonName"/>
   </label>
   @if (form.controls.commonName.touched && form.controls.commonName.invalid) {
     <p class="field-error">{{ i18n.t('form.commonName.required') }}</p>
@@ -59,12 +59,12 @@
 
   <label>
     {{ i18n.t('form.scientificName') }}
-    <input type="text" formControlName="scientificName" />
+    <input type="text" formControlName="scientificName"/>
   </label>
 
   <label>
     {{ i18n.t('form.family') }}
-    <input type="text" formControlName="family" />
+    <input type="text" formControlName="family"/>
   </label>
 
   <label>
@@ -78,7 +78,7 @@
   </label>
 
   <label class="checkbox">
-    <input type="checkbox" formControlName="isDomesticated" />
+    <input type="checkbox" formControlName="isDomesticated"/>
     {{ i18n.t('form.domesticated') }}
   </label>
 
@@ -190,7 +190,7 @@
 
   <label>
     {{ i18n.t('form.habitat') }}
-    <input type="text" formControlName="habitat" />
+    <input type="text" formControlName="habitat"/>
   </label>
 
   <label>
@@ -205,7 +205,7 @@
 
   <label>
     {{ i18n.t('form.range') }}
-    <input type="text" formControlName="rangeRegion" />
+    <input type="text" formControlName="rangeRegion"/>
   </label>
 
   <label>
@@ -238,15 +238,15 @@
 
     <label>
       {{ i18n.t('form.german.commonName') }}
-      <input type="text" formControlName="commonNameDe" />
+      <input type="text" formControlName="commonNameDe"/>
     </label>
     <label>
       {{ i18n.t('form.german.habitat') }}
-      <input type="text" formControlName="habitatDe" />
+      <input type="text" formControlName="habitatDe"/>
     </label>
     <label>
       {{ i18n.t('form.german.range') }}
-      <input type="text" formControlName="rangeRegionDe" />
+      <input type="text" formControlName="rangeRegionDe"/>
     </label>
     <label>
       {{ i18n.t('form.german.profile') }}
@@ -258,15 +258,15 @@
     <h3>{{ i18n.t('form.french.title') }}</h3>
     <label>
       {{ i18n.t('form.french.commonName') }}
-      <input type="text" formControlName="commonNameFr" />
+      <input type="text" formControlName="commonNameFr"/>
     </label>
     <label>
       {{ i18n.t('form.french.habitat') }}
-      <input type="text" formControlName="habitatFr" />
+      <input type="text" formControlName="habitatFr"/>
     </label>
     <label>
       {{ i18n.t('form.french.range') }}
-      <input type="text" formControlName="rangeRegionFr" />
+      <input type="text" formControlName="rangeRegionFr"/>
     </label>
     <label>
       {{ i18n.t('form.french.profile') }}
@@ -276,63 +276,79 @@
 
   <label>
     {{ i18n.t('form.sourceUrl') }}
-    <input type="url" placeholder="https://en.wikipedia.org/wiki/..." formControlName="sourceUrl" />
+    <input type="url" placeholder="https://en.wikipedia.org/wiki/..." formControlName="sourceUrl"/>
   </label>
   @if (imageInvalid('sourceUrl')) {
     <p class="field-error">{{ i18n.t('form.error.httpsLink') }}</p>
   }
 
-  <fieldset class="images">
+  <fieldset class="images" formArrayName="images">
     <legend>{{ i18n.t('form.pictures') }}</legend>
     <p class="hint">{{ i18n.t('form.pictures.hint') }}</p>
-    @for (field of imageFields; track field.key) {
-      <label>
-        {{ i18n.t(field.labelKey) }}
-        <input
-          type="url"
-          placeholder="https://upload.wikimedia.org/..."
-          [formControlName]="field.key"
-        />
-      </label>
-      @if (imageInvalid(field.key)) {
-        <p class="field-error">{{ i18n.t('form.error.imageLink') }}</p>
-      }
-      <label>
-        {{ i18n.t('form.image.attribution') }}
-        <input
-          type="text"
-          maxlength="500"
-          [placeholder]="i18n.t('form.image.attributionPlaceholder')"
-          [formControlName]="field.attributionKey"
-        />
-      </label>
-      <label>
-        {{ i18n.t('form.image.sourcePage') }}
-        <input
-          type="url"
-          placeholder="https://commons.wikimedia.org/wiki/File:..."
-          [formControlName]="field.sourcePageKey"
-        />
-      </label>
-      @if (imageInvalid(field.sourcePageKey)) {
-        <p class="field-error">{{ i18n.t('form.error.httpsLink') }}</p>
-      }
-      @if (imageUrl(field.key) && !imageInvalid(field.key)) {
-        @if (previewFailed(imageUrl(field.key))) {
-          <p class="field-error">
-            {{ i18n.t('form.image.notFound') }}
-          </p>
-        } @else {
-          <img
-            class="preview"
-            [src]="imageUrl(field.key)"
-            [alt]="i18n.t(field.labelKey)"
-            decoding="async"
-            (error)="markPreviewFailed(imageUrl(field.key))"
+    @for (row of imageRows.controls; track row; let i = $index) {
+      <div class="image-row" [formGroupName]="i">
+        <label>
+          {{ i18n.t('form.image.main') }}
+          <input
+            formControlName="url"
+            placeholder="https://upload.wikimedia.org/..."
+            type="url"
           />
+        </label>
+        @if (imageInvalid('images.' + i + '.url')) {
+          <p class="field-error">{{ i18n.t('form.error.imageLink') }}</p>
         }
-      }
+        <label>
+          {{ i18n.t('form.image.attribution') }}
+          <input
+            type="text"
+            maxlength="500"
+            [placeholder]="i18n.t('form.image.attributionPlaceholder')"
+            formControlName="attribution"
+          />
+        </label>
+        <label>
+          {{ i18n.t('form.image.sourcePage') }}
+          <input
+            type="url"
+            placeholder="https://commons.wikimedia.org/wiki/File:..."
+            formControlName="sourcePageUrl"
+          />
+        </label>
+        @if (imageInvalid('images.' + i + '.sourcePageUrl')) {
+          <p class="field-error">{{ i18n.t('form.error.httpsLink') }}</p>
+        }
+        @if (imageUrl('images.' + i + '.url') && !imageInvalid('images.' + i + '.url')) {
+          @if (previewFailed(imageUrl('images.' + i + '.url'))) {
+            <p class="field-error">
+              {{ i18n.t('form.image.notFound') }}
+            </p>
+          } @else {
+            <div class="preview-frame">
+              <img
+                class="preview"
+                [ngSrc]="imageUrl('images.' + i + '.url')"
+                [alt]="i18n.t('form.image.main')"
+                fill
+                disableOptimizedSrcset
+                decoding="async"
+                (error)="markPreviewFailed(imageUrl('images.' + i + '.url'))"
+              />
+            </div>
+          }
+        }
+        @if (i > 0) {
+          <button type="button" class="btn btn-danger btn-sm" (click)="removeImageRow(i)">
+            {{ i18n.t('form.image.remove') }}
+          </button>
+        }
+      </div>
     }
+    <div class="image-actions">
+      <button type="button" class="btn btn-secondary" (click)="addImageRow()">
+        {{ i18n.t('form.image.add') }}
+      </button>
+    </div>
   </fieldset>
 
   @if (error()) {
@@ -344,7 +360,7 @@
       {{ saving() ? i18n.t('form.saving') : i18n.t('form.save') }}
     </button>
     <a class="btn btn-secondary" [routerLink]="editing() ? ['/animals', id()] : '/'">{{
-      i18n.t('form.cancel')
-    }}</a>
+        i18n.t('form.cancel')
+      }}</a>
   </div>
 </form>
