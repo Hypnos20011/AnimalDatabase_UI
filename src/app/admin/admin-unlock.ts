@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AdminKeyService } from './admin-key.service';
 import { LanguageService } from '../shared/i18n/language.service';
 import { isRateLimited, rateLimitMessage } from '../shared/rate-limit';
+import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
 
 @Component({
   selector: 'app-admin-unlock',
@@ -16,6 +17,7 @@ export class AdminUnlock {
 
   protected admin = inject(AdminKeyService);
   protected i18n = inject(LanguageService);
+  protected translationCount = inject(MissingTranslationCountService);
   private router = inject(Router);
 
   key = signal('');

@@ -7,6 +7,7 @@ import { Animal } from '../animal-model/animal.model';
 import { AnimalImage } from '../animal-model/animal-image.model';
 import { AdminKeyService } from '../admin/admin-key.service';
 import { signal } from '@angular/core';
+import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
 
 type DialogShim = { showModal?: () => void; close?: () => void };
 
@@ -114,6 +115,7 @@ describe('AnimalDetail delete confirmation', () => {
 
   it('confirm deletes the animal and goes back to the list', async () => {
     const { service, navigate, settle, query } = await setup(() => of(undefined));
+    const refresh = vi.spyOn(TestBed.inject(MissingTranslationCountService), 'refresh');
 
     query<HTMLButtonElement>('.actions .delete').click();
     await settle();
@@ -123,6 +125,7 @@ describe('AnimalDetail delete confirmation', () => {
     expect(service.delete).toHaveBeenCalledTimes(1);
     expect(service.delete).toHaveBeenCalledWith(2);
     expect(navigate).toHaveBeenCalledWith(['/']);
+    expect(refresh).toHaveBeenCalledOnce();
   });
 
   it('shows a busy Delete button while the request runs', async () => {

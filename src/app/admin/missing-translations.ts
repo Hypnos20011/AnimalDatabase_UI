@@ -1,20 +1,42 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
+import { Animal } from '../animal-model/animal.model';
+import { TranslationEditor } from './translation-editor/translation-editor';
 import { AnimalService, MissingTranslation } from '../shared/animal.service';
 import { LanguageService } from '../shared/i18n/language.service';
 import { TranslationKey } from '../shared/i18n/en';
+import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
 
 @Component({
   selector: 'app-missing-translations',
-  imports: [RouterLink],
+  imports: [RouterLink, TranslationEditor],
   templateUrl: './missing-translations.html',
   styleUrl: './missing-translations.css',
 })
 export class MissingTranslations {
   private animals = inject(AnimalService);
+  private translationCount = inject(MissingTranslationCountService);
   protected i18n = inject(LanguageService);
 
+  allAnimals = signal<Animal[]>([]);
   rows = signal<MissingTranslation[]>([]);
+  editing = signal<MissingTranslation | null>(null);
+  entries = computed(() =>
+    this.allAnimals()
+      .map((animal) => {
+        const row = this.rows().find((candidate) => candidate.id === animal.id);
+        return {
+          id: animal.id,
+          commonName: animal.commonName,
+          languages: row?.languages ?? [],
+        };
+      })
+      .sort((a, b) => {
+        const missingDifference = Number(b.languages.length > 0) - Number(a.languages.length > 0);
+        return missingDifference || a.commonName.localeCompare(b.commonName);
+      }),
+  );
   loading = signal(true);
   error = signal('');
   busy = signal<number | null>(null);
@@ -57,6 +79,7 @@ export class MissingTranslations {
             : rows.map((row) => (row.id === animal.id ? updated : row)),
         );
         this.busy.set(null);
+        this.translationCount.refresh();
       },
       error: () => {
         this.error.set(this.i18n.t('admin.missing.error'));
@@ -65,12 +88,19 @@ export class MissingTranslations {
     });
   }
 
+  onEditorSaved(): void {
+    this.editing.set(null);
+    this.translationCount.refresh();
+    this.load();
+  }
+
   private load(): void {
     this.loading.set(true);
     this.error.set('');
-    this.animals.missingTranslations().subscribe({
-      next: (rows) => {
-        this.rows.set(rows);
+    forkJoin({ all: this.animals.getAll(), missing: this.animals.missingTranslations() }).subscribe({
+      next: ({ all, missing }) => {
+        this.allAnimals.set(all);
+        this.rows.set(missing);
         this.loading.set(false);
       },
       error: () => {

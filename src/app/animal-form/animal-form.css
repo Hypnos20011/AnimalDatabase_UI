@@ -203,34 +203,6 @@ form > .field-error {
   font-style: italic;
 }
 
-.translation-actions,
-.translation-texts {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.translation-actions > .btn {
-  align-self: flex-start;
-}
-
-.translation-actions .hint,
-.translation-actions .field-error {
-  margin: 0;
-}
-
-.translation-texts {
-  padding: 1rem 1.25rem 1.25rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface-muted);
-}
-
-.translation-texts h3 {
-  margin: 0;
-  font-size: 1rem;
-}
-
 @media (min-width: 720px) {
   form {
     grid-template-columns: 1fr 1fr;
@@ -240,8 +212,6 @@ form > .field-error {
   form > .field-error,
   .duplicate-warning,
   label:has(textarea),
-  .translation-actions,
-  .translation-texts,
   .images,
   .actions {
     grid-column: 1 / -1;

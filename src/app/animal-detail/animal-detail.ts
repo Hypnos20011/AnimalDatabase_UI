@@ -17,6 +17,7 @@ import { FavoritesService } from '../animals-list/favorites.service';
 import { iucnRedListSearchUrl } from '../shared/iucn';
 import { splitProfile } from '../shared/profile';
 import { CompareService } from '../compare/compare.service';
+import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
 
 export const SHARE_STATUS_MS = 3000;
 
@@ -51,6 +52,7 @@ export class AnimalDetail {
   private recentlyViewed = inject(RecentlyViewedService);
   private favorites = inject(FavoritesService);
   protected compare = inject(CompareService);
+  private translationCount = inject(MissingTranslationCountService);
 
   animal = signal<Animal | null>(null);
   loading = signal(true);
@@ -244,6 +246,7 @@ export class AnimalDetail {
     this.deleteError.set('');
     this.animalService.delete(animal.id).subscribe({
       next: () => {
+        this.translationCount.refresh();
         this.confirmOpen.set(false);
         this.router.navigate(['/']);
       },
