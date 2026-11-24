@@ -93,7 +93,7 @@ export class TranslationEditor {
       error: () => {
         this.saving.set(false);
         this.translationCount.refresh();
-        this.error.set(this.i18n.t('admin.missing.error'));
+        this.error.set(this.i18n.t('admin.missing.saveError'));
       },
     });
   }

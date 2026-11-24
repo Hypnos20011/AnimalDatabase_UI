@@ -16,6 +16,7 @@ export const en = {
   'admin.missing.empty': 'Every animal has German and French text.',
   'admin.missing.complete': 'Complete',
   'admin.missing.error': 'Could not load missing translations.',
+  'admin.missing.saveError': 'Could not save the translations.',
   'admin.missing.edit': 'Edit',
   'admin.missing.translate': 'Translate missing',
   'admin.missing.translating': 'Translating...',

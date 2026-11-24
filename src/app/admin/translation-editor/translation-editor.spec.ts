@@ -328,7 +328,7 @@ describe('TranslationEditor', () => {
 
     component.save();
 
-    expect(component.error()).toBe(TestBed.inject(LanguageService).t('admin.missing.error'));
+    expect(component.error()).toBe(TestBed.inject(LanguageService).t('admin.missing.saveError'));
     expect(component.saving()).toBe(false);
     expect(saved).not.toHaveBeenCalled();
     expect(refresh).toHaveBeenCalledOnce();

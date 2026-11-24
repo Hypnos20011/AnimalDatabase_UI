@@ -18,6 +18,7 @@ export const de: Record<TranslationKey, string> = {
   'admin.missing.empty': 'Jedes Tier hat deutschen und französischen Text.',
   'admin.missing.complete': 'Vollständig',
   'admin.missing.error': 'Fehlende Übersetzungen konnten nicht geladen werden.',
+  'admin.missing.saveError': 'Die Übersetzungen konnten nicht gespeichert werden.',
   'admin.missing.edit': 'Bearbeiten',
   'admin.missing.translate': 'Fehlendes übersetzen',
   'admin.missing.translating': 'Wird übersetzt...',
