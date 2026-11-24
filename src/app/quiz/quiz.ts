@@ -13,7 +13,6 @@ import {
   viewChild,
   viewChildren,
 } from '@angular/core';
-import { NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Animal } from '../animal-model/animal.model';
@@ -310,7 +309,7 @@ export function buildDailyPlan(
 
 @Component({
   selector: 'app-quiz',
-  imports: [NgOptimizedImage, RouterLink],
+  imports: [RouterLink],
   templateUrl: './quiz.html',
   styleUrl: './quiz.css',
   host: { '(document:keydown)': 'onKey($event)' },

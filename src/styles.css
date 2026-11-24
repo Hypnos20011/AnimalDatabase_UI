@@ -570,14 +570,10 @@ fieldset {
   background: var(--color-accent-soft);
 }
 
-.suggestions .thumb-frame {
-  position: relative;
+.suggestions .thumb {
   flex: none;
   width: 44px;
   height: 44px;
-}
-
-.suggestions .thumb {
   object-fit: cover;
   border-radius: var(--radius-sm);
   background: var(--color-surface-muted);

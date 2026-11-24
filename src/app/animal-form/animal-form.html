@@ -327,10 +327,8 @@
             <div class="preview-frame">
               <img
                 class="preview"
-                [ngSrc]="imageUrl('images.' + i + '.url')"
+                [src]="imageUrl('images.' + i + '.url')"
                 [alt]="i18n.t('form.image.main')"
-                fill
-                disableOptimizedSrcset
                 decoding="async"
                 (error)="markPreviewFailed(imageUrl('images.' + i + '.url'))"
               />

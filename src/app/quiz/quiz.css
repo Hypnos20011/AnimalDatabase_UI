@@ -177,7 +177,6 @@
 }
 
 .quiz-photo {
-  position: relative;
   margin: 0;
   aspect-ratio: 4 / 3;
   overflow: hidden;

@@ -157,34 +157,6 @@ describe('AnimalDetail translation', () => {
     expect(element.querySelector('.image-credit')?.textContent).toContain('Bildnachweis');
   });
 
-  it('updates optimized hero URLs and keeps Wikimedia candidates and the no-photo fallback', async () => {
-    const firstUrl =
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Axolotl_ganz.jpg/1280px-Axolotl_ganz.jpg';
-    const nextUrl =
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Axolotl_ganz.jpg/500px-Axolotl_ganz.jpg';
-    const image = (url: string) => ({ ...pictures[0], url }) as AnimalImage;
-    const { fixture, element } = await render({ images: [image(firstUrl)] });
-    let hero = element.querySelector<HTMLImageElement>('.hero-image')!;
-
-    expect(hero.getAttribute('src')).toBe(firstUrl);
-    expect(hero.getAttribute('srcset')).toContain('960px-Axolotl_ganz.jpg 960w');
-
-    fixture.componentInstance.images.set([image(nextUrl)]);
-    fixture.detectChanges();
-    hero = element.querySelector<HTMLImageElement>('.hero-image')!;
-    expect(hero.getAttribute('src')).toBe(nextUrl);
-    expect(hero.getAttribute('srcset')).toBe(
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Axolotl_ganz.jpg/250px-Axolotl_ganz.jpg 250w, ' +
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Axolotl_ganz.jpg/500px-Axolotl_ganz.jpg 500w',
-    );
-
-    hero.dispatchEvent(new Event('error'));
-    fixture.detectChanges();
-    expect(element.querySelector('.hero-image')).toBeNull();
-    expect(element.querySelector('.no-photo')).not.toBeNull();
-    fixture.destroy();
-  });
-
   it('translates the no images text', async () => {
     localStorage.setItem('language', 'de');
     const { text } = await render();

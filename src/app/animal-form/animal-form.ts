@@ -1,5 +1,4 @@
 import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { NgOptimizedImage } from '@angular/common';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 import {
@@ -61,7 +60,7 @@ const minNotAboveMax: ValidatorFn = (group: AbstractControl): ValidationErrors |
 
 @Component({
   selector: 'app-animal-form',
-  imports: [ReactiveFormsModule, RouterLink, NgOptimizedImage],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './animal-form.html',
   styleUrl: './animal-form.css',
 })

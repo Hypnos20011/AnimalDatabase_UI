@@ -4,22 +4,15 @@
       @if (!noPhoto()) {
         <figure class="hero">
           @if (heroImage(); as hero) {
-            @if (hero.url; as src) {
-              <div class="hero-image-frame">
-                <img
-                  class="hero-image"
-                  [ngSrc]="src"
-                  [attr.srcset]="srcset(src)"
-                  sizes="(max-width: 900px) 100vw, 60vw"
-                  [alt]="hero.caption ?? animal()!.commonName"
-                  fill
-                  disableOptimizedSrcset
-                  priority
-                  decoding="async"
-                  (error)="onHeroError()"
-                />
-              </div>
-            }
+            <img
+              class="hero-image"
+              [src]="hero.url"
+              [attr.srcset]="srcset(hero.url)"
+              sizes="(max-width: 900px) 100vw, 720px"
+              [alt]="hero.caption ?? animal()!.commonName"
+              decoding="async"
+              (error)="onHeroError()"
+            />
           }
           @if (heroImage(); as hero) {
             @if (showCaption(hero)) {
@@ -254,21 +247,15 @@
       <section class="gallery" [attr.aria-label]="i18n.t('detail.morePictures')">
         @for (img of moreImages(); track img.id) {
           <figure>
-            @if (img.url; as src) {
-              <div class="gallery-image-frame">
-                <img
-                  [ngSrc]="src"
-                  [attr.srcset]="srcset(src)"
-                  sizes="(max-width: 600px) 100vw, 30vw"
-                  [alt]="img.caption ?? animal()!.commonName"
-                  fill
-                  disableOptimizedSrcset
-                  loading="lazy"
-                  decoding="async"
-                  (error)="$any($event.target).style.visibility = 'hidden'"
-                />
-              </div>
-            }
+            <img
+              [src]="img.url"
+              [attr.srcset]="srcset(img.url)"
+              sizes="(max-width: 600px) 100vw, 380px"
+              [alt]="img.caption ?? animal()!.commonName"
+              loading="lazy"
+              decoding="async"
+              (error)="img.url = ''"
+            />
             @if (showCaption(img)) {
               <figcaption>{{ img.caption }}</figcaption>
             }

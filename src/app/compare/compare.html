@@ -44,12 +44,10 @@
                 <span class="thumb" aria-hidden="true">
                   @if (animal.thumbnailUrl; as thumb) {
                     <img
-                      [ngSrc]="thumb"
+                      [src]="thumb"
                       [attr.srcset]="srcset(thumb)"
-                      sizes="25vw"
+                      sizes="160px"
                       alt=""
-                      fill
-                      disableOptimizedSrcset
                       decoding="async"
                       (error)="$any($event.target).style.visibility = 'hidden'"
                     />

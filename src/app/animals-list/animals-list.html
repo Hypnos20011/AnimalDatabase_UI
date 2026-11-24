@@ -27,19 +27,15 @@
         @for (animal of suggestions(); track animal.id) {
           <li tabindex="0" (click)="selectAnimal(animal)" (keydown.enter)="selectAnimal(animal)">
             @if (getThumbnail(animal); as thumb) {
-              <span class="thumb-frame">
-                <img
-                  class="thumb"
-                  [ngSrc]="thumb"
-                  [attr.srcset]="srcset(thumb)"
-                  sizes="10vw"
-                  [alt]="animal.commonName"
-                  fill
-                  disableOptimizedSrcset
-                  decoding="async"
-                  (error)="$any($event.target).style.visibility = 'hidden'"
-                />
-              </span>
+              <img
+                class="thumb"
+                [src]="thumb"
+                [attr.srcset]="srcset(thumb)"
+                sizes="44px"
+                [alt]="animal.commonName"
+                decoding="async"
+                (error)="$any($event.target).style.visibility = 'hidden'"
+              />
             }
             <div class="suggestion-text">
               <strong>{{ animal.commonName }}</strong>
@@ -307,12 +303,10 @@
             <span class="row-thumb" aria-hidden="true">
               @if (getThumbnail(animal); as thumb) {
                 <img
-                  [ngSrc]="thumb"
+                  [src]="thumb"
                   [attr.srcset]="srcset(thumb)"
-                  sizes="10vw"
+                  sizes="48px"
                   alt=""
-                  fill
-                  disableOptimizedSrcset
                   loading="lazy"
                   decoding="async"
                   (error)="$any($event.target).style.visibility = 'hidden'"
@@ -376,12 +370,10 @@
         <div class="preview-media">
           @if (getThumbnail(current.item); as thumb) {
             <img
-              [ngSrc]="thumb"
+              [src]="thumb"
               [attr.srcset]="srcset(thumb)"
-              sizes="35vw"
+              sizes="280px"
               alt=""
-              fill
-              disableOptimizedSrcset
               decoding="async"
               (error)="$any($event.target).style.visibility = 'hidden'"
             />
