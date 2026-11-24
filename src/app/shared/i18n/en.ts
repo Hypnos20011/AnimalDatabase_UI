@@ -9,7 +9,8 @@ export const en = {
   'footer.admin': 'Admin',
   'admin.missing.link': 'Missing translations',
   'admin.missing.title': 'Missing translations',
-  'admin.missing.lead': 'German or French text that is still empty. Text that is already there is left as it is.',
+  'admin.missing.lead':
+    'German or French text that is still empty. Text that is already there is left as it is.',
   'admin.missing.loading': 'Loading...',
   'admin.missing.empty': 'Every animal has German and French text.',
   'admin.missing.error': 'Could not load missing translations.',
@@ -114,7 +115,8 @@ export const en = {
   'detail.delete': 'Delete',
   'detail.delete.title': 'Delete {name}?',
   'detail.delete.thisAnimal': 'this animal',
-  'detail.delete.message': 'This removes the animal and its pictures for good, and it drops out of Top searches. This can\'t be undone.',
+  'detail.delete.message':
+    "This removes the animal and its pictures for good, and it drops out of Top searches. This can't be undone.",
   'detail.delete.busy': 'Deleting...',
   'detail.delete.error': 'Could not delete this animal. Please try again.',
   'detail.loading': 'Loading...',
@@ -128,7 +130,8 @@ export const en = {
   'compare.clear': 'Clear',
   'compare.now': 'Compare now',
   'compare.strip': 'Compare',
-  'compare.empty': 'Pick two animals to compare. Use the compare button in the list or on an animal page.',
+  'compare.empty':
+    'Pick two animals to compare. Use the compare button in the list or on an animal page.',
   'compare.needOne': 'Pick one more animal to compare with {name}.',
   'compare.browse': 'Browse animals',
   'compare.loadError': 'Could not load these animals. Please try again later.',
@@ -159,10 +162,12 @@ export const en = {
   'quiz.filter.class': 'Class',
   'quiz.filter.habitat': 'Habitat',
   'quiz.filter.all': 'All',
-  'quiz.filter.empty': 'Not enough animals for this filter. The quiz needs four different names and a matching fact.',
+  'quiz.filter.empty':
+    'Not enough animals for this filter. The quiz needs four different names and a matching fact.',
   'quiz.filter.reset': 'Show all animals',
   'quiz.practice': 'Practice missed ({count})',
-  'quiz.practice.empty': 'Not enough missed animals to practice. The quiz needs four different names and a matching fact.',
+  'quiz.practice.empty':
+    'Not enough missed animals to practice. The quiz needs four different names and a matching fact.',
   'quiz.practice.exit': 'Back to all animals',
   'quiz.daily': 'Daily challenge',
   'quiz.daily.progress': 'Question {current} of {total}',
@@ -170,13 +175,14 @@ export const en = {
   'quiz.daily.done': 'Daily challenge complete! You got {score}/{total}.',
   'quiz.daily.again': 'Try again',
   'quiz.daily.exit': 'Back to quiz',
-  'quiz.daily.empty': 'Not enough matching facts for today\'s challenge.',
+  'quiz.daily.empty': "Not enough matching facts for today's challenge.",
   'quiz.daily.finish': 'See results',
   'quiz.share.result': 'Share result',
   'quiz.share.best': 'Share best streak',
   'quiz.share.cardTitle': 'Unusual Animals · Daily challenge',
   'quiz.share.bestTitle': 'Unusual Animals · Best streak',
-  'quiz.share.daily.text': 'Unusual Animals daily challenge on {date}: {score}/{total}. Streak {streak}.',
+  'quiz.share.daily.text':
+    'Unusual Animals daily challenge on {date}: {score}/{total}. Streak {streak}.',
   'quiz.share.best.text': 'My best streak on the Unusual Animals quiz is {streak}.',
   'quiz.share.copied': 'Copied to clipboard',
   'quiz.share.error': 'Could not share or copy',
@@ -244,7 +250,7 @@ export const en = {
   'form.error.size': 'Use 0 to 999,999.9 with at most one decimal, e.g. 12.5.',
   'form.error.weight': 'Use a weight from 0 to 9,999,999.99 kg.',
   'form.error.lifespan': 'Use a whole number of years, 0 or more.',
-  'form.error.minAboveMax': 'The minimum can\'t be larger than the maximum.',
+  'form.error.minAboveMax': "The minimum can't be larger than the maximum.",
   'form.iucnStatus': 'IUCN status',
   'form.habitat': 'Habitat',
   'form.habitatType': 'Habitat type',
@@ -272,18 +278,19 @@ export const en = {
   'form.translate.filledGerman': 'German fields filled in. Check them before saving.',
   'form.translate.filledFrench': 'French fields filled in. Check them before saving.',
   'form.sourceUrl': 'Source link',
-  'form.error.httpsLink': 'That doesn\'t look like an https:// link.',
+  'form.error.httpsLink': "That doesn't look like an https:// link.",
   'form.pictures': 'Pictures',
-  'form.pictures.hint': 'On Wikipedia, right-click the photo and choose "Copy image address", then paste it here.',
-  'form.image.male': 'Male',
-  'form.image.female': 'Female',
-  'form.image.baby': 'Baby',
-  'form.image.other': 'Other',
-  'form.error.imageLink': 'That doesn\'t look like an image link.',
+  'form.pictures.hint':
+    'On Wikipedia, right-click the photo and choose "Copy image address", then paste it here.',
+  'form.image.main': 'Image',
+  'form.image.add': 'Add image',
+  'form.image.remove': 'Remove image',
+  'form.error.imageLink': "That doesn't look like an image link.",
   'form.image.attribution': 'Credit / attribution',
   'form.image.attributionPlaceholder': 'Artist / license',
   'form.image.sourcePage': 'Source page',
-  'form.image.notFound': 'No picture found at this link. Right-click the photo itself and copy its image address.',
+  'form.image.notFound':
+    'No picture found at this link. Right-click the photo itself and copy its image address.',
   'form.save': 'Save',
   'form.saving': 'Saving...',
   'form.cancel': 'Cancel',
@@ -296,4 +303,6 @@ export const en = {
   'form.rateLimit.inSeconds.other': 'in {count} seconds',
 } as const;
 export type TranslationKey = keyof typeof en;
-export type PluralBase = { [K in TranslationKey]: K extends `${infer B}.other` ? B : never }[TranslationKey];
+export type PluralBase = {
+  [K in TranslationKey]: K extends `${infer B}.other` ? B : never;
+}[TranslationKey];

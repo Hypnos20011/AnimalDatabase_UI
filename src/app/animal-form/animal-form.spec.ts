@@ -65,11 +65,12 @@ describe('AnimalForm Wikipedia lookup', () => {
     const form = setup(shoebill());
     form.wikiUrl.set('Shoebill');
     form.importFromWikipedia();
-    expect(form.form.controls.otherImageUrl.value).toBe(
+    const image = form.imageRows.at(0);
+    expect(image.get('url')?.value).toBe(
       'https://upload.wikimedia.org/wikipedia/commons/a/a1/Shoebill.jpg',
     );
-    expect(form.form.controls.otherImageAttribution.value).toBe('Charles J. Sharp / CC BY-SA 4.0');
-    expect(form.form.controls.otherImageSourcePageUrl.value).toBe(
+    expect(image.get('attribution')?.value).toBe('Charles J. Sharp / CC BY-SA 4.0');
+    expect(image.get('sourcePageUrl')?.value).toBe(
       'https://commons.wikimedia.org/wiki/File:Shoebill.jpg',
     );
   });
@@ -91,7 +92,7 @@ describe('AnimalForm repeated Wikipedia lookups', () => {
   const octopusPicture = 'https://upload.wikimedia.org/wikipedia/commons/b/b2/Octopus.jpg';
 
   function setup(...results: WikipediaImport[]) {
-    const lookup = vi.fn();
+    const lookup = vi.fn<typeof AnimalService.prototype.importFromWikipedia>();
     for (const result of results) lookup.mockReturnValueOnce(of(result));
     TestBed.configureTestingModule({
       imports: [AnimalForm],
@@ -113,6 +114,32 @@ describe('AnimalForm repeated Wikipedia lookups', () => {
     form.importFromWikipedia();
   }
 
+  it('adds and removes the selected image row with the styled controls', () => {
+    const { fixture, form } = setup();
+    const element = fixture.nativeElement as HTMLElement;
+    const urls = ['https://example.com/first.jpg', 'https://example.com/second.jpg', 'https://example.com/third.jpg'];
+    form.imageRows.at(0).get('url')?.setValue(urls[0]);
+
+    const addButton = element.querySelector('.image-actions button.btn-secondary') as HTMLButtonElement;
+    expect(element.querySelectorAll('.image-row')).toHaveLength(1);
+    addButton.click();
+    fixture.detectChanges();
+    form.imageRows.at(1).get('url')?.setValue(urls[1]);
+    addButton.click();
+    fixture.detectChanges();
+    form.imageRows.at(2).get('url')?.setValue(urls[2]);
+
+    const removeButton = element.querySelectorAll('.image-row')[1].querySelector('button.btn-danger');
+    expect(removeButton).not.toBeNull();
+    removeButton?.dispatchEvent(new MouseEvent('click'));
+    fixture.detectChanges();
+
+    expect(form.imageRows.length).toBe(2);
+    expect(form.imageRows.at(0).get('url')?.value).toBe(urls[0]);
+    expect(form.imageRows.at(1).get('url')?.value).toBe(urls[2]);
+    expect(element.querySelectorAll('.image-row')).toHaveLength(2);
+  });
+
   it('replaces the picture from an earlier lookup', () => {
     const { fixture, form } = setup(
       shoebill({ commonName: 'Cat', imageUrl: catPicture }),
@@ -123,7 +150,7 @@ describe('AnimalForm repeated Wikipedia lookups', () => {
     lookUp(form, 'blue-ringed octopus');
     fixture.detectChanges();
     expect(form.form.controls.commonName.value).toBe('Blue-ringed octopus');
-    expect(form.form.controls.otherImageUrl.value).toBe(octopusPicture);
+    expect(form.imageRows.at(0).get('url')?.value).toBe(octopusPicture);
     expect(form.previewFailed(octopusPicture)).toBe(false);
     const preview = (fixture.nativeElement as HTMLElement).querySelector('img.preview');
     expect(preview?.getAttribute('src')).toBe(octopusPicture);
@@ -133,9 +160,10 @@ describe('AnimalForm repeated Wikipedia lookups', () => {
     const { form } = setup(shoebill({ imageUrl: catPicture }), shoebill({ imageUrl: null }));
     lookUp(form, 'cat');
     lookUp(form, 'blue-ringed octopus');
-    expect(form.form.controls.otherImageUrl.value).toBe('');
-    expect(form.form.controls.otherImageAttribution.value).toBe('');
-    expect(form.form.controls.otherImageSourcePageUrl.value).toBe('');
+    const image = form.imageRows.at(0);
+    expect(image.get('url')?.value).toBe('');
+    expect(image.get('attribution')?.value).toBe('');
+    expect(image.get('sourcePageUrl')?.value).toBe('');
   });
 
   it('keeps a picture the user entered', () => {
@@ -144,17 +172,18 @@ describe('AnimalForm repeated Wikipedia lookups', () => {
       shoebill({ imageUrl: catPicture }),
       shoebill({ imageUrl: octopusPicture }),
     );
-    form.form.controls.otherImageUrl.setValue(own);
-    form.form.controls.otherImageAttribution.setValue('My credit');
-    form.form.controls.otherImageSourcePageUrl.setValue('https://example.com/own');
+    const image = form.imageRows.at(0);
+    image.get('url')?.setValue(own);
+    image.get('attribution')?.setValue('My credit');
+    image.get('sourcePageUrl')?.setValue('https://example.com/own');
     lookUp(form, 'cat');
-    expect(form.form.controls.otherImageUrl.value).toBe(own);
-    expect(form.form.controls.otherImageAttribution.value).toBe('My credit');
-    expect(form.form.controls.otherImageSourcePageUrl.value).toBe('https://example.com/own');
+    expect(image.get('url')?.value).toBe(own);
+    expect(image.get('attribution')?.value).toBe('My credit');
+    expect(image.get('sourcePageUrl')?.value).toBe('https://example.com/own');
     lookUp(form, 'blue-ringed octopus');
-    expect(form.form.controls.otherImageUrl.value).toBe(own);
-    expect(form.form.controls.otherImageAttribution.value).toBe('My credit');
-    expect(form.form.controls.otherImageSourcePageUrl.value).toBe('https://example.com/own');
+    expect(image.get('url')?.value).toBe(own);
+    expect(image.get('attribution')?.value).toBe('My credit');
+    expect(image.get('sourcePageUrl')?.value).toBe('https://example.com/own');
   });
 
   it('clears values left over from the earlier lookup', () => {
@@ -301,15 +330,15 @@ describe('AnimalForm lookup', () => {
       shoebill({ imageUrl: hornwormPicture, scientificName: 'Manduca sexta' }),
     );
     lookUp(form, 'hornworm');
-    expect(form.form.controls.otherImageUrl.value).toBe(hornwormPicture);
+    expect(form.imageRows.at(0).get('url')!.value).toBe(hornwormPicture);
   });
 
   it('keeps the saved picture when the same animal is filled in again', () => {
     const { form } = setup(
-      shoebill({imageUrl: hornwormPicture, scientificName: boxerCrab.scientificName }),
+      shoebill({ imageUrl: hornwormPicture, scientificName: boxerCrab.scientificName }),
     );
     lookUp(form, 'boxer crab');
-    expect(form.form.controls.otherImageUrl.value).toBe(boxerCrabPicture);
+    expect(form.imageRows.at(0).get('url')!.value).toBe(boxerCrabPicture);
   });
 });
 
@@ -440,7 +469,12 @@ describe('AnimalForm domesticated animals', () => {
 });
 
 describe('AnimalForm habitat type', () => {
-  const okapi = { id: 3, commonName: 'Okapi', isDomesticated: false, habitatType: 'forest' } as Animal;
+  const okapi = {
+    id: 3,
+    commonName: 'Okapi',
+    isDomesticated: false,
+    habitatType: 'forest',
+  } as Animal;
 
   function setup(id?: string) {
     const create = vi.fn(() => of(okapi));

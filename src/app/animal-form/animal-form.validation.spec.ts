@@ -98,7 +98,7 @@ describe('AnimalForm number checks', () => {
 
   it('accepts https image source pages and rejects anything else', () => {
     const { form } = setup();
-    const control = form.form.controls.otherImageSourcePageUrl;
+    const control = form.imageRows.at(0).get('sourcePageUrl')!;
     for (const bad of ['http://commons.wikimedia.org/wiki/File:X.jpg', 'javascript:alert(1)', 'commons']) {
       control.setValue(bad);
       expect(control.invalid).toBe(true);
@@ -113,11 +113,12 @@ describe('AnimalForm number checks', () => {
     const create = vi.fn(() => of({ id: 9 }));
     const { form } = setup(create);
     form.form.controls.commonName.setValue('Okapi');
-    form.form.controls.otherImageUrl.setValue(
+    const image = form.imageRows.at(0);
+    image.get('url')!.setValue(
       'https://upload.wikimedia.org/wikipedia/commons/9/9f/Okapia_johnstoni_17zz.jpg',
     );
-    form.form.controls.otherImageAttribution.setValue('Charles J. Sharp / CC BY-SA 4.0');
-    form.form.controls.otherImageSourcePageUrl.setValue(
+    image.get('attribution')!.setValue('Charles J. Sharp / CC BY-SA 4.0');
+    image.get('sourcePageUrl')!.setValue(
       'https://commons.wikimedia.org/wiki/File:Okapia_johnstoni_17zz.jpg',
     );
     form.submit();
