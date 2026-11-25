@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { signal } from '@angular/core';
 import { AnimalDetail } from './animal-detail';
 import { AnimalService } from '../shared/animal.service';
@@ -130,5 +130,17 @@ describe('AnimalDetail language reload', () => {
     TestBed.inject(LanguageService).setLanguage('de');
     await settle();
     expect(document.title).toContain('Mexikanischer Querzahnmolch');
+  });
+
+  it('resets the page title when loading another animal fails', async () => {
+    const { fixture, settle } = await render();
+    expect(document.title).toBe('Axolotl · Unusual Animals');
+
+    getById.mockImplementationOnce(() => throwError(() => new Error('not found')));
+    fixture.componentRef.setInput('id', '404');
+    await settle();
+
+    expect(document.title).toBe('Unusual Animals');
+    expect(document.title).not.toContain('Axolotl');
   });
 });
