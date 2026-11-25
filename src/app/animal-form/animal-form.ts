@@ -1,5 +1,5 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
 import {
   AbstractControl,
@@ -67,6 +67,7 @@ const minNotAboveMax: ValidatorFn = (group: AbstractControl): ValidationErrors |
 export class AnimalForm {
   id = input<string>();
 
+  private destroyRef = inject(DestroyRef);
   private fb = inject(FormBuilder);
   private animalService = inject(AnimalService);
   private translationCount = inject(MissingTranslationCountService);
@@ -138,6 +139,9 @@ export class AnimalForm {
     },
     { validators: minNotAboveMax },
   );
+  private imageRowsValue = toSignal(this.imageRows.valueChanges, {
+    initialValue: this.imageRows.value,
+  });
 
   private existingAnimals = signal<Animal[]>([]);
   private commonNameValue = toSignal(this.form.controls.commonName.valueChanges, {
@@ -238,7 +242,14 @@ export class AnimalForm {
     this.failedPreviews.update((urls) => new Set(urls).add(url));
   }
 
+  canPreviewImage(key: string): boolean {
+    this.imageRowsValue();
+    const control = this.form.get(key);
+    return !!control?.value && control.valid;
+  }
+
   imageUrl(key: string): string {
+    this.imageRowsValue();
     return (this.form.get(key)?.value ?? '').trim();
   }
 
@@ -364,11 +375,24 @@ export class AnimalForm {
   }
 
   private createImageRow(): FormGroup {
-    return this.fb.group({
+    const row = this.fb.group({
       url: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
       attribution: ['', [Validators.maxLength(500)]],
       sourcePageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)]],
     });
+    const urlControl = row.get('url');
+    let previousUrl = String(urlControl?.value ?? '');
+    urlControl?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value: string | null) => {
+      const url = value ?? '';
+      this.failedPreviews.update((failed) => {
+        const updated = new Set(failed);
+        updated.delete(previousUrl);
+        updated.delete(url);
+        return updated;
+      });
+      previousUrl = url;
+    });
+    return row;
   }
 
   addImageRow(): void {
@@ -430,11 +454,13 @@ export class AnimalForm {
 
         this.savedScientificName = animal.scientificName ?? '';
         this.savedImageUrl = this.imageRows.at(0).get('url')?.value ?? '';
+        this.failedPreviews.set(new Set());
 
         this.loadingAnimal.set(false);
       },
       error: () => {
         this.error.set(this.i18n.t('form.error.load'));
+        this.failedPreviews.set(new Set());
         this.loadingAnimal.set(false);
       },
     });
