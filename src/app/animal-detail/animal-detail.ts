@@ -148,6 +148,7 @@ export class AnimalDetail {
       },
       error: () => {
         this.animal.set(null);
+        this.title.setTitle('Unusual Animals');
         this.loading.set(false);
       },
     });
