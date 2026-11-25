@@ -588,6 +588,13 @@ describe('AnimalForm image previews', () => {
     expect(urlControl.invalid).toBe(true);
     expect(frame().querySelector('img')).toBeNull();
     expect(form.canPreviewImage('images.0.url')).toBe(false);
+
+    urlControl.setValue('http://upload.wikimedia.org/image.jpg');
+    fixture.detectChanges();
+
+    expect(urlControl.invalid).toBe(true);
+    expect(frame().querySelector('img')).toBeNull();
+    expect(form.canPreviewImage('images.0.url')).toBe(false);
   });
 
   it('shows the not-found hint inside the preview frame after an image error', () => {

@@ -376,7 +376,7 @@ export class AnimalForm {
 
   private createImageRow(): FormGroup {
     const row = this.fb.group({
-      url: ['', [Validators.maxLength(500), Validators.pattern(/^https?:\/\/\S+$/)]],
+      url: ['', [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)]],
       attribution: ['', [Validators.maxLength(500)]],
       sourcePageUrl: ['', [Validators.maxLength(500), Validators.pattern(/^https:\/\/\S+$/)]],
     });

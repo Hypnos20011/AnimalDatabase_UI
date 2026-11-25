@@ -109,6 +109,16 @@ describe('AnimalForm number checks', () => {
     expect(control.valid).toBe(true);
   });
 
+  it('only accepts https image URLs', () => {
+    const { form } = setup();
+    const control = form.imageRows.at(0).get('url')!;
+
+    control.setValue('http://upload.wikimedia.org/image.jpg');
+    expect(control.invalid).toBe(true);
+    control.setValue('https://upload.wikimedia.org/image.jpg');
+    expect(control.valid).toBe(true);
+  });
+
   it('includes attribution fields when collecting images', () => {
     const create = vi.fn(() => of({ id: 9 }));
     const { form } = setup(create);
