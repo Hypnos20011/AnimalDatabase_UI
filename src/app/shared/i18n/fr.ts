@@ -288,6 +288,8 @@ export const fr: Record<TranslationKey, string> = {
   'form.image.sourcePage': 'Page source',
   'form.image.notFound':
     'Aucune image trouvée à ce lien. Faites un clic droit sur la photo elle-même et copiez l’adresse de l’image.',
+  'form.image.previewEmpty':
+    'Pas encore d’image. Si Wikipédia n’en a pas, colle une URL d’image de Wikimedia Commons.',
   'form.save': 'Enregistrer',
   'form.saving': 'Enregistrement...',
   'form.cancel': 'Annuler',

@@ -284,6 +284,8 @@ export const en = {
   'form.image.sourcePage': 'Source page',
   'form.image.notFound':
     'No picture found at this link. Right-click the photo itself and copy its image address.',
+  'form.image.previewEmpty':
+    'No picture yet. If Wikipedia has none, paste an image URL from Wikimedia Commons.',
   'form.save': 'Save',
   'form.saving': 'Saving...',
   'form.cancel': 'Cancel',

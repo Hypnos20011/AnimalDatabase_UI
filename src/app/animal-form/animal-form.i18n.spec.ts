@@ -40,7 +40,7 @@ describe('AnimalForm i18n', () => {
 
   afterEach(() => localStorage.clear());
 
-  function setup(language: 'en' | 'de', overrides: Record<string, unknown> = {}) {
+  function setup(language: 'en' | 'de' | 'fr', overrides: Record<string, unknown> = {}) {
     localStorage.setItem('language', language);
     const service = {
       getAll: vi.fn(() => of([])),
@@ -63,6 +63,9 @@ describe('AnimalForm i18n', () => {
     expect(element.querySelector('h2')?.textContent).toBe('Add animal');
     expect(element.textContent).toContain('Scientific name');
     expect(element.querySelector('legend')?.textContent).toBe('Pictures');
+    expect(element.querySelector('.preview-hint')?.textContent?.trim()).toBe(
+      'No picture yet. If Wikipedia has none, paste an image URL from Wikimedia Commons.',
+    );
     expect(element.querySelector('button[type=submit]')?.textContent?.trim()).toBe('Save');
   });
 
@@ -72,11 +75,22 @@ describe('AnimalForm i18n', () => {
     expect(element.textContent).toContain('Wissenschaftlicher Name');
     expect(element.textContent).toContain('Lebensdauer (Jahre)');
     expect(element.textContent).toContain('Bildnachweis');
+    expect(element.querySelector('.preview-hint')?.textContent?.trim()).toBe(
+      'Noch kein Bild. Wenn Wikipedia keines hat, füge eine Bild-URL von Wikimedia Commons ein.',
+    );
     expect(element.querySelector('legend')?.textContent).toBe('Bilder');
     expect(element.querySelector('button[type=submit]')?.textContent?.trim()).toBe('Speichern');
     expect(element.querySelector('a.btn-secondary')?.textContent).toBe('Abbrechen');
     const wikiInput = element.querySelector('.wiki-import input') as HTMLInputElement;
     expect(wikiInput.placeholder).toBe('Tiername, z. B. Schuhschnabel');
+  });
+
+  it('shows the empty image preview hint in French', () => {
+    const { element } = setup('fr');
+
+    expect(element.querySelector('.preview-hint')?.textContent?.trim()).toBe(
+      'Pas encore d’image. Si Wikipédia n’en a pas, colle une URL d’image de Wikimedia Commons.',
+    );
   });
 
   it('translates class, IUCN and habitat options but keeps their values', () => {

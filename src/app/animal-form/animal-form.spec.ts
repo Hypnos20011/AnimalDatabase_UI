@@ -547,3 +547,98 @@ describe('AnimalForm habitat type', () => {
     expect(habitatSelect().value).toBe('forest');
   });
 });
+
+describe('AnimalForm image previews', () => {
+  const imageUrl = 'https://upload.wikimedia.org/wikipedia/commons/okapi.jpg';
+  const animal = { id: 1, commonName: 'Okapi', isDomesticated: false } as Animal;
+
+  function setup() {
+    TestBed.configureTestingModule({
+      imports: [AnimalForm],
+      providers: [
+        provideRouter([]),
+        {
+          provide: AnimalService,
+          useValue: {
+            getAll: vi.fn(() => of([])),
+            getById: vi.fn(() => of(animal)),
+            getImages: vi.fn(() => of([{ kind: 'unspecified', url: imageUrl, caption: null }])),
+          },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(AnimalForm);
+    fixture.detectChanges();
+    return { fixture, form: fixture.componentInstance };
+  }
+
+  it('keeps an empty preview frame and does not request an image for an invalid URL', () => {
+    const { fixture, form } = setup();
+    const frame = (): HTMLElement => fixture.nativeElement.querySelector('.preview-frame');
+    const urlControl = form.imageRows.at(0).get('url')!;
+
+    expect(frame()).not.toBeNull();
+    expect(frame().querySelector('img')).toBeNull();
+    expect(frame().textContent).toContain('No picture yet. If Wikipedia has none, paste an image URL from Wikimedia Commons.');
+    expect(form.canPreviewImage('images.0.url')).toBe(false);
+
+    urlControl.setValue('https://');
+    fixture.detectChanges();
+
+    expect(urlControl.invalid).toBe(true);
+    expect(frame().querySelector('img')).toBeNull();
+    expect(form.canPreviewImage('images.0.url')).toBe(false);
+  });
+
+  it('shows the not-found hint inside the preview frame after an image error', () => {
+    const { fixture, form } = setup();
+    form.imageRows.at(0).get('url')!.setValue(imageUrl);
+    fixture.detectChanges();
+
+    expect(form.canPreviewImage('images.0.url')).toBe(true);
+    expect((fixture.nativeElement.querySelector('.image-row input[type="url"]') as HTMLInputElement).value).toBe(imageUrl);
+    expect(form.imageRows.at(0).get('url')!.valid).toBe(true);
+    const image = fixture.nativeElement.querySelector('.preview-frame img') as HTMLImageElement | null;
+    expect(image).not.toBeNull();
+    image?.dispatchEvent(new Event('error'));
+    expect(form.previewFailed(imageUrl)).toBe(true);
+    fixture.detectChanges();
+
+    const frame = fixture.nativeElement.querySelector('.preview-frame') as HTMLElement;
+    expect(frame.querySelector('img')).toBeNull();
+    expect(frame.textContent).toContain('No picture found at this link.');
+  });
+
+  it('retries a previously failed image after its URL is edited', () => {
+    const { fixture, form } = setup();
+    const urlControl = form.imageRows.at(0).get('url')!;
+    urlControl.setValue(imageUrl);
+    fixture.detectChanges();
+    const image = fixture.nativeElement.querySelector('.preview-frame img') as HTMLImageElement | null;
+    image?.dispatchEvent(new Event('error'));
+    expect(form.previewFailed(imageUrl)).toBe(true);
+    fixture.detectChanges();
+
+    urlControl.setValue('https://upload.wikimedia.org/wikipedia/commons/other.jpg');
+    fixture.detectChanges();
+    urlControl.setValue(imageUrl);
+    expect(form.previewFailed(imageUrl)).toBe(false);
+    fixture.detectChanges();
+
+    const retriedImage = fixture.nativeElement.querySelector('.preview-frame img') as HTMLImageElement | null;
+    expect(
+      retriedImage?.getAttribute('src') === imageUrl || form.previewFailed(imageUrl),
+    ).toBe(true);
+  });
+
+  it('clears failed preview state when an animal finishes loading', () => {
+    const { fixture, form } = setup();
+    form.markPreviewFailed(imageUrl);
+    expect(form.previewFailed(imageUrl)).toBe(true);
+
+    fixture.componentRef.setInput('id', '1');
+    fixture.detectChanges();
+
+    expect(form.previewFailed(imageUrl)).toBe(false);
+  });
+});

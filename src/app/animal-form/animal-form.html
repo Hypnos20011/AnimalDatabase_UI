@@ -230,6 +230,7 @@
     <p class="hint">{{ i18n.t('form.pictures.hint') }}</p>
     @for (row of imageRows.controls; track row; let i = $index) {
       <div class="image-row" [formGroupName]="i">
+        @let url = imageUrl('images.' + i + '.url');
         <label>
           {{ i18n.t('form.image.main') }}
           <input
@@ -261,23 +262,23 @@
         @if (imageInvalid('images.' + i + '.sourcePageUrl')) {
           <p class="field-error">{{ i18n.t('form.error.httpsLink') }}</p>
         }
-        @if (imageUrl('images.' + i + '.url') && !imageInvalid('images.' + i + '.url')) {
-          @if (previewFailed(imageUrl('images.' + i + '.url'))) {
-            <p class="field-error">
-              {{ i18n.t('form.image.notFound') }}
-            </p>
-          } @else {
-            <div class="preview-frame">
+        <div class="preview-frame">
+          @if (!url) {
+            <p class="preview-hint">{{ i18n.t('form.image.previewEmpty') }}</p>
+          } @else if (canPreviewImage('images.' + i + '.url')) {
+            @if (previewFailed(url)) {
+              <p class="field-error">{{ i18n.t('form.image.notFound') }}</p>
+            } @else {
               <img
                 class="preview"
-                [src]="imageUrl('images.' + i + '.url')"
+                [src]="url"
                 [alt]="i18n.t('form.image.main')"
                 decoding="async"
-                (error)="markPreviewFailed(imageUrl('images.' + i + '.url'))"
+                (error)="markPreviewFailed(url)"
               />
-            </div>
+            }
           }
-        }
+        </div>
         @if (i > 0) {
           <button type="button" class="btn btn-danger btn-sm" (click)="removeImageRow(i)">
             {{ i18n.t('form.image.remove') }}
