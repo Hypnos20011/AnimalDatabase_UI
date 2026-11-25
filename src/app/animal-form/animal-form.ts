@@ -1,5 +1,5 @@
-import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
 import {
   AbstractControl,
@@ -67,6 +67,7 @@ const minNotAboveMax: ValidatorFn = (group: AbstractControl): ValidationErrors |
 export class AnimalForm {
   id = input<string>();
 
+  private destroyRef = inject(DestroyRef);
   private fb = inject(FormBuilder);
   private animalService = inject(AnimalService);
   private translationCount = inject(MissingTranslationCountService);
@@ -381,7 +382,7 @@ export class AnimalForm {
     });
     const urlControl = row.get('url');
     let previousUrl = String(urlControl?.value ?? '');
-    urlControl?.valueChanges.subscribe((value: string | null) => {
+    urlControl?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value: string | null) => {
       const url = value ?? '';
       this.failedPreviews.update((failed) => {
         const updated = new Set(failed);
