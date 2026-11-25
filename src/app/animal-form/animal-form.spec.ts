@@ -615,7 +615,8 @@ describe('AnimalForm image previews', () => {
     urlControl.setValue(imageUrl);
     fixture.detectChanges();
     const image = fixture.nativeElement.querySelector('.preview-frame img') as HTMLImageElement | null;
-    image?.dispatchEvent(new Event('error'));
+    expect(image).not.toBeNull();
+    image!.dispatchEvent(new Event('error'));
     expect(form.previewFailed(imageUrl)).toBe(true);
     fixture.detectChanges();
 
@@ -626,9 +627,9 @@ describe('AnimalForm image previews', () => {
     fixture.detectChanges();
 
     const retriedImage = fixture.nativeElement.querySelector('.preview-frame img') as HTMLImageElement | null;
-    expect(
-      retriedImage?.getAttribute('src') === imageUrl || form.previewFailed(imageUrl),
-    ).toBe(true);
+    expect(form.previewFailed(imageUrl)).toBe(false);
+    expect(retriedImage).not.toBeNull();
+    expect(retriedImage!.getAttribute('src')).toBe(imageUrl);
   });
 
   it('clears failed preview state when an animal finishes loading', () => {
