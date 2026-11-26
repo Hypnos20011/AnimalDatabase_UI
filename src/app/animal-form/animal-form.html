@@ -265,16 +265,18 @@
         <div class="preview-frame">
           @if (!url) {
             <p class="preview-hint">{{ i18n.t('form.image.previewEmpty') }}</p>
-          } @else if (canPreviewImage('images.' + i + '.url')) {
-            @if (previewFailed(url)) {
-              <p class="field-error">{{ i18n.t('form.image.notFound') }}</p>
-            } @else {
+          } @else if (!canPreviewImage('images.' + i + '.url')) {
+            <p class="field-error">{{ i18n.t('form.error.imageLink') }}</p>
+          } @else if (previewFailed(url)) {
+            <p class="field-error">{{ i18n.t('form.image.notFound') }}</p>
+          } @else {
+            @for (previewUrl of [url]; track previewUrl) {
               <img
                 class="preview"
-                [src]="url"
+                [src]="previewUrl"
                 [alt]="i18n.t('form.image.main')"
                 decoding="async"
-                (error)="markPreviewFailed(url)"
+                (error)="markPreviewFailed(previewUrl)"
               />
             }
           }

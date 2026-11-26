@@ -563,6 +563,7 @@ describe('AnimalForm image previews', () => {
             getAll: vi.fn(() => of([])),
             getById: vi.fn(() => of(animal)),
             getImages: vi.fn(() => of([{ kind: 'unspecified', url: imageUrl, caption: null }])),
+            importFromWikipedia: vi.fn(() => of(shoebill())),
           },
         },
       ],
@@ -587,6 +588,7 @@ describe('AnimalForm image previews', () => {
 
     expect(urlControl.invalid).toBe(true);
     expect(frame().querySelector('img')).toBeNull();
+    expect(frame().textContent).toContain("That doesn't look like an image link.");
     expect(form.canPreviewImage('images.0.url')).toBe(false);
 
     urlControl.setValue('http://upload.wikimedia.org/image.jpg');
@@ -594,7 +596,48 @@ describe('AnimalForm image previews', () => {
 
     expect(urlControl.invalid).toBe(true);
     expect(frame().querySelector('img')).toBeNull();
+    expect(frame().textContent).toContain("That doesn't look like an image link.");
     expect(form.canPreviewImage('images.0.url')).toBe(false);
+  });
+
+  it('shows the invalid-link hint when a visible preview is changed to an invalid URL', () => {
+    const { fixture, form } = setup();
+    const urlControl = form.imageRows.at(0).get('url')!;
+    const frame = (): HTMLElement => fixture.nativeElement.querySelector('.preview-frame');
+
+    urlControl.setValue(imageUrl);
+    fixture.detectChanges();
+    expect(frame().querySelector('img')?.getAttribute('src')).toBe(imageUrl);
+
+    for (const invalidUrl of ['https://', 'abc']) {
+      urlControl.setValue(invalidUrl);
+      fixture.detectChanges();
+
+      expect(urlControl.untouched).toBe(true);
+      expect(frame().querySelector('img')).toBeNull();
+      expect(frame().textContent).toContain("That doesn't look like an image link.");
+      expect(fixture.nativeElement.querySelector('.image-row > .field-error')).toBeNull();
+    }
+  });
+
+  it('shows the invalid-link hint after a Wikipedia import preview is edited', () => {
+    const { fixture, form } = setup();
+    form.wikiUrl.set('Bengal tiger');
+    form.importFromWikipedia();
+    fixture.detectChanges();
+
+    const urlControl = form.imageRows.at(0).get('url')!;
+    const importedUrl = urlControl.value;
+    const frame = fixture.nativeElement.querySelector('.preview-frame') as HTMLElement;
+    expect(frame.querySelector('img')?.getAttribute('src')).toBe(importedUrl);
+
+    urlControl.setValue('abc');
+    fixture.detectChanges();
+
+    expect(urlControl.untouched).toBe(true);
+    expect(frame.querySelector('img')).toBeNull();
+    expect(frame.textContent).toContain("That doesn't look like an image link.");
+    expect(fixture.nativeElement.querySelector('.image-row > .field-error')).toBeNull();
   });
 
   it('shows the not-found hint inside the preview frame after an image error', () => {
@@ -614,6 +657,49 @@ describe('AnimalForm image previews', () => {
     const frame = fixture.nativeElement.querySelector('.preview-frame') as HTMLElement;
     expect(frame.querySelector('img')).toBeNull();
     expect(frame.textContent).toContain('No picture found at this link.');
+  });
+
+  it('replaces the preview element when a valid URL changes and shows not-found after its error', () => {
+    const { fixture, form } = setup();
+    const urlControl = form.imageRows.at(0).get('url')!;
+    urlControl.setValue(imageUrl);
+    fixture.detectChanges();
+    const oldImage = fixture.nativeElement.querySelector('.preview-frame img') as HTMLImageElement;
+
+    const newUrl = 'https://upload.wikimedia.org/wikipedia/commons/new-image.jpg';
+    urlControl.setValue(newUrl);
+    fixture.detectChanges();
+    const newImage = fixture.nativeElement.querySelector(
+      '.preview-frame img',
+    ) as HTMLImageElement | null;
+
+    expect(newImage).not.toBeNull();
+    expect(newImage!.getAttribute('src')).toBe(newUrl);
+    expect(newImage).not.toBe(oldImage);
+    expect(oldImage.isConnected).toBe(false);
+
+    newImage!.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+    const frame = fixture.nativeElement.querySelector('.preview-frame') as HTMLElement;
+    expect(frame.querySelector('img')).toBeNull();
+    expect(frame.textContent).toContain('No picture found at this link.');
+  });
+
+  it('shows the empty hint when the URL is cleared after a visible preview', () => {
+    const { fixture, form } = setup();
+    const urlControl = form.imageRows.at(0).get('url')!;
+    urlControl.setValue(imageUrl);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.preview-frame img')).not.toBeNull();
+
+    urlControl.setValue('');
+    fixture.detectChanges();
+
+    const frame = fixture.nativeElement.querySelector('.preview-frame') as HTMLElement;
+    expect(frame.querySelector('img')).toBeNull();
+    expect(frame.textContent).toContain(
+      'No picture yet. If Wikipedia has none, paste an image URL from Wikimedia Commons.',
+    );
   });
 
   it('retries a previously failed image after its URL is edited', () => {
