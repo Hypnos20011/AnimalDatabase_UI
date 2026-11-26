@@ -47,7 +47,7 @@ export class App {
   );
 
   constructor() {
-    effect(() => this.translationCount.setUnlocked(this.admin.unlocked()));
+    effect(() => this.translationCount.setUnlocked(this.admin.role() === 'admin'));
   }
 
   openRandom(): void {

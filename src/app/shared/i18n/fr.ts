@@ -18,6 +18,7 @@ export const fr: Record<TranslationKey, string> = {
   'admin.missing.empty': 'Chaque animal a un texte allemand et français.',
   'admin.missing.complete': 'Complet',
   'admin.missing.error': 'Impossible de charger les traductions manquantes.',
+  'admin.accessDenied': 'Vous n’avez pas l’autorisation d’effectuer cette action.',
   'admin.missing.saveError': 'Impossible d’enregistrer les traductions.',
   'admin.missing.edit': 'Modifier',
   'admin.missing.translate': 'Traduire le reste',

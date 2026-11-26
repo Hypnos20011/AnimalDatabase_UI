@@ -1,6 +1,6 @@
 <section class="admin">
   <h2>Admin</h2>
-  @if (admin.unlocked()) {
+  @if (admin.role() === 'admin') {
     <p class="lead">Editing is unlocked for this browser tab.</p>
     <p class="links">
       <a routerLink="/admin/missing">
@@ -14,7 +14,7 @@
       <a routerLink="/">Back to the list</a>
       <button type="button" class="text-link lock" (click)="lock()">Lock</button>
     </p>
-  } @else {
+  } @else if (!admin.unlocked()) {
     <p class="lead">Adding, editing and deleting animals needs the admin key.</p>
     <form class="unlock" (ngSubmit)="unlock()" novalidate>
       <label for="admin-key">Admin key</label>

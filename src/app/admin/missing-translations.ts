@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { Animal } from '../animal-model/animal.model';
@@ -81,8 +82,14 @@ export class MissingTranslations {
         this.busy.set(null);
         this.translationCount.refresh();
       },
-      error: () => {
-        this.error.set(this.i18n.t('admin.missing.error'));
+      error: (error: unknown) => {
+        this.error.set(
+          this.i18n.t(
+            error instanceof HttpErrorResponse && error.status === 403
+              ? 'admin.accessDenied'
+              : 'admin.missing.error',
+          ),
+        );
         this.busy.set(null);
       },
     });
@@ -103,8 +110,14 @@ export class MissingTranslations {
         this.rows.set(missing);
         this.loading.set(false);
       },
-      error: () => {
-        this.error.set(this.i18n.t('admin.missing.error'));
+      error: (error: unknown) => {
+        this.error.set(
+          this.i18n.t(
+            error instanceof HttpErrorResponse && error.status === 403
+              ? 'admin.accessDenied'
+              : 'admin.missing.error',
+          ),
+        );
         this.loading.set(false);
       },
     });

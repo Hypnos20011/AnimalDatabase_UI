@@ -51,7 +51,7 @@ describe('AnimalDetail admin Edit/Delete i18n', () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => localStorage.clear());
 
-  async function setup() {
+  async function setup(role: 'admin' | 'tester' = 'admin') {
     TestBed.configureTestingModule({
       imports: [AnimalDetail],
       providers: [
@@ -64,7 +64,7 @@ describe('AnimalDetail admin Edit/Delete i18n', () => {
             delete: vi.fn(() => of(undefined)),
           },
         },
-        { provide: AdminKeyService, useValue: { unlocked: signal(true) } },
+        { provide: AdminKeyService, useValue: { unlocked: signal(true), role: signal(role) } },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
@@ -91,6 +91,7 @@ describe('AnimalDetail admin Edit/Delete i18n', () => {
       'detail.delete.message',
       'detail.delete.busy',
       'detail.delete.error',
+      'admin.accessDenied',
     ] as const;
     for (const key of keys) {
       expect(en[key].length).toBeGreaterThan(0);
@@ -105,6 +106,14 @@ describe('AnimalDetail admin Edit/Delete i18n', () => {
     const { query } = await setup();
     expect(query('.actions .edit').textContent!.trim()).toBe('Edit');
     expect(query('.actions .delete').textContent!.trim()).toBe('Delete');
+  });
+
+  it('shows Edit but not Delete to testers', async () => {
+    const { element } = await setup('tester');
+
+    expect(element.querySelector('.actions .edit')).not.toBeNull();
+    expect(element.querySelector('.actions .delete')).toBeNull();
+    expect(element.querySelector('app-confirm-dialog')).toBeNull();
   });
 
   it('opens the English delete confirmation dialog', async () => {

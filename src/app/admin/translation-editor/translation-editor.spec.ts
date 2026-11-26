@@ -164,6 +164,15 @@ describe('TranslationEditor', () => {
     expect(element.querySelector('fieldset[formGroupName="de"]')!.matches(':disabled')).toBe(false);
   });
 
+  it('shows the access-denied message when translation loading returns 403', async () => {
+    const getTranslation = vi.fn(() => throwError(() => new HttpErrorResponse({ status: 403 })));
+    const { element } = await setup({ animalId: 1 }, getTranslation);
+
+    expect(element.querySelector('[role="alert"]')?.textContent?.trim()).toBe(
+      TestBed.inject(LanguageService).t('admin.accessDenied'),
+    );
+  });
+
   it('waits for both translations before patching the form', async () => {
     const german = new Subject<AnimalTexts>();
     const french = new Subject<AnimalTexts>();
@@ -368,6 +377,20 @@ describe('TranslationEditor', () => {
     expect(component.saving()).toBe(false);
     expect(saved).not.toHaveBeenCalled();
     expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it('shows the access-denied message when saving translations returns 403', async () => {
+    const saveTranslation = vi.fn(() =>
+      throwError(() => new HttpErrorResponse({ status: 403 })),
+    );
+    const { fixture, element } = await setup({ animalId: 3 }, undefined, saveTranslation);
+
+    fixture.componentInstance.save();
+    fixture.detectChanges();
+
+    expect(element.querySelector('[role="alert"]')?.textContent?.trim()).toBe(
+      TestBed.inject(LanguageService).t('admin.accessDenied'),
+    );
   });
 
   it('does not reopen when the selected animal changes while the dialog is open', async () => {

@@ -12,11 +12,13 @@ describe('App', () => {
   const open = vi.fn();
   const clear = vi.fn();
   const unlocked = signal(false);
+  const role = signal<'admin' | 'tester' | 'none'>('none');
 
   beforeEach(async () => {
     open.mockReset();
     clear.mockReset();
     unlocked.set(false);
+    role.set('none');
     localStorage.clear();
     document.documentElement.lang = '';
     await TestBed.configureTestingModule({
@@ -24,7 +26,7 @@ describe('App', () => {
       providers: [
         provideRouter([]),
         { provide: RandomAnimalService, useValue: { open } },
-        { provide: AdminKeyService, useValue: { unlocked, clear } },
+        { provide: AdminKeyService, useValue: { unlocked, role, clear } },
         {
           provide: AnimalService,
           useValue: {
@@ -76,6 +78,7 @@ describe('App', () => {
   });
 
   it('adds Add animal to the top bar once unlocked', async () => {
+    role.set('admin');
     unlocked.set(true);
     const { navLinks } = await render();
     const links = navLinks();
@@ -89,6 +92,14 @@ describe('App', () => {
     expect(links[1].getAttribute('href')).toBe('/animals/new');
   });
 
+  it('adds Add animal to the top bar for testers', async () => {
+    role.set('tester');
+    unlocked.set(true);
+    const { navLinks } = await render();
+
+    expect(navLinks().map((link) => link.textContent!.trim())).toContain('Add animal');
+  });
+
   it('has a quiet Admin link in the footer while locked', async () => {
     const { element } = await render();
     const link = element.querySelector<HTMLAnchorElement>('.site-footer .admin')!;
@@ -99,6 +110,7 @@ describe('App', () => {
   });
 
   it('keeps the Admin footer link and shows Lock once unlocked', async () => {
+    role.set('admin');
     unlocked.set(true);
     const { element } = await render();
     const lock = element.querySelector<HTMLButtonElement>('.site-footer .lock')!;
@@ -109,18 +121,39 @@ describe('App', () => {
     expect(clear).toHaveBeenCalledTimes(1);
   });
 
+  it('hides the Admin footer link but keeps Lock for testers', async () => {
+    role.set('tester');
+    unlocked.set(true);
+    const { element } = await render();
+
+    expect(element.querySelector('.site-footer .admin')).toBeNull();
+    expect(element.querySelector<HTMLButtonElement>('.site-footer .lock')?.textContent?.trim()).toBe(
+      'Lock',
+    );
+  });
+
   it('shows the unlocked missing-translation badge only for positive counts', async () => {
     const { fixture, element } = await render();
     const count = TestBed.inject(MissingTranslationCountService).count;
+    const missingTranslations = TestBed.inject(AnimalService).missingTranslations;
 
     expect(element.querySelector('.site-footer .missing-count')).toBeNull();
 
+    role.set('tester');
     unlocked.set(true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(element.querySelector('.site-footer .missing-count')).toBeNull();
+    expect(missingTranslations).not.toHaveBeenCalled();
+
+    role.set('admin');
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
     const unlockedBadge = element.querySelector('.site-footer .missing-count');
     expect(unlockedBadge?.textContent?.trim()).toBe('3');
+    expect(missingTranslations).toHaveBeenCalledOnce();
 
     count.set(0);
     fixture.detectChanges();
@@ -263,6 +296,7 @@ describe('App', () => {
 
     it('translates the unlocked footer', async () => {
       localStorage.setItem('language', 'de');
+      role.set('admin');
       unlocked.set(true);
       const { element } = await render();
       expect(element.querySelector('.site-footer .footer-note')!.textContent!.trim()).toBe(

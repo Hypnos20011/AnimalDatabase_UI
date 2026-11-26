@@ -1,19 +1,20 @@
 import { Routes } from '@angular/router';
 import { AnimalsList } from './animals-list/animals-list';
-import { adminGuard } from './admin/admin.guard';
+import { adminGuard, adminOnlyGuard, adminPageGuard } from './admin/admin.guard';
 
 export const routes: Routes = [
   { path: '', component: AnimalsList, title: 'Unusual Animals' },
   {
     path: 'admin',
     loadComponent: () => import('./admin/admin-unlock').then((m) => m.AdminUnlock),
+    canActivate: [adminPageGuard],
     title: 'Admin · Unusual Animals',
   },
   {
     path: 'admin/missing',
     loadComponent: () =>
       import('./admin/missing-translations').then((m) => m.MissingTranslations),
-    canActivate: [adminGuard],
+    canActivate: [adminOnlyGuard],
     title: 'Missing translations · Unusual Animals',
   },
   {

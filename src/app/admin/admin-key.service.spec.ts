@@ -27,48 +27,83 @@ describe('AdminKeyService', () => {
     expect(admin.key()).toBeNull();
   });
 
-  it('picks up a key already stored in this tab', () => {
+  it('revalidates a key already stored in this tab before unlocking', async () => {
     sessionStorage.setItem(ADMIN_KEY_STORAGE, 'stored-key');
     const admin = create();
-    expect(admin.unlocked()).toBe(true);
+    expect(admin.unlocked()).toBe(false);
     expect(admin.key()).toBe('stored-key');
+
+    await Promise.resolve();
+    const request = http.expectOne(`${environment.apiUrl}/admin/check`);
+    expect(request.request.headers.get('X-Admin-Key')).toBe('stored-key');
+    request.flush({ role: 'tester' });
+
+    expect(admin.role()).toBe('tester');
+    expect(admin.unlocked()).toBe(true);
   });
 
   it('keeps the key in sessionStorage and clears it on lock', () => {
     const admin = create();
-    admin.set('secret');
+    admin.set('secret', 'admin');
     expect(sessionStorage.getItem(ADMIN_KEY_STORAGE)).toBe('secret');
     expect(admin.unlocked()).toBe(true);
+    expect(admin.role()).toBe('admin');
 
     admin.clear();
     expect(sessionStorage.getItem(ADMIN_KEY_STORAGE)).toBeNull();
     expect(admin.unlocked()).toBe(false);
+    expect(admin.role()).toBe('none');
   });
 
-  it('verifies a key against /admin/check and accepts 204', () => {
+  it.each(['admin', 'tester'] as const)('reads the %s role from /admin/check', (role) => {
     const admin = create();
-    let result: boolean | undefined;
+    let result: string | null | undefined;
     admin.verify('good').subscribe((valid) => (result = valid));
 
     const request = http.expectOne(`${environment.apiUrl}/admin/check`);
     expect(request.request.method).toBe('GET');
     expect(request.request.headers.get('X-Admin-Key')).toBe('good');
-    request.flush(null, { status: 204, statusText: 'No Content' });
+    request.flush({ role });
 
-    expect(result).toBe(true);
+    expect(result).toBe(role);
     expect(admin.unlocked()).toBe(false);
   });
 
-  it('reports a wrong key as false on 401', () => {
+  it('reports a wrong key as none on 401', () => {
     const admin = create();
-    let result: boolean | undefined;
+    let result: string | null | undefined;
     admin.verify('bad').subscribe((valid) => (result = valid));
 
     http
       .expectOne(`${environment.apiUrl}/admin/check`)
       .flush('A valid admin key is required.', { status: 401, statusText: 'Unauthorized' });
 
-    expect(result).toBe(false);
+    expect(result).toBeNull();
+  });
+
+  it('rejects an unexpected role response', () => {
+    const admin = create();
+    let failed = false;
+    admin.verify('unexpected').subscribe({ error: () => (failed = true) });
+
+    http.expectOne(`${environment.apiUrl}/admin/check`).flush({ role: 'owner' });
+
+    expect(failed).toBe(true);
+    expect(admin.unlocked()).toBe(false);
+  });
+
+  it('clears a stored key when startup verification returns 401', async () => {
+    sessionStorage.setItem(ADMIN_KEY_STORAGE, 'stale-key');
+    const admin = create();
+
+    await Promise.resolve();
+    http
+      .expectOne(`${environment.apiUrl}/admin/check`)
+      .flush('wrong key', { status: 401, statusText: 'Unauthorized' });
+
+    expect(admin.key()).toBeNull();
+    expect(admin.role()).toBe('none');
+    expect(sessionStorage.getItem(ADMIN_KEY_STORAGE)).toBeNull();
   });
 
   it('passes other failures on as errors', () => {
