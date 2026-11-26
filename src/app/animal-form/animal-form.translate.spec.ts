@@ -14,7 +14,6 @@ describe('AnimalForm translations', () => {
       getById: vi.fn(),
       getImages: vi.fn(),
       getTranslation: vi.fn(),
-      translate: vi.fn(),
       saveTranslation: vi.fn(),
       importFromWikipedia: vi.fn(),
     };
@@ -48,7 +47,6 @@ describe('AnimalForm translations', () => {
 
     expect(service.create).toHaveBeenCalledOnce();
     expect(service.getTranslation).not.toHaveBeenCalled();
-    expect(service.translate).not.toHaveBeenCalled();
     expect(service.saveTranslation).not.toHaveBeenCalled();
     expect(refresh).toHaveBeenCalledOnce();
   });

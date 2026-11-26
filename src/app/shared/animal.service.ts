@@ -55,12 +55,6 @@ export class AnimalService {
     });
   }
 
-  translate(texts: AnimalTexts, language: Language = 'de'): Observable<AnimalTexts> {
-    return this.http.post<AnimalTexts>(`${environment.apiUrl}/translate`, texts, {
-      params: { lang: language },
-    });
-  }
-
   getTranslation(id: number, language: Language): Observable<AnimalTexts> {
     return this.http.get<AnimalTexts>(`${this.apiUrl}/${id}/translations/${language}`);
   }
