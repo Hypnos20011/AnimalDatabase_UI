@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
@@ -8,6 +9,7 @@ import { AnimalImage } from '../animal-model/animal-image.model';
 import { AdminKeyService } from '../admin/admin-key.service';
 import { signal } from '@angular/core';
 import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
+import { LanguageService } from '../shared/i18n/language.service';
 
 type DialogShim = { showModal?: () => void; close?: () => void };
 
@@ -58,7 +60,7 @@ describe('AnimalDetail delete confirmation', () => {
       providers: [
         provideRouter([]),
         { provide: AnimalService, useValue: service },
-        { provide: AdminKeyService, useValue: { unlocked: signal(true) } },
+        { provide: AdminKeyService, useValue: { unlocked: signal(true), role: signal('admin') } },
       ],
     });
     const router = TestBed.inject(Router);
@@ -160,6 +162,21 @@ describe('AnimalDetail delete confirmation', () => {
     expect(query('.confirm-error').textContent).toContain('Could not delete this animal.');
     expect(query<HTMLButtonElement>('.confirm-delete').disabled).toBe(false);
   });
+
+  it('shows the localized access-denied message when delete returns 403', async () => {
+    const { settle, query } = await setup(() =>
+      throwError(() => new HttpErrorResponse({ status: 403 })),
+    );
+
+    query<HTMLButtonElement>('.actions .delete').click();
+    await settle();
+    query<HTMLButtonElement>('.confirm-delete').click();
+    await settle();
+
+    expect(query('[role="alert"]').textContent?.trim()).toBe(
+      TestBed.inject(LanguageService).t('admin.accessDenied'),
+    );
+  });
 });
 
 describe('AnimalDetail hero', () => {
@@ -181,7 +198,7 @@ describe('AnimalDetail hero', () => {
       providers: [
         provideRouter([]),
         { provide: AnimalService, useValue: service },
-        { provide: AdminKeyService, useValue: { unlocked: signal(true) } },
+        { provide: AdminKeyService, useValue: { unlocked: signal(true), role: signal('admin') } },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
@@ -302,7 +319,7 @@ describe('AnimalDetail while locked', () => {
           provide: AnimalService,
           useValue: { getById: vi.fn(() => of(okapi)), getImages: vi.fn(() => of([])) },
         },
-        { provide: AdminKeyService, useValue: { unlocked: signal(false) } },
+        { provide: AdminKeyService, useValue: { unlocked: signal(false), role: signal('none') } },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
@@ -329,7 +346,7 @@ describe('AnimalDetail facts', () => {
       providers: [
         provideRouter([]),
         { provide: AnimalService, useValue: service },
-        { provide: AdminKeyService, useValue: { unlocked: signal(true) } },
+        { provide: AdminKeyService, useValue: { unlocked: signal(true), role: signal('admin') } },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
@@ -392,7 +409,7 @@ describe('AnimalDetail habitat', () => {
           provide: AnimalService,
           useValue: { getById: vi.fn(() => of(animal)), getImages: vi.fn(() => of([])) },
         },
-        { provide: AdminKeyService, useValue: { unlocked: signal(true) } },
+        { provide: AdminKeyService, useValue: { unlocked: signal(true), role: signal('admin') } },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);

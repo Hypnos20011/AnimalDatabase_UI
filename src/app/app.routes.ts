@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { AnimalsList } from './animals-list/animals-list';
-import { adminGuard } from './admin/admin.guard';
+import { adminGuard, adminOnlyGuard } from './admin/admin.guard';
 
 export const routes: Routes = [
   { path: '', component: AnimalsList, title: 'Unusual Animals' },
@@ -13,7 +13,7 @@ export const routes: Routes = [
     path: 'admin/missing',
     loadComponent: () =>
       import('./admin/missing-translations').then((m) => m.MissingTranslations),
-    canActivate: [adminGuard],
+    canActivate: [adminOnlyGuard],
     title: 'Missing translations · Unusual Animals',
   },
   {

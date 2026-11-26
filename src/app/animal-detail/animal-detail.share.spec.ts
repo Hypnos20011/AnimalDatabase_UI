@@ -59,7 +59,7 @@ describe('AnimalDetail share button', () => {
           provide: AnimalService,
           useValue: { getById: vi.fn(() => of(okapi)), getImages: vi.fn(() => of([])) },
         },
-        { provide: AdminKeyService, useValue: { unlocked: signal(false) } },
+        { provide: AdminKeyService, useValue: { unlocked: signal(false), role: signal('none') } },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);

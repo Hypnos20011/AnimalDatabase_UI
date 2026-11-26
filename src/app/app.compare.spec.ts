@@ -14,7 +14,10 @@ describe('App compare link', () => {
       providers: [
         provideRouter([]),
         { provide: RandomAnimalService, useValue: { open: vi.fn() } },
-        { provide: AdminKeyService, useValue: { unlocked: signal(false), clear: vi.fn() } },
+        {
+          provide: AdminKeyService,
+          useValue: { unlocked: signal(false), role: signal('none'), clear: vi.fn() },
+        },
       ],
     }).compileComponents();
   });

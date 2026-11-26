@@ -36,7 +36,7 @@ export class AdminUnlock {
           this.error.set("That key doesn't match. Check it and try again.");
           return;
         }
-        this.admin.set(key);
+        this.admin.set(key, valid);
         this.key.set('');
         this.router.navigateByUrl(this.safeReturnUrl());
       },

@@ -25,7 +25,7 @@ describe('AnimalDetail source link', () => {
       providers: [
         provideRouter([]),
         { provide: AnimalService, useValue: { getById: vi.fn(() => of({ ...base, sourceUrl })), getImages: vi.fn(() => of([])) } },
-        { provide: AdminKeyService, useValue: { unlocked: signal(false) } },
+        { provide: AdminKeyService, useValue: { unlocked: signal(false), role: signal('none') } },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);

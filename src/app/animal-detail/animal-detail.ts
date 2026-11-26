@@ -1,6 +1,7 @@
 import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { Animal } from '../animal-model/animal.model';
@@ -251,8 +252,14 @@ export class AnimalDetail {
         this.confirmOpen.set(false);
         this.router.navigate(['/']);
       },
-      error: () => {
-        this.deleteError.set(this.i18n.t('detail.delete.error'));
+      error: (error: unknown) => {
+        this.deleteError.set(
+          this.i18n.t(
+            error instanceof HttpErrorResponse && error.status === 403
+              ? 'admin.accessDenied'
+              : 'detail.delete.error',
+          ),
+        );
         this.deleting.set(false);
       },
     });

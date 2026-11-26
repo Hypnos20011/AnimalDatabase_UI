@@ -33,7 +33,7 @@ describe('adminKeyInterceptor', () => {
   });
 
   it('adds the header to API requests when unlocked', () => {
-    admin.set('secret');
+    admin.set('secret', 'admin');
     client.delete(`${environment.apiUrl}/animals/2`).subscribe();
     const request = http.expectOne(`${environment.apiUrl}/animals/2`);
     expect(request.request.headers.get('X-Admin-Key')).toBe('secret');
@@ -48,7 +48,7 @@ describe('adminKeyInterceptor', () => {
   });
 
   it('never sends the key to other hosts', () => {
-    admin.set('secret');
+    admin.set('secret', 'admin');
     client.get('https://en.wikipedia.org/api/rest_v1/page/summary/Okapi').subscribe();
     const request = http.expectOne((req) => req.url.startsWith('https://en.wikipedia.org'));
     expect(request.request.headers.has('X-Admin-Key')).toBe(false);
@@ -56,7 +56,7 @@ describe('adminKeyInterceptor', () => {
   });
 
   it('clears the key and goes to the unlock page when a write returns 401', () => {
-    admin.set('stale');
+    admin.set('stale', 'admin');
     let failed = false;
     client.put(`${environment.apiUrl}/animals/2`, {}).subscribe({ error: () => (failed = true) });
 
@@ -71,13 +71,27 @@ describe('adminKeyInterceptor', () => {
   });
 
   it('leaves the key alone on other errors', () => {
-    admin.set('secret');
+    admin.set('secret', 'admin');
     client.delete(`${environment.apiUrl}/animals/2`).subscribe({ error: () => undefined });
     http
       .expectOne(`${environment.apiUrl}/animals/2`)
       .flush('boom', { status: 500, statusText: 'Server Error' });
 
     expect(admin.unlocked()).toBe(true);
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('keeps the tester key and does not redirect on 403', () => {
+    admin.set('tester-secret', 'tester');
+    client.delete(`${environment.apiUrl}/animals/2`).subscribe({ error: () => undefined });
+    http
+      .expectOne(`${environment.apiUrl}/animals/2`)
+      .flush('Forbidden', { status: 403, statusText: 'Forbidden' });
+
+    expect(admin.key()).toBe('tester-secret');
+    expect(admin.role()).toBe('tester');
+    expect(admin.unlocked()).toBe(true);
+    expect(sessionStorage.getItem(ADMIN_KEY_STORAGE)).toBe('tester-secret');
     expect(navigate).not.toHaveBeenCalled();
   });
 

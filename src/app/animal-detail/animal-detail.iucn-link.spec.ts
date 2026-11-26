@@ -48,7 +48,7 @@ describe('AnimalDetail IUCN Red List link', () => {
           provide: AnimalService,
           useValue: { getById: vi.fn(() => of(animal)), getImages: vi.fn(() => of([])) },
         },
-        { provide: AdminKeyService, useValue: { unlocked: signal(false) } },
+        { provide: AdminKeyService, useValue: { unlocked: signal(false), role: signal('none') } },
       ],
     });
     const stored = localStorage.getItem('language');

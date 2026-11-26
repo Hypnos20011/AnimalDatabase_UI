@@ -3,11 +3,12 @@ import { Router, provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import { AdminUnlock } from './admin-unlock';
 import { AdminKeyService } from './admin-key.service';
+import type { AdminRole } from './admin-key.service';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
 
 describe('AdminUnlock', () => {
-  async function setup(verify: (key: string) => Observable<boolean>, returnUrl?: string) {
+  async function setup(verify: (key: string) => Observable<AdminRole | null>, returnUrl?: string) {
     sessionStorage.clear();
     TestBed.configureTestingModule({
       imports: [AdminUnlock],
@@ -39,14 +40,14 @@ describe('AdminUnlock', () => {
   afterEach(() => sessionStorage.clear());
 
   it('shows one password field and an Unlock button', async () => {
-    const { element } = await setup(() => of(true));
+    const { element } = await setup(() => of('admin'));
     expect(element.querySelectorAll('input').length).toBe(1);
     expect(element.querySelector('input')!.type).toBe('password');
     expect(element.querySelector('button[type="submit"]')!.textContent!.trim()).toBe('Unlock');
   });
 
   it('shows an inline error and stays locked for a wrong key', async () => {
-    const { admin, element, navigate, submit } = await setup(() => of(false));
+    const { admin, element, navigate, submit } = await setup(() => of(null));
     await submit('wrong');
 
     expect(element.querySelector('.field-error')!.textContent).toContain("doesn't match");
@@ -55,7 +56,7 @@ describe('AdminUnlock', () => {
   });
 
   it('stores a valid key and returns to the page the visitor came from', async () => {
-    const { admin, verifySpy, navigate, submit } = await setup(() => of(true), '/animals/3/edit');
+    const { admin, verifySpy, navigate, submit } = await setup(() => of('admin'), '/animals/3/edit');
     await submit('  right  ');
 
     expect(verifySpy).toHaveBeenCalledWith('right');
@@ -64,7 +65,7 @@ describe('AdminUnlock', () => {
   });
 
   it('ignores return addresses outside the app', async () => {
-    const { navigate, submit } = await setup(() => of(true), '//evil.example');
+    const { navigate, submit } = await setup(() => of('admin'), '//evil.example');
     await submit('right');
     expect(navigate).toHaveBeenCalledWith('/');
   });
@@ -88,8 +89,8 @@ describe('AdminUnlock', () => {
   });
 
   it('offers a quiet Lock link once unlocked', async () => {
-    const { admin, element, settle } = await setup(() => of(true));
-    admin.set('right');
+    const { admin, element, settle } = await setup(() => of('admin'));
+    admin.set('right', 'admin');
     await settle();
 
     const lock = element.querySelector<HTMLButtonElement>('.lock')!;
@@ -101,19 +102,34 @@ describe('AdminUnlock', () => {
     expect(element.querySelector('input[type="password"]')).not.toBeNull();
   });
 
-  it('shows the translation badge only while unlocked and the count is positive', async () => {
-    const { admin, element, settle } = await setup(() => of(true));
+  it('shows the translation badge only for an admin with a positive count', async () => {
+    const { admin, element, settle } = await setup(() => of('admin'));
     const count = TestBed.inject(MissingTranslationCountService).count;
     count.set(2);
 
     expect(element.querySelector('.missing-count')).toBeNull();
 
-    admin.set('right');
+    admin.set('right', 'admin');
     await settle();
     expect(element.querySelector('.missing-count')?.textContent?.trim()).toBe('2');
 
     count.set(0);
     await settle();
+    expect(element.querySelector('.missing-count')).toBeNull();
+  });
+
+  it('shows tester status without admin links or a translation badge', async () => {
+    const { admin, element, settle } = await setup(() => of('tester'));
+    const count = TestBed.inject(MissingTranslationCountService).count;
+    count.set(2);
+
+    admin.set('right', 'tester');
+    await settle();
+
+    expect(element.textContent).toContain('Tester access is unlocked');
+    expect(element.querySelector('a[href="/admin/missing"]')).toBeNull();
+    expect(element.querySelector('a[href="/"]')?.textContent).toContain('Back to the list');
+    expect(element.querySelector('.lock')?.textContent?.trim()).toBe('Lock');
     expect(element.querySelector('.missing-count')).toBeNull();
   });
 });

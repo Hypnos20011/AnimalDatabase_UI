@@ -9,6 +9,7 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { catchError, forkJoin, of, Subscription, throwError } from 'rxjs';
 import { AnimalTexts } from '../../animal-model/animal.model';
@@ -90,10 +91,16 @@ export class TranslationEditor {
         this.saving.set(false);
         this.saved.emit();
       },
-      error: () => {
+      error: (error: unknown) => {
         this.saving.set(false);
         this.translationCount.refresh();
-        this.error.set(this.i18n.t('admin.missing.saveError'));
+        this.error.set(
+          this.i18n.t(
+            error instanceof HttpErrorResponse && error.status === 403
+              ? 'admin.accessDenied'
+              : 'admin.missing.saveError',
+          ),
+        );
       },
     });
   }
@@ -122,9 +129,17 @@ export class TranslationEditor {
         this.form.patchValue({ de, fr });
         this.loading.set(false);
       },
-      error: () => {
+      error: (error: unknown) => {
         this.form.reset();
-        this.error.set(untracked(() => this.i18n.t('admin.missing.error')));
+        this.error.set(
+          untracked(() =>
+            this.i18n.t(
+              error instanceof HttpErrorResponse && error.status === 403
+                ? 'admin.accessDenied'
+                : 'admin.missing.error',
+            ),
+          ),
+        );
         this.loading.set(false);
       },
     });

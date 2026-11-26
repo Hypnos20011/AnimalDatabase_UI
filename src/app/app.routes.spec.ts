@@ -1,6 +1,6 @@
 import { AdminUnlock } from './admin/admin-unlock';
 import { MissingTranslations } from './admin/missing-translations';
-import { adminGuard } from './admin/admin.guard';
+import { adminGuard, adminOnlyGuard } from './admin/admin.guard';
 import { AnimalDetail } from './animal-detail/animal-detail';
 import { AnimalForm } from './animal-form/animal-form';
 import { Stats } from './animal-stats/stats';
@@ -28,7 +28,7 @@ describe('routes', () => {
     expect(route('').component).toBe(AnimalsList);
     expect(route('').title).toBe('Unusual Animals');
     expect(route('admin').title).toBe('Admin · Unusual Animals');
-    expect(route('admin/missing').canActivate).toEqual([adminGuard]);
+    expect(route('admin/missing').canActivate).toEqual([adminOnlyGuard]);
     expect(route('admin/missing').title).toBe('Missing translations · Unusual Animals');
     expect(route('animals/new').canActivate).toEqual([adminGuard]);
     expect(route('animals/new').title).toBe('New animal · Unusual Animals');

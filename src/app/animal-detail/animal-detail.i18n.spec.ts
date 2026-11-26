@@ -77,7 +77,7 @@ describe('AnimalDetail translation', () => {
       providers: [
         provideRouter([]),
         { provide: AnimalService, useValue: service },
-        { provide: AdminKeyService, useValue: { unlocked: signal(false) } },
+        { provide: AdminKeyService, useValue: { unlocked: signal(false), role: signal('none') } },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
