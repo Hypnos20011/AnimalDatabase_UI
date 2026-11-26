@@ -21,8 +21,16 @@ export const adminOnlyGuard: CanActivateFn = (_route, state) => {
   return admin.waitForInitialCheck().pipe(
     map(() => {
       if (admin.role() === 'admin') return true;
-      if (admin.role() === 'tester') return router.createUrlTree(['/admin']);
+      if (admin.role() === 'tester') return router.createUrlTree(['/']);
       return router.createUrlTree(['/admin'], { queryParams: { returnUrl: state.url } });
     }),
+  );
+};
+
+export const adminPageGuard: CanActivateFn = () => {
+  const admin = inject(AdminKeyService);
+  const router = inject(Router);
+  return admin.waitForInitialCheck().pipe(
+    map(() => admin.role() === 'tester' ? router.createUrlTree(['/']) : true),
   );
 };

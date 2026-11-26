@@ -1,12 +1,13 @@
 import { Routes } from '@angular/router';
 import { AnimalsList } from './animals-list/animals-list';
-import { adminGuard, adminOnlyGuard } from './admin/admin.guard';
+import { adminGuard, adminOnlyGuard, adminPageGuard } from './admin/admin.guard';
 
 export const routes: Routes = [
   { path: '', component: AnimalsList, title: 'Unusual Animals' },
   {
     path: 'admin',
     loadComponent: () => import('./admin/admin-unlock').then((m) => m.AdminUnlock),
+    canActivate: [adminPageGuard],
     title: 'Admin · Unusual Animals',
   },
   {

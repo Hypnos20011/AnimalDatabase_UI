@@ -121,6 +121,17 @@ describe('App', () => {
     expect(clear).toHaveBeenCalledTimes(1);
   });
 
+  it('hides the Admin footer link but keeps Lock for testers', async () => {
+    role.set('tester');
+    unlocked.set(true);
+    const { element } = await render();
+
+    expect(element.querySelector('.site-footer .admin')).toBeNull();
+    expect(element.querySelector<HTMLButtonElement>('.site-footer .lock')?.textContent?.trim()).toBe(
+      'Lock',
+    );
+  });
+
   it('shows the unlocked missing-translation badge only for positive counts', async () => {
     const { fixture, element } = await render();
     const count = TestBed.inject(MissingTranslationCountService).count;

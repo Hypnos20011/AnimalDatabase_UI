@@ -118,18 +118,18 @@ describe('AdminUnlock', () => {
     expect(element.querySelector('.missing-count')).toBeNull();
   });
 
-  it('shows tester status without admin links or a translation badge', async () => {
-    const { admin, element, settle } = await setup(() => of('tester'));
+  it('sends a tester unlocking the admin page to the list without showing a status page', async () => {
+    const { admin, element, navigate, submit } = await setup(() => of('tester'));
     const count = TestBed.inject(MissingTranslationCountService).count;
     count.set(2);
 
-    admin.set('right', 'tester');
-    await settle();
+    await submit('right');
 
-    expect(element.textContent).toContain('Tester access is unlocked');
+    expect(admin.role()).toBe('tester');
+    expect(navigate).toHaveBeenCalledWith('/');
+    expect(element.textContent).not.toContain('Tester access');
     expect(element.querySelector('a[href="/admin/missing"]')).toBeNull();
-    expect(element.querySelector('a[href="/"]')?.textContent).toContain('Back to the list');
-    expect(element.querySelector('.lock')?.textContent?.trim()).toBe('Lock');
+    expect(element.querySelector('input[type="password"]')).toBeNull();
     expect(element.querySelector('.missing-count')).toBeNull();
   });
 });

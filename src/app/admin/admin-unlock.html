@@ -1,28 +1,20 @@
 <section class="admin">
   <h2>Admin</h2>
-  @if (admin.unlocked()) {
-    @if (admin.role() === 'admin') {
-      <p class="lead">Editing is unlocked for this browser tab.</p>
-      <p class="links">
-        <a routerLink="/admin/missing">
-          {{ i18n.t('admin.missing.link') }}
-          @if (translationCount.count() > 0) {
-            <span class="missing-count" [attr.aria-label]="i18n.t('admin.missing.count', { count: translationCount.count() })">
-              {{ translationCount.count() }}
-            </span>
-          }
-        </a>
-        <a routerLink="/">Back to the list</a>
-        <button type="button" class="text-link lock" (click)="lock()">Lock</button>
-      </p>
-    } @else {
-      <p class="lead">Tester access is unlocked for this browser tab.</p>
-      <p class="links">
-        <a routerLink="/">Back to the list</a>
-        <button type="button" class="text-link lock" (click)="lock()">Lock</button>
-      </p>
-    }
-  } @else {
+  @if (admin.role() === 'admin') {
+    <p class="lead">Editing is unlocked for this browser tab.</p>
+    <p class="links">
+      <a routerLink="/admin/missing">
+        {{ i18n.t('admin.missing.link') }}
+        @if (translationCount.count() > 0) {
+          <span class="missing-count" [attr.aria-label]="i18n.t('admin.missing.count', { count: translationCount.count() })">
+            {{ translationCount.count() }}
+          </span>
+        }
+      </a>
+      <a routerLink="/">Back to the list</a>
+      <button type="button" class="text-link lock" (click)="lock()">Lock</button>
+    </p>
+  } @else if (!admin.unlocked()) {
     <p class="lead">Adding, editing and deleting animals needs the admin key.</p>
     <form class="unlock" (ngSubmit)="unlock()" novalidate>
       <label for="admin-key">Admin key</label>
