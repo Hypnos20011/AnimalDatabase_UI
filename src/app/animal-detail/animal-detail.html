@@ -92,6 +92,12 @@
               </button>
             </div>
           </div>
+          @if (admin.unlocked() && statusLabel(); as label) {
+            <span class="animal-status status-badge" [class.is-rejected]="animal()!.status === 'rejected'">{{ label }}</span>
+          }
+          @if (admin.role() === 'admin' && animal()!.status === 'rejected' && animal()!.reviewNote?.trim()) {
+            <p class="review-note">{{ animal()!.reviewNote }}</p>
+          }
           @if (animal()!.scientificName) {
             <em class="sci">{{ animal()!.scientificName }}</em>
           }
@@ -266,21 +272,21 @@
 
     <div class="actions">
       <button type="button" class="back btn btn-secondary" (click)="onClose()">{{ i18n.t('detail.back') }}</button>
-      @if (admin.unlocked()) {
+      @if (canEdit()) {
         <a class="edit btn btn-primary" [routerLink]="['/animals', animal()!.id, 'edit']">{{ i18n.t('detail.edit') }}</a>
-        @if (admin.role() === 'admin') {
-          <button
-            type="button"
-            class="delete btn btn-danger"
-            [disabled]="deleting()"
-            (click)="onDelete()"
-          >
-            {{ i18n.t('detail.delete') }}
-          </button>
-        }
+      }
+      @if (canDelete()) {
+        <button
+          type="button"
+          class="delete btn btn-danger"
+          [disabled]="deleting()"
+          (click)="onDelete()"
+        >
+          {{ i18n.t('detail.delete') }}
+        </button>
       }
     </div>
-    @if (admin.role() === 'admin') {
+    @if (canDelete()) {
       <app-confirm-dialog
         [open]="confirmOpen()"
         [title]="deleteTitle()"

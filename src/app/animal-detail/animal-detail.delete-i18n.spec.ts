@@ -64,7 +64,7 @@ describe('AnimalDetail admin Edit/Delete i18n', () => {
             delete: vi.fn(() => of(undefined)),
           },
         },
-        { provide: AdminKeyService, useValue: { unlocked: signal(true), role: signal(role) } },
+        { provide: AdminKeyService, useValue: { key: signal('key'), unlocked: signal(true), role: signal(role) } },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
@@ -108,10 +108,10 @@ describe('AnimalDetail admin Edit/Delete i18n', () => {
     expect(query('.actions .delete').textContent!.trim()).toBe('Delete');
   });
 
-  it('shows Edit but not Delete to testers', async () => {
+  it('hides Edit and Delete for testers on legacy public animals', async () => {
     const { element } = await setup('tester');
 
-    expect(element.querySelector('.actions .edit')).not.toBeNull();
+    expect(element.querySelector('.actions .edit')).toBeNull();
     expect(element.querySelector('.actions .delete')).toBeNull();
     expect(element.querySelector('app-confirm-dialog')).toBeNull();
   });

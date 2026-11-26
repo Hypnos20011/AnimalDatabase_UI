@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideLockedAdmin } from './animals-list-test-support';
 import { provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import { AnimalsList } from './animals-list';
@@ -23,6 +24,7 @@ describe('AnimalsList top searches window', () => {
     TestBed.configureTestingModule({
       imports: [AnimalsList],
       providers: [
+        provideLockedAdmin(),
         provideRouter([]),
         { provide: AnimalService, useValue: { getAll: vi.fn(() => of([])) } },
         { provide: SearchService, useValue: searchService },

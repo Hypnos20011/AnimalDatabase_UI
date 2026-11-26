@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideLockedAdmin } from './animals-list-test-support';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { AnimalsList } from './animals-list';
@@ -20,8 +21,13 @@ describe('AnimalsList recently viewed', () => {
     TestBed.configureTestingModule({
       imports: [AnimalsList],
       providers: [
+        provideLockedAdmin(),
         provideRouter([]),
-        { provide: AnimalService, useValue: { getAll: vi.fn(() => of([])) } },
+        { provide: AnimalService, useValue: { getAll: vi.fn(() => of([
+          { id: 2, commonName: 'Okapi' },
+          { id: 4, commonName: 'Axolotl' },
+          { id: 7, commonName: 'Quokka' },
+        ])) } },
         {
           provide: SearchService,
           useValue: { getTop: vi.fn(() => of([])), record: vi.fn(() => of(undefined)) },
@@ -68,5 +74,15 @@ describe('AnimalsList recently viewed', () => {
 
     expect(section()).not.toBeNull();
     expect(section()!.querySelector('.recent-link')!.textContent!.trim()).toBe('Quokka');
+  });
+
+  it('uses current names and hides missing entries without removing history', async () => {
+    const { section, viewed } = await setup([
+      { id: 2, commonName: 'Old name' },
+      { id: 99, commonName: 'Missing' },
+    ]);
+    expect(section()!.querySelector('.recent-link')!.textContent!.trim()).toBe('Okapi');
+    expect(section()!.querySelectorAll('.recent-link')).toHaveLength(1);
+    expect(viewed.recent().map((item) => item.id)).toEqual([2, 99]);
   });
 });

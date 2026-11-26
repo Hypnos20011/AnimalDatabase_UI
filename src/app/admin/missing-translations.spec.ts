@@ -43,6 +43,10 @@ const animals: Animal[] = [
     thumbnailUrl: null,
     createdAt: '',
     updatedAt: '',
+    status: 'approved',
+    submittedBy: 'admin',
+    reviewedAt: null,
+    reviewNote: null,
   },
 ];
 
@@ -130,6 +134,22 @@ describe('MissingTranslations', () => {
     expect(element.textContent).toContain('Okapi');
     expect(element.textContent).toContain('Complete');
     expect(element.querySelector('.gaps > li button.btn-primary')).toBeNull();
+  });
+
+  it('does not list pending or rejected animals', () => {
+    const { fixture, element } = setup(
+      vi.fn(() => of([])),
+      undefined,
+      vi.fn(() => of([
+        animals[0],
+        { ...animals[0], id: 5, commonName: 'Pending', status: 'pending' as const },
+        { ...animals[0], id: 6, commonName: 'Rejected', status: 'rejected' as const },
+      ])),
+    );
+
+    expect(fixture.componentInstance.entries().map((entry) => entry.id)).toEqual([4]);
+    expect(element.textContent).not.toContain('Pending');
+    expect(element.textContent).not.toContain('Rejected');
   });
 
   it('waits for both lists before publishing them', () => {

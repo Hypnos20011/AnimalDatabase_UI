@@ -1,3 +1,11 @@
+@if (submittedPending(); as animal) {
+  <section role="status">
+    <h2>Thanks! Your animal was submitted.</h2>
+    <p>{{ animal.commonName }} is waiting for admin approval. It will appear on the site once it is approved.</p>
+    <button type="button" class="btn btn-primary" (click)="addAnother()">Add another animal</button>
+    <a routerLink="/">{{ i18n.t('detail.back') }}</a>
+  </section>
+} @else {
 <h2>{{ editing() ? i18n.t('form.title.edit') : i18n.t('form.title.add') }}</h2>
 
 @if (loadingAnimal()) {
@@ -308,3 +316,4 @@
       }}</a>
   </div>
 </form>
+}

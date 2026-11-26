@@ -1,0 +1,49 @@
+@if (actionError()) {
+  <p class="field-error" role="alert">{{ actionError() }}</p>
+}
+@if (loading()) {
+  <p>Loading...</p>
+} @else if (loadError()) {
+  <div role="alert">
+    <p class="field-error">{{ loadError() }}</p>
+    <button type="button" class="btn btn-secondary" (click)="load()">Retry</button>
+  </div>
+} @else if (rows().length === 0) {
+  <p>No new animals are waiting for review.</p>
+} @else {
+  <ul class="animals">
+    @for (animal of rows(); track animal.id) {
+      <li>
+        <div class="animal-header">
+          @if (animal.thumbnailUrl; as thumbnail) {
+            <img [src]="thumbnail" [attr.srcset]="srcset(thumbnail)" sizes="64px" alt="" />
+          }
+          <div>
+            <a [routerLink]="['/animals', animal.id]">{{ animal.commonName }}</a>
+            <p>{{ animal.scientificName }} · {{ animal.family }} · {{ animal.taxonomicClass }} · {{ animal.habitatType }}</p>
+            <p>Submitted by tester · {{ animal.createdAt | date }}</p>
+            <a [routerLink]="['/animals', animal.id, 'edit']">Edit</a>
+          </div>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" [disabled]="busy() !== null" (click)="approve(animal.id)">
+            {{ approving() === animal.id ? 'Approving...' : 'Approve' }}
+          </button>
+          <button type="button" class="btn btn-secondary" [disabled]="busy() !== null" (click)="rejecting.set(animal.id)">Reject</button>
+        </div>
+        @if (rejecting() === animal.id) {
+          <div class="reject-panel">
+            <label [attr.for]="'note-' + animal.id">Reason (optional)</label>
+            <textarea [id]="'note-' + animal.id" maxlength="500" [value]="notes()[animal.id] ?? ''"
+              [disabled]="busy() !== null" (input)="setNote(animal.id, $any($event.target).value)"></textarea>
+            <span>{{ (notes()[animal.id] ?? '').length }}/500</span>
+            <div class="actions">
+              <button type="button" class="btn btn-primary" [disabled]="busy() !== null" (click)="reject(animal.id)">Confirm reject</button>
+              <button type="button" class="btn btn-secondary" [disabled]="busy() !== null" (click)="rejecting.set(null)">Cancel</button>
+            </div>
+          </div>
+        }
+      </li>
+    }
+  </ul>
+}

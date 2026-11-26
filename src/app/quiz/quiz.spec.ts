@@ -445,6 +445,17 @@ describe('Quiz', () => {
     expect(element.querySelector('.result')).toBeNull();
   });
 
+  it('excludes pending and rejected animals from the quiz pool', async () => {
+    const { element } = await setup(vi.fn(() => of([
+      ...zoo,
+      { ...animal(6, 'Lion'), status: 'pending' as const },
+      { ...animal(7, 'Wolf'), status: 'rejected' as const },
+    ])));
+
+    expect(element.textContent).not.toContain('Lion');
+    expect(element.textContent).not.toContain('Wolf');
+  });
+
   it('reveals the photo and counts a right answer', async () => {
     const { element, choice, choices, stat, photo, refresh, answerName } = await setup();
 

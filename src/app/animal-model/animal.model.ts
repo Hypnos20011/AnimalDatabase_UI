@@ -1,3 +1,6 @@
+export type AnimalReviewStatus = 'pending' | 'approved' | 'rejected';
+export type AnimalSubmitter = 'tester' | 'admin';
+
 export interface Animal {
   id: number;
   commonName: string;
@@ -20,6 +23,10 @@ export interface Animal {
   profile: string | null;
   sourceUrl: string | null;
   thumbnailUrl: string | null;
+  status: AnimalReviewStatus;
+  submittedBy: AnimalSubmitter;
+  reviewedAt: string | null;
+  reviewNote: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -32,7 +39,17 @@ export interface NewAnimalImage {
   sourcePageUrl: string | null;
 }
 
-export type NewAnimal = Omit<Animal, 'id' | 'createdAt' | 'updatedAt' | 'thumbnailUrl'> & {
+export type NewAnimal = Omit<
+  Animal,
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'thumbnailUrl'
+  | 'status'
+  | 'submittedBy'
+  | 'reviewedAt'
+  | 'reviewNote'
+> & {
   images: NewAnimalImage[];
 };
 

@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { RandomAnimalService, pickRandom } from './random-animal.service';
@@ -6,6 +7,7 @@ import { AnimalService } from './animal.service';
 import { AnimalListState } from '../animals-list/animal-list-state';
 import { Animal } from '../animal-model/animal.model';
 import { LanguageService } from './i18n/language.service';
+import { AdminKeyService } from '../admin/admin-key.service';
 
 describe('pickRandom', () => {
   it('returns null for an empty pool', () => {
@@ -27,11 +29,13 @@ describe('RandomAnimalService', () => {
 
   function setup(all: Partial<Animal>[]) {
     const getAll = vi.fn(() => of(all as Animal[]));
+    const key = signal<string | null>(null);
     TestBed.configureTestingModule({
-      providers: [provideRouter([]), { provide: AnimalService, useValue: { getAll } }],
+      providers: [provideRouter([]), { provide: AnimalService, useValue: { getAll } },
+        { provide: AdminKeyService, useValue: { key } }],
     });
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    return { service: TestBed.inject(RandomAnimalService), getAll, navigate };
+    return { service: TestBed.inject(RandomAnimalService), getAll, navigate, key };
   }
 
   it('picks from the pool the list page shares', () => {
@@ -61,5 +65,29 @@ describe('RandomAnimalService', () => {
     service.open();
 
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('only picks public animals from the fallback response', () => {
+    const { service, navigate } = setup([
+      { id: 1, status: 'pending' },
+      { id: 2, status: 'rejected' },
+      { id: 3, status: 'approved' },
+    ]);
+
+    service.open();
+
+    expect(navigate).toHaveBeenCalledWith(['/animals', 3]);
+  });
+
+  it('clears the shared pool when the key changes', () => {
+    const { key } = setup([]);
+    TestBed.tick();
+    const state = TestBed.inject(AnimalListState);
+    state.randomPool.set([3]);
+
+    key.set('test-key');
+    TestBed.tick();
+
+    expect(state.randomPool()).toEqual([]);
   });
 });

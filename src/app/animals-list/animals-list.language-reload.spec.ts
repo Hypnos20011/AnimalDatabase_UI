@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideLockedAdmin } from './animals-list-test-support';
 import { provideRouter } from '@angular/router';
 import { of, Subject } from 'rxjs';
 import { AnimalsList } from './animals-list';
@@ -67,6 +68,7 @@ describe('AnimalsList language reload', () => {
     TestBed.configureTestingModule({
       imports: [AnimalsList],
       providers: [
+        provideLockedAdmin(),
         provideRouter([]),
         { provide: AnimalService, useValue: { getAll } },
         { provide: SearchService, useValue: { getTop: vi.fn(() => of([])), record: vi.fn(() => of(undefined)) } },
@@ -82,6 +84,7 @@ describe('AnimalsList language reload', () => {
     TestBed.configureTestingModule({
       imports: [AnimalsList],
       providers: [
+        provideLockedAdmin(),
         provideRouter([]),
         { provide: AnimalService, useValue: { getAll } },
         { provide: SearchService, useValue: { getTop: vi.fn(() => of([])), record: vi.fn(() => of(undefined)) } },

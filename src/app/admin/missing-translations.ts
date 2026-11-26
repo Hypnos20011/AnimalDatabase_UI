@@ -5,6 +5,7 @@ import { forkJoin } from 'rxjs';
 import { Animal } from '../animal-model/animal.model';
 import { TranslationEditor } from './translation-editor/translation-editor';
 import { AnimalService, MissingTranslation } from '../shared/animal.service';
+import { isPublicAnimal } from '../shared/animal-status';
 import { LanguageService } from '../shared/i18n/language.service';
 import { TranslationKey } from '../shared/i18n/en';
 import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
@@ -25,6 +26,7 @@ export class MissingTranslations {
   editing = signal<MissingTranslation | null>(null);
   entries = computed(() =>
     this.allAnimals()
+      .filter(isPublicAnimal)
       .map((animal) => {
         const row = this.rows().find((candidate) => candidate.id === animal.id);
         return {

@@ -19,6 +19,7 @@ import { iucnRedListSearchUrl } from '../shared/iucn';
 import { splitProfile } from '../shared/profile';
 import { CompareService } from '../compare/compare.service';
 import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
+import { animalStatusLabel, isPublicAnimal } from '../shared/animal-status';
 
 export const SHARE_STATUS_MS = 3000;
 
@@ -48,6 +49,9 @@ export class AnimalDetail {
   private title = inject(Title);
   private animalRequest?: Subscription;
   private imagesRequest?: Subscription;
+  private deleteRequest?: Subscription;
+  private loadedId?: number;
+  private loadedKey?: string | null;
   protected admin = inject(AdminKeyService);
   protected i18n = inject(LanguageService);
   private recentlyViewed = inject(RecentlyViewedService);
@@ -56,6 +60,17 @@ export class AnimalDetail {
   private translationCount = inject(MissingTranslationCountService);
 
   animal = signal<Animal | null>(null);
+  statusLabel = computed(() => animalStatusLabel(this.animal()?.status));
+  canEdit = computed(() => {
+    const animal = this.animal();
+    return !!animal && (this.admin.role() === 'admin' ||
+      (this.admin.role() === 'tester' && animal.status === 'pending'));
+  });
+  canDelete = computed(() => {
+    const animal = this.animal();
+    return !!animal && (this.admin.role() === 'admin' ||
+      (this.admin.role() === 'tester' && animal.status === 'pending' && animal.submittedBy === 'tester'));
+  });
   loading = signal(true);
   images = signal<AnimalImage[]>([]);
   heroImage = computed(() => this.images()[0] ?? null);
@@ -122,32 +137,49 @@ export class AnimalDetail {
   deleteMessage = computed(() => this.i18n.t('detail.delete.message'));
 
   constructor() {
-    inject(DestroyRef).onDestroy(() => clearTimeout(this.shareStatusTimer));
+    inject(DestroyRef).onDestroy(() => {
+      clearTimeout(this.shareStatusTimer);
+      this.animalRequest?.unsubscribe();
+      this.imagesRequest?.unsubscribe();
+      this.deleteRequest?.unsubscribe();
+    });
     effect(() => {
       const id = Number(this.id());
       const language = this.i18n.language();
-      untracked(() => this.load(id, language));
+      const key = this.admin.key();
+      untracked(() => this.load(id, language, key));
     });
   }
 
-  load(id: number, language: Language): void {
-    const sameAnimal = this.animal()?.id === id;
-    if (!sameAnimal) {
+  load(id: number, language: Language, key: string | null): void {
+    const changedView = this.loadedId !== id || this.loadedKey !== key;
+    this.loadedId = id;
+    this.loadedKey = key;
+    if (changedView) {
+      this.deleteRequest?.unsubscribe();
+      this.confirmOpen.set(false);
+      this.deleting.set(false);
+      this.deleteError.set('');
       this.loading.set(true);
       this.animal.set(null);
+      this.images.set([]);
       this.showDetails.set(false);
-      this.loadImages(id);
+      this.setShareStatus(null);
+      this.title.setTitle('Unusual Animals');
+      this.loadImages(id, key);
     }
     this.animalRequest?.unsubscribe();
     this.animalRequest = this.animalService.getById(id, language).subscribe({
       next: (data) => {
+        if (!this.isCurrentView(id, key) || this.i18n.language() !== language) return;
         this.animal.set(data);
-        this.recentlyViewed.record(data.id, data.commonName);
+        if (isPublicAnimal(data)) this.recentlyViewed.record(data.id, data.commonName);
         this.compare.rename(data.id, data.commonName);
         this.title.setTitle(`${data.commonName} · Unusual Animals`);
         this.loading.set(false);
       },
       error: () => {
+        if (!this.isCurrentView(id, key) || this.i18n.language() !== language) return;
         this.animal.set(null);
         this.title.setTitle('Unusual Animals');
         this.loading.set(false);
@@ -155,16 +187,22 @@ export class AnimalDetail {
     });
   }
 
-  loadImages(animalId: number): void {
+  private isCurrentView(id: number, key: string | null): boolean {
+    return Object.is(Number(this.id()), id) && this.admin.key() === key;
+  }
+
+  loadImages(animalId: number, key: string | null): void {
     this.imagesLoading.set(true);
     this.heroFailed.set(false);
     this.imagesRequest?.unsubscribe();
     this.imagesRequest = this.animalService.getImages(animalId).subscribe({
       next: (data) => {
+        if (!this.isCurrentView(animalId, key)) return;
         this.images.set(data);
         this.imagesLoading.set(false);
       },
       error: () => {
+        if (!this.isCurrentView(animalId, key)) return;
         this.images.set([]);
         this.imagesLoading.set(false);
       },
@@ -230,7 +268,7 @@ export class AnimalDetail {
   }
 
   onDelete(): void {
-    if (!this.animal()) return;
+    if (!this.canDelete() || !this.isCurrentView(this.loadedId!, this.loadedKey!)) return;
     this.deleteError.set('');
     this.confirmOpen.set(true);
   }
@@ -243,16 +281,19 @@ export class AnimalDetail {
 
   confirmDelete(): void {
     const animal = this.animal();
-    if (!animal || this.deleting()) return;
+    const key = this.loadedKey;
+    if (!animal || !this.canDelete() || this.deleting() || key === undefined || !this.isCurrentView(animal.id, key)) return;
     this.deleting.set(true);
     this.deleteError.set('');
-    this.animalService.delete(animal.id).subscribe({
+    this.deleteRequest = this.animalService.delete(animal.id).subscribe({
       next: () => {
+        if (!this.isCurrentView(animal.id, key)) return;
         this.translationCount.refresh();
         this.confirmOpen.set(false);
         this.router.navigate(['/']);
       },
       error: (error: unknown) => {
+        if (!this.isCurrentView(animal.id, key)) return;
         this.deleteError.set(
           this.i18n.t(
             error instanceof HttpErrorResponse && error.status === 403

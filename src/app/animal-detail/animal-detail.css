@@ -111,6 +111,16 @@
   color: #c4cbcf;
 }
 
+.animal-status {
+  margin: 0 0.5rem 0.5rem 0;
+}
+
+.review-note {
+  margin: 0.5rem 0;
+  color: var(--color-muted);
+  white-space: pre-line;
+}
+
 .no-images {
   margin: 1rem 0 0;
   font-style: italic;

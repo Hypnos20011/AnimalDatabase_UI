@@ -102,6 +102,17 @@ describe('AdminUnlock', () => {
     expect(element.querySelector('input[type="password"]')).not.toBeNull();
   });
 
+  it('only shows the review link to admins', async () => {
+    const { admin, element, settle } = await setup(() => of('admin'));
+    expect(element.querySelector('a[href="/admin/review"]')).toBeNull();
+    admin.set('right', 'tester');
+    await settle();
+    expect(element.querySelector('a[href="/admin/review"]')).toBeNull();
+    admin.set('right', 'admin');
+    await settle();
+    expect(element.querySelector('a[href="/admin/review"]')?.textContent).toContain('Review');
+  });
+
   it('shows the translation badge only for an admin with a positive count', async () => {
     const { admin, element, settle } = await setup(() => of('admin'));
     const count = TestBed.inject(MissingTranslationCountService).count;

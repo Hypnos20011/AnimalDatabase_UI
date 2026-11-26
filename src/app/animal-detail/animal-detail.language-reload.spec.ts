@@ -54,7 +54,7 @@ describe('AnimalDetail language reload', () => {
       providers: [
         provideRouter([]),
         { provide: AnimalService, useValue: { getById, getImages, delete: vi.fn(() => of(undefined)) } },
-        { provide: AdminKeyService, useValue: { unlocked: signal(false), role: signal('none') } },
+        { provide: AdminKeyService, useValue: { key: signal(null), unlocked: signal(false), role: signal('none') } },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);

@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideLockedAdmin } from './animals-list-test-support';
 import { provideRouter, Router } from '@angular/router';
 import { of, Subject } from 'rxjs';
 import { AnimalsList } from './animals-list';
@@ -59,6 +60,7 @@ describe('AnimalsList scroll position', () => {
     TestBed.configureTestingModule({
       imports: [AnimalsList],
       providers: [
+        provideLockedAdmin(),
         provideRouter([{ path: 'animals/:id', children: [] }]),
         { provide: AnimalService, useValue: { getAll: vi.fn(getAll) } },
         { provide: SearchService, useValue: { getTop: vi.fn(() => of([])), record: vi.fn(() => of(undefined)) } },

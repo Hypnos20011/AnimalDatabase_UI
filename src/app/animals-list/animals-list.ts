@@ -2,6 +2,7 @@ import {
   afterNextRender,
   Component,
   computed,
+  DestroyRef,
   effect,
   ElementRef,
   inject,
@@ -31,6 +32,8 @@ import { RecentlyViewedService } from './recently-viewed.service';
 import { FavoritesService } from './favorites.service';
 import { CompareService } from '../compare/compare.service';
 import { RandomAnimalService } from '../shared/random-animal.service';
+import { AdminKeyService } from '../admin/admin-key.service';
+import { animalStatusLabel, isPublicAnimal } from '../shared/animal-status';
 
 @Component({
   selector: 'app-animals-list',
@@ -52,10 +55,18 @@ export class AnimalsList {
   private favoritesService = inject(FavoritesService);
   protected compare = inject(CompareService);
   private random = inject(RandomAnimalService);
+  protected admin = inject(AdminKeyService);
+  private destroyRef = inject(DestroyRef);
   private injector = inject(Injector);
   private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
-  animals = signal<Animal[]>([]);
+  private loadedAnimals = signal<Animal[]>([]);
+  private loadedKey = signal<string | null>(null);
+  animals = computed(() => {
+    const animals = this.loadedAnimals();
+    const key = this.admin.key();
+    return key && key === this.loadedKey() ? animals : animals.filter(isPublicAnimal);
+  });
   loading = signal(true);
   error = signal(false);
 
@@ -82,12 +93,23 @@ export class AnimalsList {
     { value: 'weight-asc', labelKey: 'list.sort.weightAsc' },
     { value: 'newest', labelKey: 'list.sort.newest' },
   ];
-  recent = this.recentlyViewed.recent;
+  recentItems = computed(() => {
+    const byId = new Map(this.animals().map((animal) => [animal.id, animal]));
+    return this.recentlyViewed.recent()
+      .filter((item) => byId.has(item.id))
+      .map((item) => ({ id: item.id, commonName: byId.get(item.id)!.commonName }));
+  });
   favoriteIds = this.favoritesService.ids;
   favoriteItems = computed(() => {
     const byId = new Map(this.animals().map((animal) => [animal.id, animal]));
     return this.favoritesService
       .favorites()
+      .filter((item) => byId.has(item.id))
+      .map((item) => ({ id: item.id, commonName: byId.get(item.id)!.commonName }));
+  });
+  compareItems = computed(() => {
+    const byId = new Map(this.animals().map((animal) => [animal.id, animal]));
+    return this.compare.selection()
       .filter((item) => byId.has(item.id))
       .map((item) => ({ id: item.id, commonName: byId.get(item.id)!.commonName }));
   });
@@ -108,6 +130,7 @@ export class AnimalsList {
   );
   private topRequest?: Subscription;
   private animalsRequest?: Subscription;
+  private restoredScroll = false;
 
   activeFilterCount = computed(
     () =>
@@ -256,6 +279,7 @@ export class AnimalsList {
   readonly indexLabel = indexLabel;
   readonly iucnCode = iucnCode;
   readonly iucnLabel = iucnLabel;
+  readonly animalStatusLabel = animalStatusLabel;
 
   constructor() {
     this.router.events
@@ -267,31 +291,40 @@ export class AnimalsList {
         this.state.scrollY.set(window.scrollY);
       });
     effect(() => {
-      const visible = this.filteredAnimals();
-      const pool = visible.length > 0 ? visible : this.animals();
+      const visible = this.filteredAnimals().filter(isPublicAnimal);
+      const pool = visible.length > 0 ? visible : this.animals().filter(isPublicAnimal);
       this.state.randomPool.set(pool.map((animal) => animal.id));
     });
     this.loadTopSearches();
     effect(() => {
       const language = this.i18n.language();
-      untracked(() => this.loadAnimals(language));
+      const key = this.admin.key();
+      untracked(() => {
+        if (key === null) this.loadedAnimals.update((animals) => animals.filter(isPublicAnimal));
+        this.loadAnimals(language, key);
+      });
     });
   }
 
-  private loadAnimals(language: Language): void {
+  private loadAnimals(language: Language, key: string | null): void {
     this.animalsRequest?.unsubscribe();
-    this.animalsRequest = this.animalService.getAll(language).subscribe({
+    this.error.set(false);
+    this.loading.set(true);
+    this.animalsRequest = this.animalService.getAll(language).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
-        this.animals.set(data);
-        if (data.length > 0) {
-          this.favoritesService.pruneMissing(data.map((animal) => animal.id));
-        }
+        if (this.admin.key() !== key || this.i18n.language() !== language) return;
+        this.loadedKey.set(key);
+        this.loadedAnimals.set(data);
         this.loading.set(false);
-        afterNextRender(() => window.scrollTo(0, this.state.scrollY()), {
-          injector: this.injector,
-        });
+        if (!this.restoredScroll) {
+          this.restoredScroll = true;
+          afterNextRender(() => window.scrollTo(0, this.state.scrollY()), {
+            injector: this.injector,
+          });
+        }
       },
       error: () => {
+        if (this.admin.key() !== key || this.i18n.language() !== language) return;
         this.error.set(true);
         this.loading.set(false);
       },

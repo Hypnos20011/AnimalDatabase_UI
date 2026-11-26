@@ -78,6 +78,46 @@ describe('AnimalService language', () => {
     req.flush({ id: 4, commonName: 'Okapi', languages: [] });
   });
 
+  it('gets the pending review list without a language', () => {
+    service.pendingReview().subscribe((animals) => expect(animals).toEqual([]));
+    const req = http.expectOne(`${environment.apiUrl}/admin/review/animals`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.has('lang')).toBe(false);
+    req.flush([]);
+  });
+
+  it('posts an approval and handles an empty response', () => {
+    let response: void | undefined;
+    service.approve(7).subscribe((value) => (response = value));
+    const req = http.expectOne(`${environment.apiUrl}/admin/review/animals/7/approve`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toBeNull();
+    req.flush(null, { status: 204, statusText: 'No Content' });
+    expect(response).toBeNull();
+  });
+
+  it('posts rejection notes, including an omitted note', () => {
+    service.reject(7, '  Needs a source  ').subscribe();
+    const withNote = http.expectOne(`${environment.apiUrl}/admin/review/animals/7/reject`);
+    expect(withNote.request.method).toBe('POST');
+    expect(withNote.request.body).toEqual({ note: 'Needs a source' });
+    withNote.flush(null, { status: 204, statusText: 'No Content' });
+
+    service.reject(8, '  ').subscribe();
+    const withoutNote = http.expectOne(`${environment.apiUrl}/admin/review/animals/8/reject`);
+    expect(withoutNote.request.method).toBe('POST');
+    expect(withoutNote.request.body).toBeNull();
+    withoutNote.flush(null, { status: 204, statusText: 'No Content' });
+  });
+
+  it('propagates review errors to the caller', () => {
+    let status = 0;
+    service.approve(7).subscribe({ error: (error) => (status = error.status) });
+    const req = http.expectOne(`${environment.apiUrl}/admin/review/animals/7/approve`);
+    req.flush(null, { status: 409, statusText: 'Conflict' });
+    expect(status).toBe(409);
+  });
+
   it('saveTranslation puts /animals/:id/translations/:language', () => {
     const texts = { commonName: 'Okapi', habitat: 'Regenwald', rangeRegion: null, profile: null };
     service.saveTranslation(7, 'de', texts).subscribe();

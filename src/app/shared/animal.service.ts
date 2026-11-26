@@ -22,6 +22,7 @@ export interface MissingTranslation {
 export class AnimalService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/animals`;
+  private reviewUrl = `${environment.apiUrl}/admin/review/animals`;
 
   getAll(language?: Language): Observable<Animal[]> {
     return this.http.get<Animal[]>(this.apiUrl, { params: language ? { lang: language } : {} });
@@ -47,6 +48,19 @@ export class AnimalService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  pendingReview(): Observable<Animal[]> {
+    return this.http.get<Animal[]>(this.reviewUrl);
+  }
+
+  approve(id: number): Observable<void> {
+    return this.http.post<void>(`${this.reviewUrl}/${id}/approve`, null);
+  }
+
+  reject(id: number, note: string): Observable<void> {
+    const trimmed = note.trim();
+    return this.http.post<void>(`${this.reviewUrl}/${id}/reject`, trimmed ? { note: trimmed } : null);
   }
 
   importFromWikipedia(query: string): Observable<WikipediaImport> {

@@ -100,4 +100,16 @@ describe('adminGuard', () => {
       '/admin?returnUrl=%2Fadmin%2Fmissing',
     );
   });
+
+  it('only allows admins to visit the review route', async () => {
+    const router = TestBed.inject(Router);
+    const locked = await firstValueFrom(runAdminOnly('/admin/review') as Observable<boolean | UrlTree>);
+    expect(router.serializeUrl(locked as UrlTree)).toBe('/admin?returnUrl=%2Fadmin%2Freview');
+    const admin = TestBed.inject(AdminKeyService);
+    admin.set('secret', 'tester');
+    const tester = await firstValueFrom(runAdminOnly('/admin/review') as Observable<boolean | UrlTree>);
+    expect(router.serializeUrl(tester as UrlTree)).toBe('/');
+    admin.set('secret', 'admin');
+    expect(await firstValueFrom(runAdminOnly('/admin/review') as Observable<boolean | UrlTree>)).toBe(true);
+  });
 });

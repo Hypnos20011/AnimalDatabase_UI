@@ -47,7 +47,7 @@ describe('AnimalDetail compare button', () => {
           provide: AnimalService,
           useValue: { getById: vi.fn(() => of(okapi)), getImages: vi.fn(() => of([])) },
         },
-        { provide: AdminKeyService, useValue: { unlocked: signal(false), role: signal('none') } },
+        { provide: AdminKeyService, useValue: { key: signal(null), unlocked: signal(false), role: signal('none') } },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);

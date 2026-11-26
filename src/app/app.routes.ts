@@ -18,6 +18,12 @@ export const routes: Routes = [
     title: 'Missing translations · Unusual Animals',
   },
   {
+    path: 'admin/review',
+    loadComponent: () => import('./admin/review/review').then((m) => m.Review),
+    canActivate: [adminOnlyGuard],
+    title: 'Review · Unusual Animals',
+  },
+  {
     path: 'animals/new',
     loadComponent: () => import('./animal-form/animal-form').then((m) => m.AnimalForm),
     canActivate: [adminGuard],
