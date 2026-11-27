@@ -7,7 +7,6 @@ export const en = {
   'footer.unlocked': 'Editing unlocked',
   'footer.lock': 'Lock',
   'footer.admin': 'Admin',
-  'admin.missing.link': 'Translations',
   'admin.missing.count': '{count} missing translations',
   'admin.missing.error': 'Could not load missing translations.',
   'admin.accessDenied': 'You do not have permission to perform this action.',

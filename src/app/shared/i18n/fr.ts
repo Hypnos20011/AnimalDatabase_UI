@@ -9,7 +9,6 @@ export const fr: Record<TranslationKey, string> = {
   'footer.unlocked': 'Modification déverrouillée',
   'footer.lock': 'Verrouiller',
   'footer.admin': 'Admin',
-  'admin.missing.link': 'Traductions',
   'admin.missing.count': '{count} traductions manquantes',
   'admin.missing.error': 'Impossible de charger les traductions manquantes.',
   'admin.accessDenied': 'Vous n’avez pas l’autorisation d’effectuer cette action.',

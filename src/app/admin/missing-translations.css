@@ -10,10 +10,6 @@
   color: var(--color-muted);
 }
 
-.links {
-  margin: 0 0 1.25rem;
-}
-
 .gaps {
   list-style: none;
   margin: 0;
