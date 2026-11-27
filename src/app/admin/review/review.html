@@ -1,6 +1,8 @@
 <section class="review">
-  <h2>Review</h2>
-  <p><a routerLink="/admin">Admin</a></p>
+  <header class="page-head">
+    <h2>Review</h2>
+    <a class="btn btn-secondary btn-sm" routerLink="/admin"><span aria-hidden="true">←</span> Admin</a>
+  </header>
   <div class="tabs" role="tablist" aria-label="Review categories">
     @for (tab of tabs; track tab.id) {
       <button type="button" role="tab" [id]="'tab-' + tab.id"

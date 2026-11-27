@@ -18,6 +18,11 @@ describe('Review', () => {
     const fixture = TestBed.createComponent(Review);
     fixture.detectChanges();
     const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('.page-head h2')?.textContent?.trim()).toBe('Review');
+    const adminLink = element.querySelector<HTMLAnchorElement>('.page-head a');
+    expect(adminLink?.textContent?.trim()).toBe('← Admin');
+    expect(adminLink?.getAttribute('href')).toBe('/admin');
+    expect(adminLink?.classList.contains('btn-secondary')).toBe(true);
     const tabs = element.querySelectorAll('[role="tab"]');
     expect(tabs).toHaveLength(1);
     expect(tabs[0].textContent).toContain('New animals');

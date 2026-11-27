@@ -31,6 +31,7 @@ describe('MissingTranslationCountService', () => {
     count.setUnlocked(true);
     expect(missingTranslations).toHaveBeenCalledOnce();
     expect(count.count()).toBe(2);
+    expect(count.state()).toBe('ready');
   });
 
   it('refreshes the count and clears it when locked', () => {
@@ -47,6 +48,7 @@ describe('MissingTranslationCountService', () => {
 
     count.setUnlocked(false);
     expect(count.count()).toBe(0);
+    expect(count.state()).toBe('locked');
   });
 
   it('ignores a pending response after the admin session locks', () => {
@@ -54,6 +56,7 @@ describe('MissingTranslationCountService', () => {
     const { count } = setup(vi.fn(() => response));
 
     count.setUnlocked(true);
+    expect(count.state()).toBe('loading');
     count.setUnlocked(false);
     response.next(missing);
 
@@ -68,9 +71,11 @@ describe('MissingTranslationCountService', () => {
     const { count } = setup(missingTranslations);
 
     count.setUnlocked(true);
+    expect(count.state()).toBe('ready');
     expect(count.count()).toBe(2);
     count.refresh();
     expect(count.count()).toBe(2);
+    expect(count.state()).toBe('error');
   });
 
   it('keeps the initial count at zero when the first load fails', () => {
@@ -79,5 +84,6 @@ describe('MissingTranslationCountService', () => {
     expect(count.count()).toBe(0);
     count.setUnlocked(true);
     expect(count.count()).toBe(0);
+    expect(count.state()).toBe('error');
   });
 });

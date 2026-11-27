@@ -2,13 +2,12 @@ import { Component, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AdminKeyService } from './admin-key.service';
-import { LanguageService } from '../shared/i18n/language.service';
 import { isRateLimited, rateLimitMessage } from '../shared/rate-limit';
-import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
+import { AdminDashboard } from './admin-dashboard';
 
 @Component({
   selector: 'app-admin-unlock',
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, AdminDashboard],
   templateUrl: './admin-unlock.html',
   styleUrl: './admin-unlock.css',
 })
@@ -16,8 +15,6 @@ export class AdminUnlock {
   returnUrl = input<string>();
 
   protected admin = inject(AdminKeyService);
-  protected i18n = inject(LanguageService);
-  protected translationCount = inject(MissingTranslationCountService);
   private router = inject(Router);
 
   key = signal('');
@@ -49,10 +46,6 @@ export class AdminUnlock {
         );
       },
     });
-  }
-
-  lock(): void {
-    this.admin.lock();
   }
 
   private safeReturnUrl(): string {

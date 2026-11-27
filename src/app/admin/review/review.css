@@ -4,7 +4,6 @@
 
 .review {
   max-width: 48rem;
-  padding-top: 1rem;
 }
 
 .tabs {
@@ -15,10 +14,15 @@
 .tabs button {
   padding: 0.6rem 1rem;
   border: 0;
-  border-bottom: 2px solid currentColor;
+  border-bottom: 2px solid transparent;
   background: transparent;
-  color: inherit;
+  color: var(--color-muted);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+}
+
+.tabs button[aria-selected='true'] {
+  border-bottom-color: var(--color-accent);
+  color: var(--color-accent);
 }

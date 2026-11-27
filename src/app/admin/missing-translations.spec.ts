@@ -66,7 +66,9 @@ describe('MissingTranslations', () => {
     const { fixture, element } = setup();
 
     expect(element.querySelector('h2')!.textContent).toBe('Translations');
-    expect(element.querySelector('.links a')!.textContent).toBe('Admin');
+    expect(element.querySelector('.page-head h2')!.textContent).toBe('Translations');
+    expect(element.querySelector('.page-head a')!.textContent).toContain('Admin');
+    expect(element.querySelector('.page-head a')!.getAttribute('href')).toBe('/admin');
     expect(element.textContent).toContain('German: habitat');
     expect(element.textContent).toContain('French: name, profile');
     expect(element.textContent).not.toContain('Complete');
