@@ -4,15 +4,10 @@
 
 .missing {
   max-width: 40rem;
-  padding-top: 1rem;
 }
 
 .lead {
   color: var(--color-muted);
-}
-
-.links {
-  margin: 0 0 1.25rem;
 }
 
 .gaps {

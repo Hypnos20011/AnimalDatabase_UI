@@ -1,9 +1,26 @@
 @if (submittedPending(); as animal) {
-  <section role="status">
-    <h2>Thanks! Your animal was submitted.</h2>
+  <section class="submitted" role="status">
+    <span class="submitted-icon" aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        width="1.4rem"
+        height="1.4rem"
+        fill="none"
+        stroke="currentColor"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        focusable="false"
+      >
+        <path d="m5 12 4 4L19 6" />
+      </svg>
+    </span>
+    <h2>Thanks, your animal was submitted</h2>
     <p>{{ animal.commonName }} is waiting for admin approval. It will appear on the site once it is approved.</p>
-    <button type="button" class="btn btn-primary" (click)="addAnother()">Add another animal</button>
-    <a routerLink="/">{{ i18n.t('detail.back') }}</a>
+    <div class="submitted-actions">
+      <button type="button" class="btn btn-primary" (click)="addAnother()">Add another animal</button>
+      <a class="btn btn-secondary" routerLink="/">Back to list</a>
+    </div>
   </section>
 } @else {
 <h2>{{ editing() ? i18n.t('form.title.edit') : i18n.t('form.title.add') }}</h2>

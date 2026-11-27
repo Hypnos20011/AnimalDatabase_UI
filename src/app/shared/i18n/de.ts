@@ -9,7 +9,6 @@ export const de: Record<TranslationKey, string> = {
   'footer.unlocked': 'Bearbeiten freigeschaltet',
   'footer.lock': 'Sperren',
   'footer.admin': 'Admin',
-  'admin.missing.link': 'Übersetzungen',
   'admin.missing.count': '{count} fehlende Übersetzungen',
   'admin.missing.error': 'Fehlende Übersetzungen konnten nicht geladen werden.',
   'admin.accessDenied': 'Du hast keine Berechtigung, diese Aktion auszuführen.',

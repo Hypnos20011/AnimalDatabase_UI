@@ -1,0 +1,41 @@
+<section class="dashboard">
+  <header class="page-head">
+    <h2>Admin</h2>
+    <div class="dashboard-actions">
+      <span class="status">Admin</span>
+      <a class="btn btn-secondary btn-sm" routerLink="/">Back to list</a>
+      <button type="button" class="btn btn-secondary btn-sm lock" (click)="admin.lock()">Lock</button>
+    </div>
+  </header>
+  <div class="cards">
+    <a
+      class="card card-review"
+      routerLink="/admin/review"
+      [attr.aria-label]="reviewCountLabel()"
+    >
+      <span class="card-label">Review</span>
+      <span class="card-count" [class.is-positive]="(pendingCount() ?? 0) > 0">{{ pendingCount() ?? '—' }}</span>
+      <span class="card-text">New animals waiting for approval</span>
+      <span class="card-arrow" aria-hidden="true">↗</span>
+    </a>
+    <a
+      class="card card-translations"
+      routerLink="/admin/missing"
+      [attr.aria-label]="translationCountLabel()"
+    >
+      <span class="card-label">Translations</span>
+      <span
+        class="card-count"
+        [class.is-positive]="translationCount.state() === 'ready' && translationCount.count() > 0"
+      >{{ translationCount.state() === 'ready' ? translationCount.count() : '—' }}</span>
+      <span class="card-text">Animals with missing German or French text</span>
+      <span class="card-arrow" aria-hidden="true">↗</span>
+    </a>
+    <a class="card card-add" routerLink="/animals/new" aria-label="Add a new animal to the database">
+      <span class="card-label">Add animal</span>
+      <span class="card-count">+</span>
+      <span class="card-text">Add a new animal to the database</span>
+      <span class="card-arrow" aria-hidden="true">↗</span>
+    </a>
+  </div>
+</section>

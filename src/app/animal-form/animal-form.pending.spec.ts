@@ -54,7 +54,7 @@ describe('AnimalForm pending submission', () => {
   }
 
   it('shows the pending confirmation without navigating', () => {
-    const { fixture, form, element, navigate, refresh, i18n } = setup();
+    const { fixture, form, element, navigate, refresh } = setup();
     form.form.controls.commonName.setValue('Okapi');
     form.submit();
     fixture.detectChanges();
@@ -64,15 +64,12 @@ describe('AnimalForm pending submission', () => {
     expect(form.saving()).toBe(false);
     expect(element.querySelector('form')).toBeNull();
     expect(element.querySelector('.wiki-import')).toBeNull();
-    expect(element.textContent).toContain('Thanks! Your animal was submitted.');
+    expect(element.querySelector('.submitted h2')?.textContent).toBe('Thanks, your animal was submitted');
     expect(element.textContent).toContain('Okapi is waiting for admin approval. It will appear on the site once it is approved.');
-    expect(element.querySelector('button')?.textContent).toContain('Add another animal');
-    expect(element.querySelector('a')?.textContent).toContain(i18n.t('detail.back'));
-
-    i18n.setLanguage('de');
-    fixture.detectChanges();
-    expect(element.textContent).toContain('Thanks! Your animal was submitted.');
-    expect(element.querySelector('a')?.textContent).toContain(i18n.t('detail.back'));
+    expect(element.querySelector('.submitted-icon')?.getAttribute('aria-hidden')).toBe('true');
+    expect(element.querySelector('.submitted-actions .btn-primary')?.textContent).toContain('Add another animal');
+    expect(element.querySelector('.submitted-actions a')?.textContent).toContain('Back to list');
+    expect(element.querySelector('.submitted-actions a')?.getAttribute('href')).toBe('/');
   });
 
   it('starts another submission with default values and clears import and image state', () => {
@@ -125,7 +122,7 @@ describe('AnimalForm pending submission', () => {
     form.submit();
     fixture.detectChanges();
     expect(service.create).toHaveBeenLastCalledWith(expect.objectContaining({ commonName: 'Second', images: [] }));
-    expect(element.textContent).toContain('Thanks! Your animal was submitted.');
+    expect(element.textContent).toContain('Thanks, your animal was submitted');
   });
 
   it('ignores a Wikipedia lookup still in flight when starting another submission', () => {

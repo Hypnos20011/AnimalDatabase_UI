@@ -6,13 +6,18 @@ import { AdminKeyService } from './admin-key.service';
 import type { AdminRole } from './admin-key.service';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
+import { AnimalService } from '../shared/animal.service';
 
 describe('AdminUnlock', () => {
   async function setup(verify: (key: string) => Observable<AdminRole | null>, returnUrl?: string) {
     sessionStorage.clear();
     TestBed.configureTestingModule({
       imports: [AdminUnlock],
-      providers: [provideRouter([]), provideHttpClient()],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        { provide: AnimalService, useValue: { pendingReview: vi.fn(() => of([])) } },
+      ],
     });
     const admin = TestBed.inject(AdminKeyService);
     const verifySpy = vi.spyOn(admin, 'verify').mockImplementation(verify);
@@ -41,9 +46,11 @@ describe('AdminUnlock', () => {
 
   it('shows one password field and an Unlock button', async () => {
     const { element } = await setup(() => of('admin'));
+    expect(element.querySelector('.unlock-card')).not.toBeNull();
     expect(element.querySelectorAll('input').length).toBe(1);
     expect(element.querySelector('input')!.type).toBe('password');
     expect(element.querySelector('button[type="submit"]')!.textContent!.trim()).toBe('Unlock');
+    expect(element.querySelector('.unlock-card > a.btn-secondary')?.textContent?.trim()).toBe('Back to list');
   });
 
   it('shows an inline error and stays locked for a wrong key', async () => {
@@ -113,20 +120,25 @@ describe('AdminUnlock', () => {
     expect(element.querySelector('a[href="/admin/review"]')?.textContent).toContain('Review');
   });
 
-  it('shows the translation badge only for an admin with a positive count', async () => {
+  it('shows the translation count on the dashboard for an admin', async () => {
     const { admin, element, settle } = await setup(() => of('admin'));
-    const count = TestBed.inject(MissingTranslationCountService).count;
+    const counter = TestBed.inject(MissingTranslationCountService);
+    const count = counter.count;
     count.set(2);
+    counter.state.set('ready');
 
-    expect(element.querySelector('.missing-count')).toBeNull();
+    expect(element.querySelector('.card-translations .card-count')).toBeNull();
 
     admin.set('right', 'admin');
     await settle();
-    expect(element.querySelector('.missing-count')?.textContent?.trim()).toBe('2');
+    expect(element.querySelector('.dashboard .page-head h2')?.textContent?.trim()).toBe('Admin');
+    expect(element.querySelectorAll('.dashboard .cards > a')).toHaveLength(3);
+    expect(element.querySelector('.card-translations .card-count')?.textContent?.trim()).toBe('2');
 
     count.set(0);
     await settle();
-    expect(element.querySelector('.missing-count')).toBeNull();
+    expect(element.querySelector('.card-translations .card-count')?.textContent?.trim()).toBe('0');
+    expect(element.querySelector('.card-translations .card-count')?.classList.contains('is-positive')).toBe(false);
   });
 
   it('sends a tester unlocking the admin page to the list without showing a status page', async () => {
@@ -141,6 +153,6 @@ describe('AdminUnlock', () => {
     expect(element.textContent).not.toContain('Tester access');
     expect(element.querySelector('a[href="/admin/missing"]')).toBeNull();
     expect(element.querySelector('input[type="password"]')).toBeNull();
-    expect(element.querySelector('.missing-count')).toBeNull();
+    expect(element.querySelector('.card-translations')).toBeNull();
   });
 });
