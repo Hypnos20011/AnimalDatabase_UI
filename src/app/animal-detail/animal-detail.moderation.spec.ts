@@ -11,35 +11,36 @@ import { RecentlyViewedService } from '../animals-list/recently-viewed.service';
 import { LanguageService } from '../shared/i18n/language.service';
 import { animalStatusLabel } from '../shared/animal-status';
 
-const animal = (status: 'approved' | 'pending' | 'rejected', submittedBy = 'tester'): Animal => ({
-  id: 1,
-  commonName: 'Okapi',
-  scientificName: null,
-  family: null,
-  taxonomicClass: null,
-  isDomesticated: false,
-  sizeLengthCmMin: null,
-  sizeLengthCmMax: null,
-  sizeHeightCmMin: null,
-  sizeHeightCmMax: null,
-  weightKgMin: null,
-  weightKgMax: null,
-  lifespanYearsMin: null,
-  lifespanYearsMax: null,
-  iucnStatus: null,
-  habitat: null,
-  habitatType: null,
-  rangeRegion: null,
-  profile: null,
-  sourceUrl: null,
-  thumbnailUrl: null,
-  createdAt: '',
-  updatedAt: '',
-  status,
-  submittedBy,
-  reviewedAt: null,
-  reviewNote: 'Private review note',
-} as Animal);
+const animal = (status: 'approved' | 'pending' | 'rejected', submittedBy = 'tester'): Animal =>
+  ({
+    id: 1,
+    commonName: 'Okapi',
+    scientificName: null,
+    family: null,
+    taxonomicClass: null,
+    isDomesticated: false,
+    lengthMmMin: null,
+    lengthMmMax: null,
+    heightMmMin: null,
+    heightMmMax: null,
+    weightGramsMin: null,
+    weightGramsMax: null,
+    lifespanMonthsMin: null,
+    lifespanMonthsMax: null,
+    iucnStatus: null,
+    habitat: null,
+    habitatType: null,
+    rangeRegion: null,
+    profile: null,
+    sourceUrl: null,
+    thumbnailUrl: null,
+    createdAt: '',
+    updatedAt: '',
+    status,
+    submittedBy,
+    reviewedAt: null,
+    reviewNote: 'Private review note',
+  }) as Animal;
 
 describe('AnimalDetail moderation', () => {
   beforeEach(() => localStorage.clear());
@@ -58,7 +59,10 @@ describe('AnimalDetail moderation', () => {
       providers: [
         provideRouter([]),
         { provide: AnimalService, useValue: service },
-        { provide: AdminKeyService, useValue: { key, role: roleSignal, unlocked: signal(role !== 'none') } },
+        {
+          provide: AdminKeyService,
+          useValue: { key, role: roleSignal, unlocked: signal(role !== 'none') },
+        },
       ],
     });
     const recent = vi.spyOn(TestBed.inject(RecentlyViewedService), 'record');
@@ -71,7 +75,17 @@ describe('AnimalDetail moderation', () => {
       fixture.detectChanges();
     };
     await settle();
-    return { fixture, detail: fixture.componentInstance, element: fixture.nativeElement as HTMLElement, key, roleSignal, service, recent, navigate, settle };
+    return {
+      fixture,
+      detail: fixture.componentInstance,
+      element: fixture.nativeElement as HTMLElement,
+      key,
+      roleSignal,
+      service,
+      recent,
+      navigate,
+      settle,
+    };
   }
 
   it.each([
@@ -83,38 +97,54 @@ describe('AnimalDetail moderation', () => {
     ['admin', 'approved', 'admin', true, true],
     ['admin', 'pending', 'tester', true, true],
     ['admin', 'rejected', 'tester', true, true],
-  ] as const)('applies %s permissions to %s submitted by %s', async (role, status, submitter, edit, del) => {
-    const { element, detail, service } = await setup(animal(status, submitter), role);
-    expect(!!element.querySelector('.edit')).toBe(edit);
-    expect(!!element.querySelector('.delete')).toBe(del);
-    if (!del) {
-      detail.onDelete();
-      detail.confirmDelete();
-      expect(detail.confirmOpen()).toBe(false);
-      expect(service.delete).not.toHaveBeenCalled();
-    }
-  });
+  ] as const)(
+    'applies %s permissions to %s submitted by %s',
+    async (role, status, submitter, edit, del) => {
+      const { element, detail, service } = await setup(animal(status, submitter), role);
+      expect(!!element.querySelector('.edit')).toBe(edit);
+      expect(!!element.querySelector('.delete')).toBe(del);
+      if (!del) {
+        detail.onDelete();
+        detail.confirmDelete();
+        expect(detail.confirmOpen()).toBe(false);
+        expect(service.delete).not.toHaveBeenCalled();
+      }
+    },
+  );
 
-  it.each(['pending', 'rejected'] as const)('shows an English %s badge and only admins see rejected review notes', async (status) => {
-    const { element, roleSignal, settle } = await setup(animal(status));
-    const i18n = TestBed.inject(LanguageService);
-    expect(element.querySelector('.animal-status')?.textContent?.trim()).toBe(animalStatusLabel(status));
-    expect(!!element.querySelector('.review-note')).toBe(status === 'rejected');
-    roleSignal.set('tester');
-    await settle();
-    expect(element.querySelector('.review-note')).toBeNull();
-    i18n.setLanguage('de');
-    await settle();
-    expect(element.querySelector('.animal-status')?.textContent?.trim()).toBe(animalStatusLabel(status));
-  });
+  it.each(['pending', 'rejected'] as const)(
+    'shows an English %s badge and only admins see rejected review notes',
+    async (status) => {
+      const { element, roleSignal, settle } = await setup(animal(status));
+      const i18n = TestBed.inject(LanguageService);
+      expect(element.querySelector('.animal-status')?.textContent?.trim()).toBe(
+        animalStatusLabel(status),
+      );
+      expect(!!element.querySelector('.review-note')).toBe(status === 'rejected');
+      roleSignal.set('tester');
+      await settle();
+      expect(element.querySelector('.review-note')).toBeNull();
+      i18n.setLanguage('de');
+      await settle();
+      expect(element.querySelector('.animal-status')?.textContent?.trim()).toBe(
+        animalStatusLabel(status),
+      );
+    },
+  );
 
-  it.each(['approved', 'pending', 'rejected'] as const)('only records public animals: %s', async (status) => {
-    const { recent } = await setup(animal(status));
-    expect(recent.mock.calls.length).toBe(status === 'approved' ? 1 : 0);
-  });
+  it.each(['approved', 'pending', 'rejected'] as const)(
+    'only records public animals: %s',
+    async (status) => {
+      const { recent } = await setup(animal(status));
+      expect(recent.mock.calls.length).toBe(status === 'approved' ? 1 : 0);
+    },
+  );
 
   it('treats a legacy animal without status as public and shows no badge', async () => {
-    const { element, recent } = await setup({ ...animal('approved'), status: undefined } as unknown as Animal);
+    const { element, recent } = await setup({
+      ...animal('approved'),
+      status: undefined,
+    } as unknown as Animal);
     expect(element.querySelector('.animal-status')).toBeNull();
     expect(recent).toHaveBeenCalledOnce();
   });

@@ -15,14 +15,14 @@ const okapi = {
   family: 'Giraffidae',
   taxonomicClass: 'mammal',
   isDomesticated: false,
-  sizeLengthCmMin: null,
-  sizeLengthCmMax: null,
-  sizeHeightCmMin: null,
-  sizeHeightCmMax: null,
-  weightKgMin: null,
-  weightKgMax: null,
-  lifespanYearsMin: null,
-  lifespanYearsMax: null,
+  lengthMmMin: null,
+  lengthMmMax: null,
+  heightMmMin: null,
+  heightMmMax: null,
+  weightGramsMin: null,
+  weightGramsMax: null,
+  lifespanMonthsMin: null,
+  lifespanMonthsMax: null,
   iucnStatus: 'endangered',
   habitat: null,
   habitatType: null,
@@ -46,7 +46,10 @@ describe('AnimalDetail favorite toggle', () => {
           provide: AnimalService,
           useValue: { getById: vi.fn(() => of(okapi)), getImages: vi.fn(() => of([])) },
         },
-        { provide: AdminKeyService, useValue: { key: signal(null), unlocked: signal(false), role: signal('none') } },
+        {
+          provide: AdminKeyService,
+          useValue: { key: signal(null), unlocked: signal(false), role: signal('none') },
+        },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
@@ -55,7 +58,8 @@ describe('AnimalDetail favorite toggle', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     const element = fixture.nativeElement as HTMLElement;
-    const button = () => element.querySelector<HTMLButtonElement>('.detail-header .favorite-toggle')!;
+    const button = () =>
+      element.querySelector<HTMLButtonElement>('.detail-header .favorite-toggle')!;
     return { fixture, element, button, favorites: TestBed.inject(FavoritesService) };
   }
 

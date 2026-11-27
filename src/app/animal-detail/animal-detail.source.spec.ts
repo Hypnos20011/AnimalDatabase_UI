@@ -10,13 +10,33 @@ import { en } from '../shared/i18n/en';
 import { de } from '../shared/i18n/de';
 
 const base = {
-  id: 2, commonName: 'Okapi', scientificName: null, family: null, taxonomicClass: null,
-  isDomesticated: false, sizeLengthCmMin: null, sizeLengthCmMax: null, sizeHeightCmMin: null,
-  sizeHeightCmMax: null, weightKgMin: null, weightKgMax: null, lifespanYearsMin: null,
-  lifespanYearsMax: null, iucnStatus: null, habitat: null, habitatType: null, rangeRegion: null,
-  profile: null, sourceUrl: null, thumbnailUrl: null,
-  status: 'approved', submittedBy: 'admin', reviewedAt: null, reviewNote: null,
-  createdAt: '2026-10-08T10:00:00', updatedAt: '2026-10-08T10:00:00',
+  id: 2,
+  commonName: 'Okapi',
+  scientificName: null,
+  family: null,
+  taxonomicClass: null,
+  isDomesticated: false,
+  lengthMmMin: null,
+  lengthMmMax: null,
+  heightMmMin: null,
+  heightMmMax: null,
+  weightGramsMin: null,
+  weightGramsMax: null,
+  lifespanMonthsMin: null,
+  lifespanMonthsMax: null,
+  iucnStatus: null,
+  habitat: null,
+  habitatType: null,
+  rangeRegion: null,
+  profile: null,
+  sourceUrl: null,
+  thumbnailUrl: null,
+  status: 'approved',
+  submittedBy: 'admin',
+  reviewedAt: null,
+  reviewNote: null,
+  createdAt: '2026-10-08T10:00:00',
+  updatedAt: '2026-10-08T10:00:00',
 } satisfies Animal;
 
 describe('AnimalDetail source link', () => {
@@ -25,8 +45,17 @@ describe('AnimalDetail source link', () => {
       imports: [AnimalDetail],
       providers: [
         provideRouter([]),
-        { provide: AnimalService, useValue: { getById: vi.fn(() => of({ ...base, sourceUrl })), getImages: vi.fn(() => of([])) } },
-        { provide: AdminKeyService, useValue: { key: signal(null), unlocked: signal(false), role: signal('none') } },
+        {
+          provide: AnimalService,
+          useValue: {
+            getById: vi.fn(() => of({ ...base, sourceUrl })),
+            getImages: vi.fn(() => of([])),
+          },
+        },
+        {
+          provide: AdminKeyService,
+          useValue: { key: signal(null), unlocked: signal(false), role: signal('none') },
+        },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);

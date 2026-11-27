@@ -128,15 +128,14 @@
                 </dd>
               </div>
             }
-            @if (animal()!.weightKgMin | range: animal()!.weightKgMax : 'kg' : 2 : i18n.language(); as weight) {
+            @if (measurement(animal()!.weightGramsMin, animal()!.weightGramsMax, 'weight'); as weight) {
               <div class="fact">
                 <dt>{{ i18n.t('detail.weight') }}</dt>
                 <dd>{{ weight }}</dd>
               </div>
             }
 
-            @let lifespan = animal()!.lifespanYearsMin | range: animal()!.lifespanYearsMax : years() : 0 :
-            i18n.language();
+            @let lifespan = measurement(animal()!.lifespanMonthsMin, animal()!.lifespanMonthsMax, 'lifespan');
 
             <div class="fact">
               <dt>{{ i18n.t('detail.lifespan') }}</dt>
@@ -192,15 +191,13 @@
                   <dd>{{ i18n.t('detail.wild') }}</dd>
                 </div>
               }
-              @if (animal()!.sizeLengthCmMin | range: animal()!.sizeLengthCmMax : 'cm' : 1 : i18n.language();
-                as bodyLength) {
+              @if (measurement(animal()!.lengthMmMin, animal()!.lengthMmMax, 'length'); as bodyLength) {
                 <div class="fact">
                   <dt>{{ i18n.t('detail.bodyLength') }}</dt>
                   <dd>{{ bodyLength }}</dd>
                 </div>
               }
-              @if (animal()!.sizeHeightCmMin | range: animal()!.sizeHeightCmMax : 'cm' : 1 : i18n.language();
-                as shoulderHeight) {
+              @if (measurement(animal()!.heightMmMin, animal()!.heightMmMax, 'height'); as shoulderHeight) {
                 <div class="fact">
                   <dt>{{ i18n.t('detail.shoulderHeight') }}</dt>
                   <dd>{{ shoulderHeight }}</dd>

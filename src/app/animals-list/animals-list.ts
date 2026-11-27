@@ -34,6 +34,7 @@ import { CompareService } from '../compare/compare.service';
 import { RandomAnimalService } from '../shared/random-animal.service';
 import { AdminKeyService } from '../admin/admin-key.service';
 import { animalStatusLabel, isPublicAnimal } from '../shared/animal-status';
+import { convertUnit } from '../shared/unit-conversion';
 
 @Component({
   selector: 'app-animals-list',
@@ -95,7 +96,8 @@ export class AnimalsList {
   ];
   recentItems = computed(() => {
     const byId = new Map(this.animals().map((animal) => [animal.id, animal]));
-    return this.recentlyViewed.recent()
+    return this.recentlyViewed
+      .recent()
       .filter((item) => byId.has(item.id))
       .map((item) => ({ id: item.id, commonName: byId.get(item.id)!.commonName }));
   });
@@ -109,7 +111,8 @@ export class AnimalsList {
   });
   compareItems = computed(() => {
     const byId = new Map(this.animals().map((animal) => [animal.id, animal]));
-    return this.compare.selection()
+    return this.compare
+      .selection()
       .filter((item) => byId.has(item.id))
       .map((item) => ({ id: item.id, commonName: byId.get(item.id)!.commonName }));
   });
@@ -194,10 +197,14 @@ export class AnimalsList {
     const statuses = this.selectedStatuses();
     const habitats = this.selectedHabitats();
     const type = this.filterType();
-    const lengthFrom = this.lengthFrom();
-    const lengthTo = this.lengthTo();
-    const weightFrom = this.weightFrom();
-    const weightTo = this.weightTo();
+    const toMillimeters = (value: number | null) =>
+      convertUnit(value, 'length', 'cm', 'mm');
+    const toGrams = (value: number | null) =>
+      convertUnit(value, 'weight', 'kg', 'g');
+    const lengthFrom = toMillimeters(this.lengthFrom());
+    const lengthTo = toMillimeters(this.lengthTo());
+    const weightFrom = toGrams(this.weightFrom());
+    const weightTo = toGrams(this.weightTo());
     const favoriteIds = this.favoritesOnly() ? this.favoriteIds() : null;
 
     return this.animals().filter((animal) => {
@@ -217,11 +224,11 @@ export class AnimalsList {
         return false;
       }
 
-      if (!this.inRange(animal.sizeLengthCmMin, animal.sizeLengthCmMax, lengthFrom, lengthTo)) {
+      if (!this.inRange(animal.lengthMmMin, animal.lengthMmMax, lengthFrom, lengthTo)) {
         return false;
       }
 
-      if (!this.inRange(animal.weightKgMin, animal.weightKgMax, weightFrom, weightTo)) {
+      if (!this.inRange(animal.weightGramsMin, animal.weightGramsMax, weightFrom, weightTo)) {
         return false;
       }
 
@@ -249,8 +256,8 @@ export class AnimalsList {
         return (descending ? y - x : x - y) || byName(a, b);
       };
     };
-    const length = (a: Animal) => a.sizeLengthCmMax ?? a.sizeLengthCmMin;
-    const weight = (a: Animal) => a.weightKgMax ?? a.weightKgMin;
+    const length = (a: Animal) => a.lengthMmMax ?? a.lengthMmMin;
+    const weight = (a: Animal) => a.weightGramsMax ?? a.weightGramsMin;
 
     switch (sort) {
       case 'relevance':
@@ -310,25 +317,28 @@ export class AnimalsList {
     this.animalsRequest?.unsubscribe();
     this.error.set(false);
     this.loading.set(true);
-    this.animalsRequest = this.animalService.getAll(language).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (data) => {
-        if (this.admin.key() !== key || this.i18n.language() !== language) return;
-        this.loadedKey.set(key);
-        this.loadedAnimals.set(data);
-        this.loading.set(false);
-        if (!this.restoredScroll) {
-          this.restoredScroll = true;
-          afterNextRender(() => window.scrollTo(0, this.state.scrollY()), {
-            injector: this.injector,
-          });
-        }
-      },
-      error: () => {
-        if (this.admin.key() !== key || this.i18n.language() !== language) return;
-        this.error.set(true);
-        this.loading.set(false);
-      },
-    });
+    this.animalsRequest = this.animalService
+      .getAll(language)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          if (this.admin.key() !== key || this.i18n.language() !== language) return;
+          this.loadedKey.set(key);
+          this.loadedAnimals.set(data);
+          this.loading.set(false);
+          if (!this.restoredScroll) {
+            this.restoredScroll = true;
+            afterNextRender(() => window.scrollTo(0, this.state.scrollY()), {
+              injector: this.injector,
+            });
+          }
+        },
+        error: () => {
+          if (this.admin.key() !== key || this.i18n.language() !== language) return;
+          this.error.set(true);
+          this.loading.set(false);
+        },
+      });
   }
 
   onTopSearchDaysChange(value: string): void {

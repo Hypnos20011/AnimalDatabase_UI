@@ -20,14 +20,14 @@ const okapi = {
   family: 'Giraffidae',
   taxonomicClass: 'mammal',
   isDomesticated: false,
-  sizeLengthCmMin: 180,
-  sizeLengthCmMax: 250,
-  sizeHeightCmMin: 140,
-  sizeHeightCmMax: 170,
-  weightKgMin: 200,
-  weightKgMax: 350,
-  lifespanYearsMin: 20,
-  lifespanYearsMax: 30,
+  lengthMmMin: 1800,
+  lengthMmMax: 2500,
+  heightMmMin: 1400,
+  heightMmMax: 1700,
+  weightGramsMin: 200000,
+  weightGramsMax: 350000,
+  lifespanMonthsMin: 240,
+  lifespanMonthsMax: 360,
   iucnStatus: 'endangered',
   habitat: null,
   habitatType: null,
@@ -60,7 +60,10 @@ describe('AnimalDetail delete confirmation', () => {
       providers: [
         provideRouter([]),
         { provide: AnimalService, useValue: service },
-        { provide: AdminKeyService, useValue: { key: signal('key'), unlocked: signal(true), role: signal('admin') } },
+        {
+          provide: AdminKeyService,
+          useValue: { key: signal('key'), unlocked: signal(true), role: signal('admin') },
+        },
       ],
     });
     const router = TestBed.inject(Router);
@@ -198,7 +201,10 @@ describe('AnimalDetail hero', () => {
       providers: [
         provideRouter([]),
         { provide: AnimalService, useValue: service },
-        { provide: AdminKeyService, useValue: { key: signal('key'), unlocked: signal(true), role: signal('admin') } },
+        {
+          provide: AdminKeyService,
+          useValue: { key: signal('key'), unlocked: signal(true), role: signal('admin') },
+        },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
@@ -321,7 +327,10 @@ describe('AnimalDetail while locked', () => {
           provide: AnimalService,
           useValue: { getById: vi.fn(() => of(okapi)), getImages: vi.fn(() => of([])) },
         },
-        { provide: AdminKeyService, useValue: { key: signal(null), unlocked: signal(false), role: signal('none') } },
+        {
+          provide: AdminKeyService,
+          useValue: { key: signal(null), unlocked: signal(false), role: signal('none') },
+        },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
@@ -348,7 +357,10 @@ describe('AnimalDetail facts', () => {
       providers: [
         provideRouter([]),
         { provide: AnimalService, useValue: service },
-        { provide: AdminKeyService, useValue: { key: signal('key'), unlocked: signal(true), role: signal('admin') } },
+        {
+          provide: AdminKeyService,
+          useValue: { key: signal('key'), unlocked: signal(true), role: signal('admin') },
+        },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
@@ -364,7 +376,7 @@ describe('AnimalDetail facts', () => {
   }
 
   it('shows unknown when the lifespan is missing', async () => {
-    const { element } = await setup({ ...okapi, lifespanYearsMin: null, lifespanYearsMax: null });
+    const { element } = await setup({ ...okapi, lifespanMonthsMin: null, lifespanMonthsMax: null });
 
     const facts = element.querySelector('.facts')?.textContent;
     expect(facts).toContain('Unknown');
@@ -379,7 +391,11 @@ describe('AnimalDetail facts', () => {
   });
 
   it('hides shoulder height when it is empty', async () => {
-    const { element, settle } = await setup({ ...okapi, sizeHeightCmMin: null, sizeHeightCmMax: null });
+    const { element, settle } = await setup({
+      ...okapi,
+      heightMmMin: null,
+      heightMmMax: null,
+    });
 
     (element.querySelector('.more') as HTMLButtonElement).click();
     await settle();
@@ -397,7 +413,7 @@ describe('AnimalDetail facts', () => {
 
     const extra = element.querySelector('.facts.extra')?.textContent;
     expect(extra).toContain('Shoulder height');
-    expect(extra).toContain('140');
+    expect(extra).toContain('1.4–1.7 m');
   });
 });
 
@@ -411,7 +427,10 @@ describe('AnimalDetail habitat', () => {
           provide: AnimalService,
           useValue: { getById: vi.fn(() => of(animal)), getImages: vi.fn(() => of([])) },
         },
-        { provide: AdminKeyService, useValue: { key: signal('key'), unlocked: signal(true), role: signal('admin') } },
+        {
+          provide: AdminKeyService,
+          useValue: { key: signal('key'), unlocked: signal(true), role: signal('admin') },
+        },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);

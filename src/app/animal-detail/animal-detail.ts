@@ -7,7 +7,7 @@ import { Subscription } from 'rxjs';
 import { Animal } from '../animal-model/animal.model';
 import { AnimalService } from '../shared/animal.service';
 import { AnimalImage } from '../animal-model/animal-image.model';
-import { RangePipe } from '../shared/range.pipe';
+import { formatMeasurementRange, MeasurementKind } from '../shared/unit-conversion';
 import { ConfirmDialog } from '../shared/confirm-dialog/confirm-dialog';
 import { sameName, wikimediaSrcset } from '../shared/wikimedia-image';
 import { AdminKeyService } from '../admin/admin-key.service';
@@ -24,16 +24,22 @@ export const SHARE_STATUS_MS = 3000;
 
 @Component({
   selector: 'app-animal-detail',
-  imports: [CommonModule, RouterLink, RangePipe, ConfirmDialog],
+  imports: [CommonModule, RouterLink, ConfirmDialog],
   templateUrl: './animal-detail.html',
   styleUrl: './animal-detail.css',
 })
 export class AnimalDetail {
-  readonly years = computed(() => ({
-    one: this.i18n.t('unit.year'),
-    other: this.i18n.t('unit.years'),
-  }));
   readonly srcset = wikimediaSrcset;
+
+  measurement(min: number | null, max: number | null, kind: MeasurementKind): string {
+    return formatMeasurementRange(min, max, kind, this.i18n.language(), {
+      month: { one: this.i18n.t('unit.month'), other: this.i18n.t('unit.months') },
+      year: { one: this.i18n.t('unit.year'), other: this.i18n.t('unit.years') },
+    }, {
+      upTo: this.i18n.t('range.upTo'),
+      atLeast: this.i18n.t('range.atLeast'),
+    });
+  }
 
   showCaption(img: AnimalImage): boolean {
     const animal = this.animal();

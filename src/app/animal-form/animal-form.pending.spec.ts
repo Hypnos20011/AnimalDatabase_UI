@@ -10,7 +10,11 @@ import { LanguageService } from '../shared/i18n/language.service';
 import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
 
 describe('AnimalForm pending submission', () => {
-  const animal = { id: 1, commonName: 'Okapi', isDomesticated: false } as Animal;
+  const animal = {
+    id: 1, commonName: 'Okapi', isDomesticated: false,
+    lengthMmMin: null, lengthMmMax: null, heightMmMin: null, heightMmMax: null,
+    weightGramsMin: null, weightGramsMax: null, lifespanMonthsMin: null, lifespanMonthsMax: null,
+  } as Animal;
   const pending = { ...animal, status: 'pending' as const };
   const approved = { ...animal, status: 'approved' as const };
   const importData = {
@@ -18,6 +22,8 @@ describe('AnimalForm pending submission', () => {
     scientificName: 'Okapia johnstoni',
     imageUrl: 'https://example.com/okapi.jpg',
     warnings: ['Warning'],
+    lengthMmMin: null, lengthMmMax: null, heightMmMin: null, heightMmMax: null,
+    weightGramsMin: null, weightGramsMax: null, lifespanMonthsMin: null, lifespanMonthsMax: null,
   } as WikipediaImport;
 
   beforeEach(() => {
@@ -77,7 +83,9 @@ describe('AnimalForm pending submission', () => {
     form.wikiUrl.set('Okapi');
     form.importFromWikipedia();
     form.form.controls.isDomesticated.setValue(true);
-    form.form.controls.weightKgMin.setValue(20);
+    form.form.controls.weightUnit.setValue('g');
+    form.changeUnit('weight');
+    form.form.controls.weightMin.setValue(20);
     form.form.markAllAsTouched();
     form.form.markAsDirty();
     form.addImageRow();
@@ -93,7 +101,8 @@ describe('AnimalForm pending submission', () => {
     expect(element.querySelector('form')).not.toBeNull();
     expect(form.form.controls.commonName.value).toBe('');
     expect(form.form.controls.scientificName.value).toBe('');
-    expect(form.form.controls.weightKgMin.value).toBeNull();
+    expect(form.form.controls.weightMin.value).toBeNull();
+    expect(form.form.controls.weightUnit.value).toBe('kg');
     expect(form.form.controls.isDomesticated.value).toBe(false);
     expect(form.form.controls.iucnStatus.enabled).toBe(true);
     expect(form.form.pristine).toBe(true);
@@ -119,9 +128,14 @@ describe('AnimalForm pending submission', () => {
     form.importFromWikipedia();
     expect(form.form.controls.scientificName.value).toBe('Okapia johnstoni');
     form.form.controls.commonName.setValue('Second');
+    form.form.controls.weightMin.setValue(0.002);
+    form.form.controls.weightUnit.setValue('g');
+    form.changeUnit('weight');
+    expect(form.form.controls.weightMin.value).toBe(2);
     form.submit();
     fixture.detectChanges();
     expect(service.create).toHaveBeenLastCalledWith(expect.objectContaining({ commonName: 'Second', images: [] }));
+    expect(service.create).toHaveBeenLastCalledWith(expect.objectContaining({ weightGramsMin: 2 }));
     expect(element.textContent).toContain('Thanks, your animal was submitted');
   });
 

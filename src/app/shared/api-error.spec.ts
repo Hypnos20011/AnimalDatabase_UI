@@ -10,7 +10,7 @@ describe('apiErrorMessage', () => {
   it('joins the messages of a validation problem', () => {
     const error = new HttpErrorResponse({
       status: 400,
-      error: { title: 'Invalid', errors: { WeightKgMin: ['Weight: too big.'], Url: ['Bad link.'] } },
+      error: { title: 'Invalid', errors: { WeightGramsMin: ['Weight: too big.'], Url: ['Bad link.'] } },
     });
     expect(apiErrorMessage(error, 'Failed')).toBe('Weight: too big. Bad link.');
   });

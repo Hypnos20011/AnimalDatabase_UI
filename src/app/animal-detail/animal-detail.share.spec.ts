@@ -14,14 +14,14 @@ const okapi = {
   family: 'Giraffidae',
   taxonomicClass: 'mammal',
   isDomesticated: false,
-  sizeLengthCmMin: null,
-  sizeLengthCmMax: null,
-  sizeHeightCmMin: null,
-  sizeHeightCmMax: null,
-  weightKgMin: null,
-  weightKgMax: null,
-  lifespanYearsMin: null,
-  lifespanYearsMax: null,
+  lengthMmMin: null,
+  lengthMmMax: null,
+  heightMmMin: null,
+  heightMmMax: null,
+  weightGramsMin: null,
+  weightGramsMax: null,
+  lifespanMonthsMin: null,
+  lifespanMonthsMax: null,
   iucnStatus: 'endangered',
   habitat: null,
   habitatType: null,
@@ -59,7 +59,10 @@ describe('AnimalDetail share button', () => {
           provide: AnimalService,
           useValue: { getById: vi.fn(() => of(okapi)), getImages: vi.fn(() => of([])) },
         },
-        { provide: AdminKeyService, useValue: { key: signal(null), unlocked: signal(false), role: signal('none') } },
+        {
+          provide: AdminKeyService,
+          useValue: { key: signal(null), unlocked: signal(false), role: signal('none') },
+        },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
@@ -177,7 +180,10 @@ describe('AnimalDetail share button', () => {
 
   it('shows an error when sharing and copying both fail', async () => {
     const share = vi.fn(() => Promise.reject(new DOMException('Not allowed', 'NotAllowedError')));
-    mockNavigator({ share, clipboard: { writeText: vi.fn(() => Promise.reject(new Error('denied'))) } });
+    mockNavigator({
+      share,
+      clipboard: { writeText: vi.fn(() => Promise.reject(new Error('denied'))) },
+    });
     const { click, status } = await setup();
 
     await click();

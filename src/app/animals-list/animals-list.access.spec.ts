@@ -15,13 +15,30 @@ import { SearchService } from './search.service';
 
 function animal(id: number, commonName: string, status: string): Animal {
   return {
-    id, commonName, status, scientificName: null, family: null,
-    taxonomicClass: 'mammal', isDomesticated: false,
-    sizeLengthCmMin: null, sizeLengthCmMax: null, sizeHeightCmMin: null,
-    sizeHeightCmMax: null, weightKgMin: null, weightKgMax: null,
-    lifespanYearsMin: null, lifespanYearsMax: null, iucnStatus: null,
-    habitat: null, habitatType: null, rangeRegion: null, profile: null,
-    sourceUrl: null, thumbnailUrl: null, createdAt: '', updatedAt: '',
+    id,
+    commonName,
+    status,
+    scientificName: null,
+    family: null,
+    taxonomicClass: 'mammal',
+    isDomesticated: false,
+    lengthMmMin: null,
+    lengthMmMax: null,
+    heightMmMin: null,
+    heightMmMax: null,
+    weightGramsMin: null,
+    weightGramsMax: null,
+    lifespanMonthsMin: null,
+    lifespanMonthsMax: null,
+    iucnStatus: null,
+    habitat: null,
+    habitatType: null,
+    rangeRegion: null,
+    profile: null,
+    sourceUrl: null,
+    thumbnailUrl: null,
+    createdAt: '',
+    updatedAt: '',
   } as Animal;
 }
 
@@ -44,7 +61,10 @@ describe('AnimalsList access changes', () => {
     window.scrollTo = originalScrollTo;
   });
 
-  async function setup(getAll = vi.fn(() => of([approved, draft])), initialKey: string | null = null) {
+  async function setup(
+    getAll = vi.fn(() => of([approved, draft])),
+    initialKey: string | null = null,
+  ) {
     const key = signal<string | null>(initialKey);
     TestBed.configureTestingModule({
       imports: [AnimalsList],
@@ -52,26 +72,44 @@ describe('AnimalsList access changes', () => {
         provideRouter([]),
         { provide: AdminKeyService, useValue: { key: key.asReadonly(), unlocked: () => !!key() } },
         { provide: AnimalService, useValue: { getAll } },
-        { provide: SearchService, useValue: { getTop: vi.fn(() => of([])), record: vi.fn(() => of(undefined)) } },
+        {
+          provide: SearchService,
+          useValue: { getTop: vi.fn(() => of([])), record: vi.fn(() => of(undefined)) },
+        },
       ],
     });
     const fixture = TestBed.createComponent(AnimalsList);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
-    return { fixture, key, getAll, list: fixture.componentInstance, element: fixture.nativeElement as HTMLElement };
+    return {
+      fixture,
+      key,
+      getAll,
+      list: fixture.componentInstance,
+      element: fixture.nativeElement as HTMLElement,
+    };
   }
 
   it('immediately hides non-public animals, suggestions, filters, favorites and recents on lock', async () => {
-    localStorage.setItem(RECENTLY_VIEWED_STORAGE, JSON.stringify([
-      { id: 2, commonName: 'Secret draft' }, { id: 1, commonName: 'Old name' },
-    ]));
-    localStorage.setItem(FAVORITES_STORAGE, JSON.stringify([
-      { id: 2, commonName: 'Secret draft', starredAt: '2026-11-01T10:00:00Z' },
-    ]));
-    localStorage.setItem(COMPARE_STORAGE, JSON.stringify([
-      { id: 1, commonName: 'Okapi' }, { id: 2, commonName: 'Secret draft' },
-    ]));
+    localStorage.setItem(
+      RECENTLY_VIEWED_STORAGE,
+      JSON.stringify([
+        { id: 2, commonName: 'Secret draft' },
+        { id: 1, commonName: 'Old name' },
+      ]),
+    );
+    localStorage.setItem(
+      FAVORITES_STORAGE,
+      JSON.stringify([{ id: 2, commonName: 'Secret draft', starredAt: '2026-11-01T10:00:00Z' }]),
+    );
+    localStorage.setItem(
+      COMPARE_STORAGE,
+      JSON.stringify([
+        { id: 1, commonName: 'Okapi' },
+        { id: 2, commonName: 'Secret draft' },
+      ]),
+    );
     const { fixture, key, list } = await setup(undefined, 'admin');
     list.query.set('secret');
     expect(list.suggestions().map((a) => a.id)).toEqual([2]);
@@ -91,10 +129,11 @@ describe('AnimalsList access changes', () => {
   it('renders English review badges only for pending and rejected animals', async () => {
     const getAll = vi.fn(() => of([approved, draft, rejected]));
     const { fixture, element } = await setup(getAll, 'admin');
-    const badges = () => Array.from(element.querySelectorAll('.row')).map((row) => ({
-      name: row.querySelector('.name')!.textContent!.trim(),
-      status: row.querySelector('.review-status')?.textContent!.trim() ?? null,
-    }));
+    const badges = () =>
+      Array.from(element.querySelectorAll('.row')).map((row) => ({
+        name: row.querySelector('.name')!.textContent!.trim(),
+        status: row.querySelector('.review-status')?.textContent!.trim() ?? null,
+      }));
     expect(badges()).toEqual([
       { name: 'Okapi', status: null },
       { name: 'Rejected animal', status: 'Rejected' },
@@ -117,7 +156,10 @@ describe('AnimalsList access changes', () => {
 
   it('hides the previous key’s non-public animals until the new key response arrives', async () => {
     const response = new Subject<Animal[]>();
-    const getAll = vi.fn().mockReturnValueOnce(of([approved, draft])).mockReturnValueOnce(response);
+    const getAll = vi
+      .fn()
+      .mockReturnValueOnce(of([approved, draft]))
+      .mockReturnValueOnce(response);
     const { fixture, key, list } = await setup(getAll, 'first');
     expect(list.animals().map((a) => a.id)).toEqual([1, 2]);
     key.set('second');
@@ -146,7 +188,11 @@ describe('AnimalsList access changes', () => {
     const first = new Subject<Animal[]>();
     const second = new Subject<Animal[]>();
     const third = new Subject<Animal[]>();
-    const getAll = vi.fn().mockReturnValueOnce(first).mockReturnValueOnce(second).mockReturnValueOnce(third);
+    const getAll = vi
+      .fn()
+      .mockReturnValueOnce(first)
+      .mockReturnValueOnce(second)
+      .mockReturnValueOnce(third);
     const { fixture, key, list } = await setup(getAll);
     key.set('admin');
     first.next([draft]);
@@ -178,14 +224,20 @@ describe('AnimalsList access changes', () => {
 
   it('uses matching public animals when possible and an empty pool if there are none', async () => {
     const another = animal(4, 'Axolotl', 'approved');
-    const { fixture, list } = await setup(vi.fn(() => of([approved, another, draft])), 'admin');
+    const { fixture, list } = await setup(
+      vi.fn(() => of([approved, another, draft])),
+      'admin',
+    );
     const state = TestBed.inject(AnimalListState);
     list.query.set('okapi');
     fixture.detectChanges();
     expect(state.randomPool()).toEqual([1]);
     fixture.destroy();
     TestBed.resetTestingModule();
-    const next = await setup(vi.fn(() => of([draft, rejected])), 'admin');
+    const next = await setup(
+      vi.fn(() => of([draft, rejected])),
+      'admin',
+    );
     expect(TestBed.inject(AnimalListState).randomPool()).toEqual([]);
     next.fixture.destroy();
   });

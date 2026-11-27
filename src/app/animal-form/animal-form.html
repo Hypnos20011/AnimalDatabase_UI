@@ -108,99 +108,105 @@
   </label>
 
   <div class="range">
-    <span>{{ i18n.t('form.length') }}</span>
+    <span>Length</span>
     <input
       type="number"
       min="0"
-      step="0.1"
+      step="any"
       [placeholder]="i18n.t('form.min')"
-      formControlName="sizeLengthCmMin"
+      formControlName="lengthMin"
     />
     <input
       type="number"
       min="0"
-      step="0.1"
+      step="any"
       [placeholder]="i18n.t('form.max')"
-      formControlName="sizeLengthCmMax"
+      formControlName="lengthMax"
     />
+    <select aria-label="Length unit" formControlName="lengthUnit" (change)="changeUnit('length')">
+      <option value="mm">mm</option>
+      <option value="cm">cm</option>
+      <option value="m">m</option>
+    </select>
   </div>
-  @if (rangeInvalid('sizeLengthCmMin', 'sizeLengthCmMax')) {
-    <p class="field-error">{{ i18n.t('form.error.size') }}</p>
-  }
-  @if (rangeReversed('sizeLengthCmMin')) {
-    <p class="field-error">{{ i18n.t('form.error.minAboveMax') }}</p>
+  @if (rangeInvalid('lengthMin', 'lengthMax') || rangeReversed('lengthMin')) {
+    <p class="field-error">Enter a valid range; the minimum must not exceed the maximum.</p>
   }
 
   <div class="range">
-    <span>{{ i18n.t('form.height') }}</span>
+    <span>Height</span>
     <input
       type="number"
       min="0"
-      step="0.1"
+      step="any"
       [placeholder]="i18n.t('form.min')"
-      formControlName="sizeHeightCmMin"
+      formControlName="heightMin"
     />
     <input
       type="number"
       min="0"
-      step="0.1"
+      step="any"
       [placeholder]="i18n.t('form.max')"
-      formControlName="sizeHeightCmMax"
+      formControlName="heightMax"
     />
+    <select aria-label="Height unit" formControlName="heightUnit" (change)="changeUnit('height')">
+      <option value="mm">mm</option>
+      <option value="cm">cm</option>
+      <option value="m">m</option>
+    </select>
   </div>
-  @if (rangeInvalid('sizeHeightCmMin', 'sizeHeightCmMax')) {
-    <p class="field-error">{{ i18n.t('form.error.size') }}</p>
-  }
-  @if (rangeReversed('sizeHeightCmMin')) {
-    <p class="field-error">{{ i18n.t('form.error.minAboveMax') }}</p>
+  @if (rangeInvalid('heightMin', 'heightMax') || rangeReversed('heightMin')) {
+    <p class="field-error">Enter a valid range; the minimum must not exceed the maximum.</p>
   }
 
   <div class="range">
-    <span>{{ i18n.t('form.weight') }}</span>
+    <span>Weight</span>
     <input
       type="number"
       min="0"
-      step="0.01"
+      step="any"
       [placeholder]="i18n.t('form.min')"
-      formControlName="weightKgMin"
+      formControlName="weightMin"
     />
     <input
       type="number"
       min="0"
-      step="0.01"
+      step="any"
       [placeholder]="i18n.t('form.max')"
-      formControlName="weightKgMax"
+      formControlName="weightMax"
     />
+    <select aria-label="Weight unit" formControlName="weightUnit" (change)="changeUnit('weight')">
+      <option value="g">g</option>
+      <option value="kg">kg</option>
+    </select>
   </div>
-  @if (rangeInvalid('weightKgMin', 'weightKgMax')) {
-    <p class="field-error">{{ i18n.t('form.error.weight') }}</p>
-  }
-  @if (rangeReversed('weightKgMin')) {
-    <p class="field-error">{{ i18n.t('form.error.minAboveMax') }}</p>
+  @if (rangeInvalid('weightMin', 'weightMax') || rangeReversed('weightMin')) {
+    <p class="field-error">Enter a valid range; the minimum must not exceed the maximum.</p>
   }
 
   <div class="range">
-    <span>{{ i18n.t('form.lifespan') }}</span>
+    <span>Lifespan</span>
     <input
       type="number"
       min="0"
-      step="1"
+      step="any"
       [placeholder]="i18n.t('form.min')"
-      formControlName="lifespanYearsMin"
+      formControlName="lifespanMin"
     />
     <input
       type="number"
       min="0"
-      step="1"
+      step="any"
       [placeholder]="i18n.t('form.max')"
-      formControlName="lifespanYearsMax"
+      formControlName="lifespanMax"
     />
+    <select aria-label="Lifespan unit" formControlName="lifespanUnit" (change)="changeUnit('lifespan')">
+      <option value="month">months</option>
+      <option value="year">years</option>
+    </select>
   </div>
-  @if (rangeInvalid('lifespanYearsMin', 'lifespanYearsMax')) {
-    <p class="field-error">{{ i18n.t('form.error.lifespan') }}</p>
-  }
-  @if (rangeReversed('lifespanYearsMin')) {
-    <p class="field-error">{{ i18n.t('form.error.minAboveMax') }}</p>
+  @if (rangeInvalid('lifespanMin', 'lifespanMax') || rangeReversed('lifespanMin')) {
+    <p class="field-error">Enter a valid range; the minimum must not exceed the maximum.</p>
   }
 
   <label>

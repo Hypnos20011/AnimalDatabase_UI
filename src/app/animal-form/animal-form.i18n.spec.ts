@@ -13,12 +13,14 @@ function okapi(overrides: Partial<WikipediaImport> = {}): WikipediaImport {
     scientificName: 'Okapia johnstoni',
     family: null,
     taxonomicClass: null,
-    sizeLengthCmMin: null,
-    sizeLengthCmMax: null,
-    weightKgMin: null,
-    weightKgMax: null,
-    lifespanYearsMin: null,
-    lifespanYearsMax: null,
+    lengthMmMin: null,
+    lengthMmMax: null,
+    heightMmMin: null,
+    heightMmMax: null,
+    weightGramsMin: null,
+    weightGramsMax: null,
+    lifespanMonthsMin: null,
+    lifespanMonthsMax: null,
     iucnStatus: null,
     habitat: null,
     rangeRegion: null,
@@ -73,7 +75,7 @@ describe('AnimalForm i18n', () => {
     const { element } = setup('de');
     expect(element.querySelector('h2')?.textContent).toBe('Tier hinzufügen');
     expect(element.textContent).toContain('Wissenschaftlicher Name');
-    expect(element.textContent).toContain('Lebensdauer (Jahre)');
+    expect(element.textContent).toContain('Lifespan');
     expect(element.textContent).toContain('Bildnachweis');
     expect(element.querySelector('.preview-hint')?.textContent?.trim()).toBe(
       'Noch kein Bild. Wenn Wikipedia keines hat, füge eine Bild-URL von Wikimedia Commons ein.',
@@ -105,16 +107,16 @@ describe('AnimalForm i18n', () => {
     expect(option('habitatType', '').textContent).toBe('Unbekannt');
   });
 
-  it('shows validation errors in German', () => {
+  it('shows general validation errors in German and measurement errors in English', () => {
     const { fixture, form, element } = setup('de');
     form.form.controls.commonName.setValue('');
-    form.form.patchValue({ weightKgMin: 10, weightKgMax: 5, lifespanYearsMax: 2.5 });
+    form.form.patchValue({ weightMin: 10, weightMax: 5, lifespanMax: 2.5 });
     form.submit();
     fixture.detectChanges();
     const text = element.textContent ?? '';
     expect(text).toContain('Der Name ist ein Pflichtfeld.');
-    expect(text).toContain('Das Minimum darf nicht größer als das Maximum sein.');
-    expect(text).toContain('Bitte eine ganze Zahl von Jahren angeben, 0 oder mehr.');
+    expect(text).toContain('Enter a valid range; the minimum must not exceed the maximum.');
+    expect(form.form.controls.lifespanMax.valid).toBe(true);
   });
 
   it('switches labels right after the language changes', () => {
