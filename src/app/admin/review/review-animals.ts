@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -25,6 +25,13 @@ export class ReviewAnimals {
   private loadRequest?: Subscription;
   readonly srcset = wikimediaSrcset;
   rows = signal<Animal[]>([]);
+  displayRows = computed(() => this.rows().map((animal) => ({
+    animal,
+    metadata: [animal.scientificName, animal.family, animal.taxonomicClass, animal.habitatType]
+      .map((value) => value?.trim())
+      .filter(Boolean)
+      .join(' · '),
+  })));
   loading = signal(true);
   loadError = signal('');
   actionError = signal('');
@@ -93,7 +100,10 @@ export class ReviewAnimals {
         );
         this.busy.set(null);
         this.approving.set(null);
-        if (status === 404 || status === 409) this.load();
+        if (status === 404 || status === 409) {
+          this.rejecting.set(null);
+          this.load();
+        }
       },
     });
   }

@@ -12,7 +12,8 @@
   <p>No new animals are waiting for review.</p>
 } @else {
   <ul class="animals">
-    @for (animal of rows(); track animal.id) {
+    @for (row of displayRows(); track row.animal.id) {
+      @let animal = row.animal;
       <li>
         <div class="animal-header">
           @if (animal.thumbnailUrl; as thumbnail) {
@@ -20,8 +21,10 @@
           }
           <div>
             <a [routerLink]="['/animals', animal.id]">{{ animal.commonName }}</a>
-            <p>{{ animal.scientificName }} · {{ animal.family }} · {{ animal.taxonomicClass }} · {{ animal.habitatType }}</p>
-            <p>Submitted by tester · {{ animal.createdAt | date }}</p>
+            @if (row.metadata) {
+              <p>{{ row.metadata }}</p>
+            }
+            <p>Submitted by {{ animal.submittedBy }} · {{ animal.createdAt | date }}</p>
             <a [routerLink]="['/animals', animal.id, 'edit']">Edit</a>
           </div>
         </div>

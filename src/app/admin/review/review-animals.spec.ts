@@ -43,9 +43,25 @@ describe('ReviewAnimals', () => {
     expect(element.textContent).toContain('mammal');
     expect(element.textContent).toContain('forest');
     expect(element.textContent).toContain('Submitted by tester');
+    expect(element.querySelector('.animal-header p')?.textContent?.trim()).toBe('Okapia johnstoni · Giraffidae · mammal · forest');
     expect(element.querySelector('img')?.getAttribute('alt')).toBe('');
     expect(element.querySelector('a[href="/animals/1"]')).not.toBeNull();
     expect(element.querySelector('a[href="/animals/1/edit"]')).not.toBeNull();
+  });
+
+  it('joins only present metadata and shows the submitted role', () => {
+    const submittedByAdmin = {
+      ...animal,
+      scientificName: null,
+      family: 'Giraffidae',
+      taxonomicClass: null,
+      habitatType: 'forest',
+      submittedBy: 'admin',
+    } as unknown as Animal;
+    const { element } = setup(() => of([submittedByAdmin]));
+
+    expect(element.querySelector('.animal-header p')?.textContent?.trim()).toBe('Giraffidae · forest');
+    expect(element.textContent).toContain('Submitted by admin');
   });
 
   it('shows an error with retry and an empty state after retry', () => {
@@ -98,7 +114,8 @@ describe('ReviewAnimals', () => {
       fixture.detectChanges();
       expect(api.pendingReview).toHaveBeenCalledTimes(2);
       expect(element.querySelector('[role="alert"]')?.textContent).toContain(message);
-      expect(element.querySelector<HTMLTextAreaElement>('textarea')?.value).toBe('Keep this');
+      expect(element.querySelector('.reject-panel')).toBeNull();
+      expect(component.notes()[1]).toBe('Keep this');
     },
   );
 

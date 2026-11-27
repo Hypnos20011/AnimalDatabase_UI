@@ -452,6 +452,16 @@ fieldset {
   border-color: var(--color-danger-border);
 }
 
+app-animal-detail .animal-status {
+  margin: 0 0.5rem 0.5rem 0;
+}
+
+app-animal-detail .review-note {
+  margin: 0.5rem 0;
+  color: var(--color-muted);
+  white-space: pre-line;
+}
+
 .code {
   font-size: 0.75rem;
   font-weight: 700;
