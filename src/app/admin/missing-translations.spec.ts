@@ -1,10 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { of, Subject, throwError } from 'rxjs';
 import { MissingTranslations } from './missing-translations';
 import { AnimalService, MissingTranslation } from '../shared/animal.service';
-import { Animal } from '../animal-model/animal.model';
-import { LanguageService } from '../shared/i18n/language.service';
 import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
 
 const rows: MissingTranslation[] = [
@@ -18,49 +17,10 @@ const rows: MissingTranslation[] = [
   },
 ];
 
-const animals: Animal[] = [
-  {
-    id: 4,
-    commonName: 'Okapi',
-    scientificName: null,
-    family: null,
-    taxonomicClass: null,
-    isDomesticated: false,
-    sizeLengthCmMin: null,
-    sizeLengthCmMax: null,
-    sizeHeightCmMin: null,
-    sizeHeightCmMax: null,
-    weightKgMin: null,
-    weightKgMax: null,
-    lifespanYearsMin: null,
-    lifespanYearsMax: null,
-    iucnStatus: null,
-    habitat: null,
-    habitatType: null,
-    rangeRegion: null,
-    profile: null,
-    sourceUrl: null,
-    thumbnailUrl: null,
-    createdAt: '',
-    updatedAt: '',
-    status: 'approved',
-    submittedBy: 'admin',
-    reviewedAt: null,
-    reviewNote: null,
-  },
-];
-
-const animalsForEntries: Animal[] = [
-  { ...animals[0], id: 4, commonName: 'Okapi' },
-  { ...animals[0], id: 1, commonName: 'Zebra' },
-  { ...animals[0], id: 2, commonName: 'Bear' },
-  { ...animals[0], id: 3, commonName: 'Alpaca' },
-];
-
-const rowsForEntries: MissingTranslation[] = [
+const rowsForSorting: MissingTranslation[] = [
   { id: 1, commonName: 'Zebra', languages: [{ language: 'de', fields: ['habitat'] }] },
   { id: 4, commonName: 'Okapi', languages: [{ language: 'fr', fields: ['profile'] }] },
-  { id: 3, commonName: 'Alpaca', languages: [] },
+  { id: 3, commonName: 'Alpaca', languages: [{ language: 'fr', fields: ['commonName'] }] },
 ];
 
 describe('MissingTranslations', () => {
@@ -80,8 +40,8 @@ describe('MissingTranslations', () => {
   function setup(
     missing = vi.fn(() => of(rows)),
     translate = vi.fn(() => of(rows[0])),
-    getAll = vi.fn(() => of(animals)),
   ) {
+    const refresh = vi.fn();
     TestBed.configureTestingModule({
       imports: [MissingTranslations],
       providers: [
@@ -89,30 +49,31 @@ describe('MissingTranslations', () => {
         {
           provide: AnimalService,
           useValue: {
-            getAll,
             getTranslation: vi.fn(() => of({ commonName: null, habitat: null, rangeRegion: null, profile: null })),
             missingTranslations: missing,
             translateMissing: translate,
           },
         },
+        { provide: MissingTranslationCountService, useValue: { refresh } },
       ],
     });
     const fixture = TestBed.createComponent(MissingTranslations);
     fixture.detectChanges();
-    return { fixture, element: fixture.nativeElement as HTMLElement, missing, translate, getAll };
+    return { fixture, element: fixture.nativeElement as HTMLElement, missing, translate, refresh };
   }
 
-  it('lists the animal, the languages, the fields, and an edit link', () => {
+  it('lists only missing translations with English labels and an edit link', () => {
     const { fixture, element } = setup();
 
     expect(element.querySelector('h2')!.textContent).toBe('Translations');
     expect(element.querySelector('.links a')!.textContent).toBe('Admin');
-    expect(element.textContent).toContain('Okapi');
     expect(element.textContent).toContain('German: habitat');
     expect(element.textContent).toContain('French: name, profile');
+    expect(element.textContent).not.toContain('Complete');
     const edit = element.querySelector<HTMLButtonElement>('button.edit')!;
     expect(edit.type).toBe('button');
     expect(edit.textContent!.trim()).toBe('Edit');
+    expect(element.querySelector('a[href="/animals/4/edit"]')).not.toBeNull();
 
     edit.click();
     fixture.detectChanges();
@@ -127,165 +88,129 @@ describe('MissingTranslations', () => {
     expect(dialog.open).toBe(false);
   });
 
-  it('shows every animal with a complete label when nothing is missing', () => {
-    const { element } = setup(vi.fn(() => of([])));
+  it('sorts missing rows alphabetically by common name', () => {
+    const { fixture, element } = setup(vi.fn(() => of(rowsForSorting)));
 
-    expect(element.textContent).toContain('Every animal has German and French text.');
-    expect(element.textContent).toContain('Okapi');
-    expect(element.textContent).toContain('Complete');
-    expect(element.querySelector('.gaps > li button.btn-primary')).toBeNull();
-  });
-
-  it('does not list pending or rejected animals', () => {
-    const { fixture, element } = setup(
-      vi.fn(() => of([])),
-      undefined,
-      vi.fn(() => of([
-        animals[0],
-        { ...animals[0], id: 5, commonName: 'Pending', status: 'pending' as const },
-        { ...animals[0], id: 6, commonName: 'Rejected', status: 'rejected' as const },
-      ])),
-    );
-
-    expect(fixture.componentInstance.entries().map((entry) => entry.id)).toEqual([4]);
-    expect(element.textContent).not.toContain('Pending');
-    expect(element.textContent).not.toContain('Rejected');
-  });
-
-  it('waits for both lists before publishing them', () => {
-    const animalsRequest = new Subject<Animal[]>();
-    const missingRequest = new Subject<MissingTranslation[]>();
-    const { fixture, getAll, missing } = setup(
-      vi.fn(() => missingRequest),
-      undefined,
-      vi.fn(() => animalsRequest),
-    );
-    const component = fixture.componentInstance;
-
-    expect(getAll).toHaveBeenCalledOnce();
-    expect(missing).toHaveBeenCalledOnce();
-    expect(component.loading()).toBe(true);
-
-    animalsRequest.next(animals);
-    animalsRequest.complete();
-    expect(component.allAnimals()).toEqual([]);
-    expect(component.rows()).toEqual([]);
-    expect(component.loading()).toBe(true);
-
-    missingRequest.next(rows);
-    missingRequest.complete();
-    expect(component.allAnimals()).toEqual(animals);
-    expect(component.rows()).toEqual(rows);
-    expect(component.loading()).toBe(false);
-  });
-
-  it('combines all animals with missing languages and sorts missing entries first', () => {
-    const { fixture, element } = setup(
-      vi.fn(() => of(rowsForEntries)),
-      undefined,
-      vi.fn(() => of(animalsForEntries)),
-    );
-
-    expect(fixture.componentInstance.entries()).toEqual([
-      { id: 4, commonName: 'Okapi', languages: rowsForEntries[1].languages },
-      { id: 1, commonName: 'Zebra', languages: rowsForEntries[0].languages },
-      { id: 3, commonName: 'Alpaca', languages: [] },
-      { id: 2, commonName: 'Bear', languages: [] },
+    expect(fixture.componentInstance.entries().map((entry) => entry.commonName)).toEqual([
+      'Alpaca',
+      'Okapi',
+      'Zebra',
     ]);
     expect(
       Array.from(element.querySelectorAll('.gaps > li .gap-head > a:first-child')).map((link) =>
         link.textContent,
       ),
-    ).toEqual(['Okapi', 'Zebra', 'Alpaca', 'Bear']);
-    expect(element.querySelectorAll('.gaps > li button.btn-primary')).toHaveLength(2);
-    expect(element.querySelectorAll('.gaps > li > p')).toHaveLength(2);
+    ).toEqual(['Alpaca', 'Okapi', 'Zebra']);
   });
 
-  it('shows localized page titles and completion labels', () => {
-    const { fixture, element } = setup(vi.fn(() => of([])));
-    const language = TestBed.inject(LanguageService);
+  it('shows the empty state when no animals have missing translations', () => {
+    const { element } = setup(vi.fn(() => of([])));
 
-    for (const [locale, title, complete] of [
-      ['de', 'Übersetzungen', 'Vollständig'],
-      ['fr', 'Traductions', 'Complet'],
-    ] as const) {
-      language.language.set(locale);
-      fixture.detectChanges();
-      expect(element.querySelector('h2')!.textContent).toBe(title);
-      expect(element.textContent).toContain(complete);
-      expect(element.querySelector('.links a')!.textContent).toBe(language.t('footer.admin'));
-    }
+    expect(element.textContent).toContain('Every animal has German and French text.');
+    expect(element.querySelector('.gaps > li')).toBeNull();
+    expect(element.textContent).not.toContain('Complete');
+  });
 
-    language.language.set('en');
+  it('shows the loading state only for the initial request', () => {
+    const request = new Subject<MissingTranslation[]>();
+    const missing = vi.fn(() => request);
+    const { fixture, element } = setup(missing);
+
+    expect(missing).toHaveBeenCalledOnce();
+    expect(fixture.componentInstance.loading()).toBe(true);
+    expect(element.textContent).toContain('Loading...');
+
+    request.next(rows);
+    request.complete();
     fixture.detectChanges();
-    expect(element.querySelector('h2')!.textContent).toBe('Translations');
-    expect(element.querySelector('.links a')!.textContent).toBe(language.t('footer.admin'));
+
+    expect(fixture.componentInstance.loading()).toBe(false);
+    expect(element.textContent).not.toContain('Loading...');
   });
 
-  it('keeps translated animals in entries and recomputes their sorted position', () => {
-    const translated: MissingTranslation = { id: 4, commonName: 'Okapi', languages: [] };
-    const { fixture } = setup(
-      vi.fn(() => of(rowsForEntries)),
-      vi.fn(() => of(translated)),
-      vi.fn(() => of(animalsForEntries)),
-    );
-    const component = fixture.componentInstance;
-
-    component.translate(rowsForEntries[1]);
-
-    expect(component.entries().map((entry) => entry.commonName)).toEqual([
-      'Zebra',
-      'Alpaca',
-      'Bear',
-      'Okapi',
-    ]);
-    expect(component.entries().find((entry) => entry.id === 4)?.languages).toEqual([]);
-  });
-
-  it('closes the editor and reloads both lists after translations are saved', () => {
-    const missing = vi.fn(() => of(rows));
-    const getAll = vi.fn(() => of(animals));
-    const { fixture } = setup(missing, undefined, getAll);
-    const component = fixture.componentInstance;
-    const refresh = vi.spyOn(TestBed.inject(MissingTranslationCountService), 'refresh');
-    component.editing.set(rows[0]);
-
-    component.onEditorSaved();
-
-    expect(component.editing()).toBeNull();
-    expect(getAll).toHaveBeenCalledTimes(2);
-    expect(missing).toHaveBeenCalledTimes(2);
-    expect(refresh).toHaveBeenCalledOnce();
-  });
-
-  it('keeps an animal in entries after its missing text is filled', () => {
+  it('removes a fully translated animal and refreshes the count', () => {
     const translate = vi.fn(() => of({ id: 4, commonName: 'Okapi', languages: [] }));
-    const { element, fixture } = setup(undefined, translate);
+    const { fixture, element, refresh } = setup(undefined, translate);
 
     element.querySelector<HTMLButtonElement>('button.btn-primary')!.click();
     fixture.detectChanges();
 
     expect(translate).toHaveBeenCalledWith(4);
+    expect(fixture.componentInstance.entries()).toEqual([]);
+    expect(element.textContent).not.toContain('Okapi');
     expect(element.textContent).toContain('Every animal has German and French text.');
-    expect(element.textContent).toContain('Okapi');
-    expect(element.textContent).toContain('Complete');
-    expect(element.querySelector('.gaps > li button.btn-primary')).toBeNull();
+    expect(refresh).toHaveBeenCalledOnce();
   });
 
-  it('shows an error when the list cannot be loaded', () => {
-    const { element } = setup(vi.fn(() => throwError(() => new Error('down'))));
+  it('removes a completed row after an editor save without showing loading', () => {
+    const reload = new Subject<MissingTranslation[]>();
+    const missing = vi.fn().mockReturnValueOnce(of(rows)).mockReturnValueOnce(reload);
+    const { fixture, element, refresh } = setup(missing);
+    const component = fixture.componentInstance;
+    component.editing.set(rows[0]);
 
-    expect(element.querySelector('[role="alert"]')!.textContent).toContain(
+    component.onEditorSaved();
+    fixture.detectChanges();
+
+    expect(missing).toHaveBeenCalledTimes(2);
+    expect(component.loading()).toBe(false);
+    expect(element.textContent).not.toContain('Loading...');
+    expect(element.textContent).toContain('Okapi');
+    expect(refresh).toHaveBeenCalledOnce();
+
+    reload.next([]);
+    reload.complete();
+    fixture.detectChanges();
+
+    expect(component.entries()).toEqual([]);
+    expect(element.textContent).not.toContain('Okapi');
+    expect(element.textContent).toContain('Every animal has German and French text.');
+  });
+
+  it('keeps visible rows when a reload after save fails', () => {
+    const missing = vi.fn().mockReturnValueOnce(of(rows)).mockReturnValueOnce(throwError(() => new Error('down')));
+    const { fixture, element } = setup(missing);
+    const component = fixture.componentInstance;
+
+    component.onEditorSaved();
+    fixture.detectChanges();
+
+    expect(component.loading()).toBe(false);
+    expect(element.textContent).not.toContain('Loading...');
+    expect(component.entries()).toEqual(rows);
+    expect(element.textContent).toContain('Okapi');
+    expect(element.querySelector('[role="alert"]')?.textContent).toContain(
       'Could not load missing translations.',
     );
   });
 
-  it('shows an error when all animals cannot be loaded', () => {
-    const { element } = setup(
+  it('uses the English access-denied message for a forbidden translation', () => {
+    const { element, fixture } = setup(
       undefined,
-      undefined,
-      vi.fn(() => throwError(() => new Error('down'))),
+      vi.fn(() => throwError(() => new HttpErrorResponse({ status: 403 }))),
     );
+
+    fixture.componentInstance.translate(rows[0]);
+    fixture.detectChanges();
+
+    expect(element.querySelector('[role="alert"]')?.textContent).toContain(
+      'You do not have permission to perform this action.',
+    );
+  });
+
+  it('uses an English translation error message for other failures', () => {
+    const { element, fixture } = setup(undefined, vi.fn(() => throwError(() => new Error('down'))));
+
+    fixture.componentInstance.translate(rows[0]);
+    fixture.detectChanges();
+
+    expect(element.querySelector('[role="alert"]')?.textContent).toContain(
+      'Could not translate missing fields.',
+    );
+  });
+
+  it('shows an error when the list cannot be loaded', () => {
+    const { element } = setup(vi.fn(() => throwError(() => new Error('down'))));
 
     expect(element.querySelector('[role="alert"]')!.textContent).toContain(
       'Could not load missing translations.',

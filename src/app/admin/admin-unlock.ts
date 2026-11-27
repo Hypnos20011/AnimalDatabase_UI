@@ -52,7 +52,7 @@ export class AdminUnlock {
   }
 
   lock(): void {
-    this.admin.clear();
+    this.admin.lock();
   }
 
   private safeReturnUrl(): string {

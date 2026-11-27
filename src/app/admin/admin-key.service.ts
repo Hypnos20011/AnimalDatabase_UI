@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { Observable, ReplaySubject, catchError, map, of, take, throwError } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -11,6 +12,7 @@ export type AdminRoleState = AdminRole | 'none';
 @Injectable({ providedIn: 'root' })
 export class AdminKeyService {
   private http = inject(HttpClient);
+  private router = inject(Router);
   private readonly stored = signal<string | null>(readStoredKey());
   private readonly initialCheck = new ReplaySubject<void>(1);
   private initialCheckResolved = false;
@@ -45,6 +47,14 @@ export class AdminKeyService {
       sessionStorage.removeItem(ADMIN_KEY_STORAGE);
     } catch {}
     this.resolveInitialCheck();
+  }
+
+  lock(): void {
+    let route = this.router.routerState.snapshot.root;
+    while (route.firstChild) route = route.firstChild;
+    const keyHolderOnly = route.data['keyHolderOnly'] === true;
+    this.clear();
+    if (keyHolderOnly) this.router.navigate(['/'], { replaceUrl: true });
   }
 
   waitForInitialCheck(): Observable<void> {

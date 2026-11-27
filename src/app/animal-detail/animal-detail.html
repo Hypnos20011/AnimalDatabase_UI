@@ -122,20 +122,9 @@
               <div class="fact">
                 <dt>{{ i18n.t('detail.iucnStatus') }}</dt>
                 <dd>
-                  @if (iucnRedListUrl(); as iucnUrl) {
-                    <a
-                      class="status"
-                      [attr.data-status]="animal()!.iucnStatus"
-                      [href]="iucnUrl"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      [attr.title]="i18n.t('detail.iucnRedListLink')"
-                    >{{ i18n.tValue('iucn', status) }}</a>
-                  } @else {
-                    <span class="status" [attr.data-status]="animal()!.iucnStatus">{{
-                      i18n.tValue('iucn', status)
-                    }}</span>
-                  }
+                  <span class="status" [attr.data-status]="animal()!.iucnStatus">{{
+                    i18n.tValue('iucn', status)
+                  }}</span>
                 </dd>
               </div>
             }

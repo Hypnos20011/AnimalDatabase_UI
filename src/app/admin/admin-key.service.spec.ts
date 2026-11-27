@@ -1,15 +1,29 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Router } from '@angular/router';
 import { ADMIN_KEY_STORAGE, AdminKeyService } from './admin-key.service';
 import { environment } from '../../environments/environment';
 
 describe('AdminKeyService', () => {
   let http: HttpTestingController;
+  let router: { navigate: ReturnType<typeof vi.fn> };
 
-  function create() {
+  function create(keyHolderOnly = false) {
+    const deepestRoute = { data: { keyHolderOnly }, firstChild: null };
+    const root = { data: { keyHolderOnly: true }, firstChild: deepestRoute };
+    router = {
+      navigate: vi.fn(),
+    };
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: Router,
+          useValue: { routerState: { snapshot: { root } }, navigate: router.navigate },
+        },
+      ],
     });
     http = TestBed.inject(HttpTestingController);
     return TestBed.inject(AdminKeyService);
@@ -53,6 +67,28 @@ describe('AdminKeyService', () => {
     expect(sessionStorage.getItem(ADMIN_KEY_STORAGE)).toBeNull();
     expect(admin.unlocked()).toBe(false);
     expect(admin.role()).toBe('none');
+  });
+
+  it.each(['/admin', '/admin/review', '/admin/missing', '/animals/new', '/animals/5/edit'])(
+    'redirects to the list when locking from %s', (_path) => {
+      const admin = create(true);
+      admin.set('secret', 'admin');
+
+      admin.lock();
+
+      expect(admin.key()).toBeNull();
+      expect(router.navigate).toHaveBeenCalledWith(['/'], { replaceUrl: true });
+    },
+  );
+
+  it('stays on the quiz page when locking', () => {
+    const admin = create(false);
+    admin.set('secret', 'admin');
+
+    admin.lock();
+
+    expect(admin.key()).toBeNull();
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
   it.each(['admin', 'tester'] as const)('reads the %s role from /admin/check', (role) => {

@@ -10,13 +10,13 @@ import { MissingTranslationCountService } from './shared/missing-translation-cou
 
 describe('App', () => {
   const open = vi.fn();
-  const clear = vi.fn();
+  const lock = vi.fn();
   const unlocked = signal(false);
   const role = signal<'admin' | 'tester' | 'none'>('none');
 
   beforeEach(async () => {
     open.mockReset();
-    clear.mockReset();
+    lock.mockReset();
     unlocked.set(false);
     role.set('none');
     localStorage.clear();
@@ -26,7 +26,7 @@ describe('App', () => {
       providers: [
         provideRouter([]),
         { provide: RandomAnimalService, useValue: { open } },
-        { provide: AdminKeyService, useValue: { unlocked, role, clear } },
+        { provide: AdminKeyService, useValue: { unlocked, role, lock } },
         {
           provide: AnimalService,
           useValue: {
@@ -113,12 +113,12 @@ describe('App', () => {
     role.set('admin');
     unlocked.set(true);
     const { element } = await render();
-    const lock = element.querySelector<HTMLButtonElement>('.site-footer .lock')!;
+    const lockButton = element.querySelector<HTMLButtonElement>('.site-footer .lock')!;
 
-    expect(lock.textContent!.trim()).toBe('Lock');
+    expect(lockButton.textContent!.trim()).toBe('Lock');
     expect(element.querySelector('.site-footer .admin')?.getAttribute('href')).toBe('/admin');
-    lock.click();
-    expect(clear).toHaveBeenCalledTimes(1);
+    lockButton.click();
+    expect(lock).toHaveBeenCalledTimes(1);
   });
 
   it('hides the Admin footer link but keeps Lock for testers', async () => {
