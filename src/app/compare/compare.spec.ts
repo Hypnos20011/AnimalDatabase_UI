@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { provideRouter, Router, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -8,6 +9,7 @@ import { COMPARE_STORAGE, CompareService } from './compare.service';
 import { AnimalService } from '../shared/animal.service';
 import { LanguageService } from '../shared/i18n/language.service';
 import { Animal } from '../animal-model/animal.model';
+import { AdminKeyService } from '../admin/admin-key.service';
 
 function animal(id: number, commonName: string, extra: Partial<Animal> = {}): Animal {
   return {
@@ -34,6 +36,10 @@ function animal(id: number, commonName: string, extra: Partial<Animal> = {}): An
     thumbnailUrl: null,
     createdAt: '2026-10-08T10:00:00',
     updatedAt: '2026-10-08T10:00:00',
+    status: 'approved',
+    submittedBy: 'admin',
+    reviewedAt: null,
+    reviewNote: null,
     ...extra,
   };
 }
@@ -79,10 +85,12 @@ describe('Compare', () => {
   }
 
   async function setup(url = '/compare', getById = vi.fn((id: number) => of(byId.get(id)!))) {
+    const key = signal<string | null>(null);
     TestBed.configureTestingModule({
       providers: [
         provideRouter([{ path: 'compare', component: Compare }], withComponentInputBinding()),
         { provide: AnimalService, useValue: { getById } },
+        { provide: AdminKeyService, useValue: { key } },
       ],
     });
     const harness = await RouterTestingHarness.create();
@@ -113,6 +121,7 @@ describe('Compare', () => {
       getById,
       compare: TestBed.inject(CompareService),
       router: TestBed.inject(Router),
+      key,
     };
   }
 
@@ -156,6 +165,25 @@ describe('Compare', () => {
       'Fun fact It cleans its ears with its tongue.',
       'Profile A salamander that keeps its larval features.',
     ]);
+  });
+
+  it('reloads on key changes and removes an animal that becomes unavailable', async () => {
+    seed({ id: 1, commonName: 'Okapi' }, { id: 2, commonName: 'Axolotl' });
+    let restricted = false;
+    const getById = vi.fn((id: number) =>
+      restricted && id === 1
+        ? throwError(() => new HttpErrorResponse({ status: 404 }))
+        : of(byId.get(id)!),
+    );
+    const { key, refresh, compare } = await setup('/compare', getById);
+    expect(getById).toHaveBeenCalledTimes(2);
+
+    restricted = true;
+    key.set('test-key');
+    await refresh();
+
+    expect(getById).toHaveBeenCalledTimes(4);
+    expect(compare.ids()).toEqual([2]);
   });
 
   it('marks rows where both animals match', async () => {

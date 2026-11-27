@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { provideLockedAdmin } from './animals-list-test-support';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { AnimalsList } from './animals-list';
@@ -56,6 +57,7 @@ describe('AnimalsList favorites', () => {
     TestBed.configureTestingModule({
       imports: [AnimalsList],
       providers: [
+        provideLockedAdmin(),
         provideRouter([]),
         { provide: AnimalService, useValue: { getAll } },
         {
@@ -110,7 +112,7 @@ describe('AnimalsList favorites', () => {
     ]);
   });
 
-  it('prunes favorites whose animal is gone and hides them', async () => {
+  it('hides missing favorites without deleting stored entries', async () => {
     const { links, favorites } = await setup({
       seed: [
         favorite(1, 'Okapi', '2026-11-01T10:00:00.000Z'),
@@ -119,8 +121,8 @@ describe('AnimalsList favorites', () => {
     });
 
     expect(links()).toEqual([{ text: 'Okapi', href: '/animals/1' }]);
-    expect(favorites.favorites().map((item) => item.id)).toEqual([1]);
-    expect(JSON.parse(localStorage.getItem(FAVORITES_STORAGE)!)).toHaveLength(1);
+    expect(favorites.favorites().map((item) => item.id)).toEqual([99, 1]);
+    expect(JSON.parse(localStorage.getItem(FAVORITES_STORAGE)!)).toHaveLength(2);
   });
 
   it('keeps stored favorites when the animals fail to load', async () => {

@@ -17,6 +17,7 @@ import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { Animal } from '../animal-model/animal.model';
 import { AnimalService } from '../shared/animal.service';
+import { isPublicAnimal } from '../shared/animal-status';
 import { LanguageService } from '../shared/i18n/language.service';
 import { Language } from '../shared/i18n/languages';
 import { wikimediaSrcset } from '../shared/wikimedia-image';
@@ -407,7 +408,7 @@ export class Quiz {
     this.request = this.animalService.getAll(language).subscribe({
       next: (animals) => {
         this.loading.set(false);
-        this.animals.set(animals);
+        this.animals.set(animals.filter(isPublicAnimal));
         this.dropMissingFilters();
         if (this.dailyMode()) {
           if (!this.refreshDailyPlan()) this.beginDaily();

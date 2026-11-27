@@ -32,6 +32,10 @@ const okapi = {
   profile: null,
   sourceUrl: null,
   thumbnailUrl: null,
+  status: 'approved',
+  submittedBy: 'admin',
+  reviewedAt: null,
+  reviewNote: null,
   createdAt: '2026-10-08T10:00:00',
   updatedAt: '2026-10-08T10:00:00',
 } satisfies Animal;
@@ -48,7 +52,7 @@ describe('AnimalDetail IUCN Red List link', () => {
           provide: AnimalService,
           useValue: { getById: vi.fn(() => of(animal)), getImages: vi.fn(() => of([])) },
         },
-        { provide: AdminKeyService, useValue: { unlocked: signal(false), role: signal('none') } },
+        { provide: AdminKeyService, useValue: { key: signal(null), unlocked: signal(false), role: signal('none') } },
       ],
     });
     const stored = localStorage.getItem('language');

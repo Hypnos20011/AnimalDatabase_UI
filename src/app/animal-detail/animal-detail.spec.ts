@@ -60,7 +60,7 @@ describe('AnimalDetail delete confirmation', () => {
       providers: [
         provideRouter([]),
         { provide: AnimalService, useValue: service },
-        { provide: AdminKeyService, useValue: { unlocked: signal(true), role: signal('admin') } },
+        { provide: AdminKeyService, useValue: { key: signal('key'), unlocked: signal(true), role: signal('admin') } },
       ],
     });
     const router = TestBed.inject(Router);
@@ -198,7 +198,7 @@ describe('AnimalDetail hero', () => {
       providers: [
         provideRouter([]),
         { provide: AnimalService, useValue: service },
-        { provide: AdminKeyService, useValue: { unlocked: signal(true), role: signal('admin') } },
+        { provide: AdminKeyService, useValue: { key: signal('key'), unlocked: signal(true), role: signal('admin') } },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
@@ -319,7 +319,7 @@ describe('AnimalDetail while locked', () => {
           provide: AnimalService,
           useValue: { getById: vi.fn(() => of(okapi)), getImages: vi.fn(() => of([])) },
         },
-        { provide: AdminKeyService, useValue: { unlocked: signal(false), role: signal('none') } },
+        { provide: AdminKeyService, useValue: { key: signal(null), unlocked: signal(false), role: signal('none') } },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
@@ -346,7 +346,7 @@ describe('AnimalDetail facts', () => {
       providers: [
         provideRouter([]),
         { provide: AnimalService, useValue: service },
-        { provide: AdminKeyService, useValue: { unlocked: signal(true), role: signal('admin') } },
+        { provide: AdminKeyService, useValue: { key: signal('key'), unlocked: signal(true), role: signal('admin') } },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
@@ -409,7 +409,7 @@ describe('AnimalDetail habitat', () => {
           provide: AnimalService,
           useValue: { getById: vi.fn(() => of(animal)), getImages: vi.fn(() => of([])) },
         },
-        { provide: AdminKeyService, useValue: { unlocked: signal(true), role: signal('admin') } },
+        { provide: AdminKeyService, useValue: { key: signal('key'), unlocked: signal(true), role: signal('admin') } },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);

@@ -20,6 +20,7 @@ import { TranslationKey } from '../shared/i18n/en';
 import { formatRange, RangeUnit } from '../shared/format-range';
 import { profileSnippet, splitProfile } from '../shared/profile';
 import { wikimediaSrcset } from '../shared/wikimedia-image';
+import { AdminKeyService } from '../admin/admin-key.service';
 import { COMPARE_MAX, CompareService } from './compare.service';
 
 export interface CompareRow {
@@ -42,10 +43,12 @@ export class Compare implements OnInit {
 
   private animalService = inject(AnimalService);
   private router = inject(Router);
+  private admin = inject(AdminKeyService);
   protected compare = inject(CompareService);
   protected i18n = inject(LanguageService);
   private request?: Subscription;
   private loadedLanguage?: Language;
+  private loadedKey: string | null | undefined;
   readonly srcset = wikimediaSrcset;
 
   animals = signal<Animal[]>([]);
@@ -148,7 +151,13 @@ export class Compare implements OnInit {
       if (!this.initialized()) return;
       const ids = this.compare.ids();
       const language = this.i18n.language();
+      const key = this.admin.key();
       untracked(() => {
+        if (this.loadedKey !== undefined && this.loadedKey !== key) {
+          this.animals.set([]);
+          this.loadedLanguage = undefined;
+        }
+        this.loadedKey = key;
         this.syncUrl(ids);
         this.load(ids, language);
       });

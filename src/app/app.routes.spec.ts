@@ -1,5 +1,6 @@
 import { AdminUnlock } from './admin/admin-unlock';
 import { MissingTranslations } from './admin/missing-translations';
+import { Review } from './admin/review/review';
 import { adminGuard, adminOnlyGuard, adminPageGuard } from './admin/admin.guard';
 import { AnimalDetail } from './animal-detail/animal-detail';
 import { AnimalForm } from './animal-form/animal-form';
@@ -17,6 +18,7 @@ describe('routes', () => {
       '',
       'admin',
       'admin/missing',
+      'admin/review',
       'animals/new',
       'animals/:id/edit',
       'animals/:id',
@@ -31,6 +33,8 @@ describe('routes', () => {
     expect(route('admin').canActivate).toEqual([adminPageGuard]);
     expect(route('admin/missing').canActivate).toEqual([adminOnlyGuard]);
     expect(route('admin/missing').title).toBe('Missing translations · Unusual Animals');
+    expect(route('admin/review').canActivate).toEqual([adminOnlyGuard]);
+    expect(route('admin/review').title).toBe('Review · Unusual Animals');
     expect(route('animals/new').canActivate).toEqual([adminGuard]);
     expect(route('animals/new').title).toBe('New animal · Unusual Animals');
     expect(route('animals/:id/edit').canActivate).toEqual([adminGuard]);
@@ -45,6 +49,7 @@ describe('routes', () => {
   it('loads each secondary page on demand', async () => {
     await expect(route('admin').loadComponent!()).resolves.toBe(AdminUnlock);
     await expect(route('admin/missing').loadComponent!()).resolves.toBe(MissingTranslations);
+    await expect(route('admin/review').loadComponent!()).resolves.toBe(Review);
     await expect(route('animals/new').loadComponent!()).resolves.toBe(AnimalForm);
     await expect(route('animals/:id/edit').loadComponent!()).resolves.toBe(AnimalForm);
     await expect(route('animals/:id').loadComponent!()).resolves.toBe(AnimalDetail);

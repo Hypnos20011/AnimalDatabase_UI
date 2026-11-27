@@ -1,0 +1,16 @@
+<section class="review">
+  <h2>Review</h2>
+  <p><a routerLink="/admin">Admin</a></p>
+  <div class="tabs" role="tablist" aria-label="Review categories">
+    @for (tab of tabs; track tab.id) {
+      <button type="button" role="tab" [id]="'tab-' + tab.id"
+        [attr.aria-selected]="activeTab() === tab.id" [attr.aria-controls]="'panel-' + tab.id"
+        (click)="activeTab.set(tab.id)">{{ tab.label }}</button>
+    }
+  </div>
+  @if (activeTab() === 'animals') {
+    <div role="tabpanel" id="panel-animals" aria-labelledby="tab-animals">
+      <app-review-animals />
+    </div>
+  }
+</section>

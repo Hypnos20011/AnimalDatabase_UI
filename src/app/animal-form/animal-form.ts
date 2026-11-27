@@ -1,6 +1,6 @@
 import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subject, takeUntil } from 'rxjs';
 import {
   AbstractControl,
   FormArray,
@@ -101,6 +101,7 @@ export class AnimalForm {
   editing = computed(() => !!this.id());
   loadingAnimal = signal(false);
   saving = signal(false);
+  submittedPending = signal<Animal | null>(null);
   wikiUrl = signal('');
   importing = signal(false);
   importMessage = signal('');
@@ -113,6 +114,7 @@ export class AnimalForm {
   private savedImageUrl = '';
   private savedScientificName = '';
   private importedValues = new Map<string, unknown>();
+  private cancelImports = new Subject<void>();
 
   form = this.fb.group(
     {
@@ -139,6 +141,7 @@ export class AnimalForm {
     },
     { validators: minNotAboveMax },
   );
+  private readonly initialFormValue = this.form.getRawValue();
   private imageRowsValue = toSignal(this.imageRows.valueChanges, {
     initialValue: this.imageRows.value,
   });
@@ -221,15 +224,47 @@ export class AnimalForm {
       ? this.animalService.update(Number(id), animal)
       : this.animalService.create(animal);
     request.subscribe({
-        next: () => {
+        next: (result) => {
           this.translationCount.refresh();
-          this.router.navigate(id ? ['/animals', id] : ['/']);
+          if (!id && result?.status === 'pending') {
+            this.cancelImports.next();
+            this.importing.set(false);
+            this.saving.set(false);
+            this.submittedPending.set(result);
+          } else {
+            this.router.navigate(id ? ['/animals', id] : ['/']);
+          }
         },
         error: (err) => {
-          this.error.set(apiErrorMessage(err, this.i18n.t('form.error.save')));
+          this.error.set(
+            err instanceof HttpErrorResponse && err.status === 403
+              ? this.i18n.t('admin.accessDenied')
+              : apiErrorMessage(err, this.i18n.t('form.error.save')),
+          );
           this.saving.set(false);
         },
       });
+  }
+
+
+  addAnother(): void {
+    this.cancelImports.next();
+    this.imageRows.clear();
+    this.imageRows.push(this.createImageRow());
+    this.form.reset(this.initialFormValue);
+    this.originalCaptions.clear();
+    this.importedValues.clear();
+    this.importedImageUrl = '';
+    this.savedImageUrl = '';
+    this.savedScientificName = '';
+    this.failedPreviews.set(new Set());
+    this.wikiUrl.set('');
+    this.importing.set(false);
+    this.importMessage.set('');
+    this.importError.set('');
+    this.importWarnings.set([]);
+    this.error.set('');
+    this.submittedPending.set(null);
   }
 
   private failedPreviews = signal<ReadonlySet<string>>(new Set());
@@ -277,7 +312,10 @@ export class AnimalForm {
     this.importMessage.set('');
     this.importError.set('');
     this.importWarnings.set([]);
-    this.animalService.importFromWikipedia(url).subscribe({
+    this.animalService.importFromWikipedia(url).pipe(
+      takeUntil(this.cancelImports),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
       next: (data) => {
         const filled = this.applyImport(data);
         this.importMessage.set(
