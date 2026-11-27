@@ -9,6 +9,7 @@ export const routes: Routes = [
     loadComponent: () => import('./admin/admin-unlock').then((m) => m.AdminUnlock),
     canActivate: [adminPageGuard],
     title: 'Admin · Unusual Animals',
+    data: { keyHolderOnly: true },
   },
   {
     path: 'admin/missing',
@@ -16,24 +17,28 @@ export const routes: Routes = [
       import('./admin/missing-translations').then((m) => m.MissingTranslations),
     canActivate: [adminOnlyGuard],
     title: 'Missing translations · Unusual Animals',
+    data: { keyHolderOnly: true },
   },
   {
     path: 'admin/review',
     loadComponent: () => import('./admin/review/review').then((m) => m.Review),
     canActivate: [adminOnlyGuard],
     title: 'Review · Unusual Animals',
+    data: { keyHolderOnly: true },
   },
   {
     path: 'animals/new',
     loadComponent: () => import('./animal-form/animal-form').then((m) => m.AnimalForm),
     canActivate: [adminGuard],
     title: 'New animal · Unusual Animals',
+    data: { keyHolderOnly: true },
   },
   {
     path: 'animals/:id/edit',
     loadComponent: () => import('./animal-form/animal-form').then((m) => m.AnimalForm),
     canActivate: [adminGuard],
     title: 'Edit animal · Unusual Animals',
+    data: { keyHolderOnly: true },
   },
   {
     path: 'animals/:id',

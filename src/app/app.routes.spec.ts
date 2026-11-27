@@ -31,18 +31,25 @@ describe('routes', () => {
     expect(route('').title).toBe('Unusual Animals');
     expect(route('admin').title).toBe('Admin · Unusual Animals');
     expect(route('admin').canActivate).toEqual([adminPageGuard]);
+    expect(route('admin').data).toEqual({ keyHolderOnly: true });
     expect(route('admin/missing').canActivate).toEqual([adminOnlyGuard]);
     expect(route('admin/missing').title).toBe('Missing translations · Unusual Animals');
+    expect(route('admin/missing').data).toEqual({ keyHolderOnly: true });
     expect(route('admin/review').canActivate).toEqual([adminOnlyGuard]);
     expect(route('admin/review').title).toBe('Review · Unusual Animals');
+    expect(route('admin/review').data).toEqual({ keyHolderOnly: true });
     expect(route('animals/new').canActivate).toEqual([adminGuard]);
     expect(route('animals/new').title).toBe('New animal · Unusual Animals');
+    expect(route('animals/new').data).toEqual({ keyHolderOnly: true });
     expect(route('animals/:id/edit').canActivate).toEqual([adminGuard]);
     expect(route('animals/:id/edit').title).toBe('Edit animal · Unusual Animals');
+    expect(route('animals/:id/edit').data).toEqual({ keyHolderOnly: true });
     expect(route('animals/:id').title).toBe('Unusual Animals');
+    expect(route('animals/:id').data).toBeUndefined();
     expect(route('stats').title).toBe('Stats - Unusual Animals');
     expect(route('compare').title).toBe('Compare · Unusual Animals');
     expect(route('quiz').title).toBe('Quiz · Unusual Animals');
+    expect(route('quiz').data).toBeUndefined();
     expect(route('**').redirectTo).toBe('');
   });
 

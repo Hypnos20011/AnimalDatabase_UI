@@ -15,7 +15,6 @@ import { Language } from '../shared/i18n/languages';
 import { LanguageService } from '../shared/i18n/language.service';
 import { RecentlyViewedService } from '../animals-list/recently-viewed.service';
 import { FavoritesService } from '../animals-list/favorites.service';
-import { iucnRedListSearchUrl } from '../shared/iucn';
 import { splitProfile } from '../shared/profile';
 import { CompareService } from '../compare/compare.service';
 import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
@@ -123,7 +122,6 @@ export class AnimalDetail {
     return '';
   });
   private shareStatusTimer?: ReturnType<typeof setTimeout>;
-  iucnRedListUrl = computed(() => iucnRedListSearchUrl(this.animal()?.scientificName));
   imagesLoading = signal(true);
   showDetails = signal(false);
   confirmOpen = signal(false);
@@ -152,6 +150,7 @@ export class AnimalDetail {
   }
 
   load(id: number, language: Language, key: string | null): void {
+    const keyChangedForSameAnimal = this.loadedId === id && this.loadedKey !== undefined && this.loadedKey !== key;
     const changedView = this.loadedId !== id || this.loadedKey !== key;
     this.loadedId = id;
     this.loadedKey = key;
@@ -178,11 +177,14 @@ export class AnimalDetail {
         this.title.setTitle(`${data.commonName} · Unusual Animals`);
         this.loading.set(false);
       },
-      error: () => {
+      error: (error: unknown) => {
         if (!this.isCurrentView(id, key) || this.i18n.language() !== language) return;
         this.animal.set(null);
         this.title.setTitle('Unusual Animals');
         this.loading.set(false);
+        if (keyChangedForSameAnimal && error instanceof HttpErrorResponse && error.status === 404) {
+          this.router.navigate(['/'], { replaceUrl: true });
+        }
       },
     });
   }

@@ -1,13 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
-import { Animal } from '../animal-model/animal.model';
 import { TranslationEditor } from './translation-editor/translation-editor';
 import { AnimalService, MissingTranslation } from '../shared/animal.service';
-import { isPublicAnimal } from '../shared/animal-status';
-import { LanguageService } from '../shared/i18n/language.service';
-import { TranslationKey } from '../shared/i18n/en';
 import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
 
 @Component({
@@ -19,51 +14,35 @@ import { MissingTranslationCountService } from '../shared/missing-translation-co
 export class MissingTranslations {
   private animals = inject(AnimalService);
   private translationCount = inject(MissingTranslationCountService);
-  protected i18n = inject(LanguageService);
 
-  allAnimals = signal<Animal[]>([]);
   rows = signal<MissingTranslation[]>([]);
   editing = signal<MissingTranslation | null>(null);
   entries = computed(() =>
-    this.allAnimals()
-      .filter(isPublicAnimal)
-      .map((animal) => {
-        const row = this.rows().find((candidate) => candidate.id === animal.id);
-        return {
-          id: animal.id,
-          commonName: animal.commonName,
-          languages: row?.languages ?? [],
-        };
-      })
-      .sort((a, b) => {
-        const missingDifference = Number(b.languages.length > 0) - Number(a.languages.length > 0);
-        return missingDifference || a.commonName.localeCompare(b.commonName);
-      }),
+    [...this.rows()].sort((a, b) => a.commonName.localeCompare(b.commonName)),
   );
   loading = signal(true);
   error = signal('');
   busy = signal<number | null>(null);
+  private hasLoaded = false;
 
   constructor() {
     this.load();
   }
 
   languageLabel(language: string): string {
-    const key = `admin.missing.language.${language}` as TranslationKey;
-    return language === 'de' || language === 'fr' ? this.i18n.t(key) : language;
+    if (language === 'de') return 'German';
+    if (language === 'fr') return 'French';
+    return language;
   }
 
   fieldLabel(field: string): string {
-    const key = `admin.missing.field.${field}` as TranslationKey;
-    return field in
-      {
-        commonName: 1,
-        habitat: 1,
-        rangeRegion: 1,
-        profile: 1,
-      }
-      ? this.i18n.t(key)
-      : field;
+    const labels: Record<string, string> = {
+      commonName: 'name',
+      habitat: 'habitat',
+      rangeRegion: 'range',
+      profile: 'profile',
+    };
+    return labels[field] ?? field;
   }
 
   fields(names: string[]): string {
@@ -85,13 +64,9 @@ export class MissingTranslations {
         this.translationCount.refresh();
       },
       error: (error: unknown) => {
-        this.error.set(
-          this.i18n.t(
-            error instanceof HttpErrorResponse && error.status === 403
-              ? 'admin.accessDenied'
-              : 'admin.missing.error',
-          ),
-        );
+        this.error.set(error instanceof HttpErrorResponse && error.status === 403
+          ? 'You do not have permission to perform this action.'
+          : 'Could not translate missing fields.');
         this.busy.set(null);
       },
     });
@@ -104,23 +79,20 @@ export class MissingTranslations {
   }
 
   private load(): void {
-    this.loading.set(true);
+    if (!this.hasLoaded) this.loading.set(true);
     this.error.set('');
-    forkJoin({ all: this.animals.getAll(), missing: this.animals.missingTranslations() }).subscribe({
-      next: ({ all, missing }) => {
-        this.allAnimals.set(all);
-        this.rows.set(missing);
+    this.animals.missingTranslations().subscribe({
+      next: (rows) => {
+        this.rows.set(rows);
         this.loading.set(false);
+        this.hasLoaded = true;
       },
       error: (error: unknown) => {
-        this.error.set(
-          this.i18n.t(
-            error instanceof HttpErrorResponse && error.status === 403
-              ? 'admin.accessDenied'
-              : 'admin.missing.error',
-          ),
-        );
+        this.error.set(error instanceof HttpErrorResponse && error.status === 403
+          ? 'You do not have permission to perform this action.'
+          : 'Could not load missing translations.');
         this.loading.set(false);
+        this.hasLoaded = true;
       },
     });
   }

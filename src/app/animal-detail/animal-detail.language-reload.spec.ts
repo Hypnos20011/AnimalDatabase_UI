@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 import { signal } from '@angular/core';
 import { AnimalDetail } from './animal-detail';
@@ -48,15 +49,17 @@ describe('AnimalDetail language reload', () => {
 
   afterEach(() => localStorage.clear());
 
-  async function render() {
+  async function render(initialKey: string | null = null) {
+    const key = signal(initialKey);
     TestBed.configureTestingModule({
       imports: [AnimalDetail],
       providers: [
         provideRouter([]),
         { provide: AnimalService, useValue: { getById, getImages, delete: vi.fn(() => of(undefined)) } },
-        { provide: AdminKeyService, useValue: { key: signal(null), unlocked: signal(false), role: signal('none') } },
+        { provide: AdminKeyService, useValue: { key, unlocked: signal(false), role: signal('none') } },
       ],
     });
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     const fixture = TestBed.createComponent(AnimalDetail);
     fixture.componentRef.setInput('id', '3');
     fixture.detectChanges();
@@ -67,7 +70,7 @@ describe('AnimalDetail language reload', () => {
       await fixture.whenStable();
       fixture.detectChanges();
     };
-    return { fixture, settle, detail: fixture.componentInstance };
+    return { fixture, settle, detail: fixture.componentInstance, key, navigate, element: fixture.nativeElement as HTMLElement };
   }
 
   it('loads the animal in the current language', async () => {
@@ -132,15 +135,48 @@ describe('AnimalDetail language reload', () => {
     expect(document.title).toContain('Mexikanischer Querzahnmolch');
   });
 
-  it('resets the page title when loading another animal fails', async () => {
-    const { fixture, settle } = await render();
+  it('shows not found for a direct missing id without redirecting', async () => {
+    const { fixture, settle, navigate, element } = await render();
     expect(document.title).toBe('Axolotl · Unusual Animals');
 
-    getById.mockImplementationOnce(() => throwError(() => new Error('not found')));
+    getById.mockImplementationOnce(() => throwError(() => new HttpErrorResponse({ status: 404 })));
     fixture.componentRef.setInput('id', '404');
     await settle();
 
     expect(document.title).toBe('Unusual Animals');
     expect(document.title).not.toContain('Axolotl');
+    expect(element.textContent).toContain('Animal not found.');
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('redirects to the list when locking makes the same pending animal return 404', async () => {
+    const { settle, key, navigate } = await render('tester-key');
+    getById.mockImplementationOnce(() => throwError(() => new HttpErrorResponse({ status: 404 })));
+
+    key.set(null);
+    await settle();
+
+    expect(navigate).toHaveBeenCalledWith(['/'], { replaceUrl: true });
+  });
+
+  it('stays on an approved animal after locking', async () => {
+    const { settle, key, navigate, detail } = await render('admin-key');
+
+    key.set(null);
+    await settle();
+
+    expect(detail.animal()?.commonName).toBe('Axolotl');
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('does not redirect when a language change returns 404', async () => {
+    const { settle, navigate, detail } = await render();
+    getById.mockImplementationOnce(() => throwError(() => new HttpErrorResponse({ status: 404 })));
+
+    TestBed.inject(LanguageService).setLanguage('de');
+    await settle();
+
+    expect(detail.animal()).toBeNull();
+    expect(navigate).not.toHaveBeenCalled();
   });
 });

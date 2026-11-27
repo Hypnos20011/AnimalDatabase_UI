@@ -55,7 +55,7 @@ export class App {
   }
 
   lock(): void {
-    this.admin.clear();
+    this.admin.lock();
   }
 
   languageCode(): string {

@@ -1,10 +1,10 @@
 <section class="missing">
-  <h2>{{ i18n.t('admin.missing.title') }}</h2>
-  <p class="lead">{{ i18n.t('admin.missing.lead') }}</p>
-  <p class="links"><a routerLink="/admin">{{ i18n.t('footer.admin') }}</a></p>
+  <h2>Translations</h2>
+  <p class="lead">German or French text that is still empty. Text that is already there is left as it is.</p>
+  <p class="links"><a routerLink="/admin">Admin</a></p>
 
   @if (loading()) {
-    <p>{{ i18n.t('admin.missing.loading') }}</p>
+    <p>Loading...</p>
   } @else if (error() && rows().length === 0) {
     <p class="field-error" role="alert">{{ error() }}</p>
   } @else {
@@ -12,16 +12,14 @@
       <p class="field-error" role="alert">{{ error() }}</p>
     }
     @if (rows().length === 0) {
-      <p>{{ i18n.t('admin.missing.empty') }}</p>
+      <p>Every animal has German and French text.</p>
     }
     <ul class="gaps">
       @for (animal of entries(); track animal.id) {
         <li>
           <div class="gap-head">
             <a [routerLink]="['/animals', animal.id, 'edit']">{{ animal.commonName }}</a>
-            <button type="button" class="edit" (click)="editing.set(animal)">{{
-              i18n.t('admin.missing.edit')
-            }}</button>
+            <button type="button" class="edit" (click)="editing.set(animal)">Edit</button>
           </div>
           @if (animal.languages.length > 0) {
             <ul>
@@ -35,14 +33,8 @@
               [disabled]="busy() !== null"
               (click)="translate(animal)"
             >
-              {{
-                busy() === animal.id
-                  ? i18n.t('admin.missing.translating')
-                  : i18n.t('admin.missing.translate')
-              }}
+              {{ busy() === animal.id ? 'Translating...' : 'Translate missing' }}
             </button>
-          } @else {
-            <p>{{ i18n.t('admin.missing.complete') }}</p>
           }
         </li>
       }

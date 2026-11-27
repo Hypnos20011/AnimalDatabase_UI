@@ -300,6 +300,8 @@ describe('AnimalDetail hero', () => {
 
     expect(text.querySelector('.detail-header h2')?.textContent).toContain('Okapi');
     expect(text.querySelector('.facts .fact dt')?.textContent).toContain('IUCN status');
+    expect(text.querySelector('.facts .fact .status')?.tagName).toBe('SPAN');
+    expect(text.querySelector('.facts .fact .status')?.closest('a')).toBeNull();
     expect(text.querySelector('.more')?.textContent).toContain('More details');
 
     (text.querySelector('.more') as HTMLButtonElement).click();
