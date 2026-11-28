@@ -1,13 +1,4 @@
-import {
-  Component,
-  computed,
-  DestroyRef,
-  effect,
-  inject,
-  input,
-  signal,
-  untracked,
-} from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { forkJoin, Subject, takeUntil } from 'rxjs';
 import {
@@ -56,12 +47,17 @@ const rangeRules = (kind: MeasurementKind): ValidatorFn[] => [
     if (value === null || value === undefined || value === '') return null;
     const unit = control.parent?.get(MEASUREMENTS[kind].unit)?.value as MeasurementUnit | undefined;
     if (unit === undefined) return null;
+    const actual = Number(value);
+    if (actual > 0 && toCanonical(actual, kind, unit) === 0) return { tooSmallToStore: true };
     const max = maxInUnit(kind, unit);
-    return Number(value) > max ? { max: { max, actual: Number(value) } } : null;
+    return actual > max ? { max: { max, actual } } : null;
   },
 ];
 
 const RANGES = Object.values(MEASUREMENTS).map(({ min, max }) => [min, max] as const);
+
+const roundInputValue = (value: number | null): number | null =>
+  value === null ? null : Number(value.toPrecision(10));
 
 const minNotAboveMax: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
   const reversed = RANGES.filter(([min, max]) => {
@@ -329,6 +325,16 @@ export class AnimalForm {
     return reversed.includes(minKey);
   }
 
+  rangeErrorText(...keys: string[]): string {
+    const tooSmall = keys.some((key) => {
+      const control = this.form.get(key);
+      return !!control && control.touched && control.hasError('tooSmallToStore');
+    });
+    return tooSmall
+      ? 'Too small to store; use a smaller unit.'
+      : 'Enter a valid range; the minimum must not exceed the maximum.';
+  }
+
   changeUnit(kind: MeasurementKind): void {
     const config = MEASUREMENTS[kind];
     const previousUnit = this.activeUnits[kind];
@@ -338,7 +344,7 @@ export class AnimalForm {
       const control = this.form.get(key);
       const value = control?.value;
       if (control && value !== null && value !== '') {
-        control.setValue(convertUnit(Number(value), kind, previousUnit, nextUnit));
+        control.setValue(roundInputValue(convertUnit(Number(value), kind, previousUnit, nextUnit)));
       }
     }
     this.activeUnits[kind] = nextUnit;
@@ -463,7 +469,7 @@ export class AnimalForm {
     for (const [key, value] of [[config.min, min], [config.max, max]] as const) {
       if (value === null && this.importedValues.has(key)) {
         const previous = this.importedValues.get(key) as number;
-        const displayedPrevious = fromCanonical(previous, kind, this.activeUnits[kind]);
+        const displayedPrevious = roundInputValue(fromCanonical(previous, kind, this.activeUnits[kind]));
         const control = this.form.get(key);
         if (this.sameValue(control?.value, displayedPrevious)) control?.setValue(null);
         this.importedValues.delete(key);
@@ -477,7 +483,7 @@ export class AnimalForm {
     let filled = 0;
     for (const [key, value] of [[config.min, min], [config.max, max]] as const) {
       if (value !== null) {
-        this.form.get(key)?.setValue(fromCanonical(value, kind, unit));
+        this.form.get(key)?.setValue(roundInputValue(fromCanonical(value, kind, unit)));
         this.importedValues.set(key, value);
         filled++;
       }
@@ -490,8 +496,8 @@ export class AnimalForm {
     const unit = chooseDisplayUnit(kind, min, max);
     this.form.get(config.unit)?.setValue(unit);
     this.activeUnits[kind] = unit;
-    this.form.get(config.min)?.setValue(fromCanonical(min, kind, unit));
-    this.form.get(config.max)?.setValue(fromCanonical(max, kind, unit));
+    this.form.get(config.min)?.setValue(roundInputValue(fromCanonical(min, kind, unit)));
+    this.form.get(config.max)?.setValue(roundInputValue(fromCanonical(max, kind, unit)));
   }
 
   private canonical(value: number | null, kind: MeasurementKind, unit: MeasurementUnit): number | null {
@@ -506,18 +512,16 @@ export class AnimalForm {
     });
     const urlControl = row.get('url');
     let previousUrl = String(urlControl?.value ?? '');
-    urlControl?.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((value: string | null) => {
-        const url = value ?? '';
-        this.failedPreviews.update((failed) => {
-          const updated = new Set(failed);
-          updated.delete(previousUrl);
-          updated.delete(url);
-          return updated;
-        });
-        previousUrl = url;
+    urlControl?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((value: string | null) => {
+      const url = value ?? '';
+      this.failedPreviews.update((failed) => {
+        const updated = new Set(failed);
+        updated.delete(previousUrl);
+        updated.delete(url);
+        return updated;
       });
+      previousUrl = url;
+    });
     return row;
   }
 
@@ -627,4 +631,5 @@ export class AnimalForm {
     const trimmed = (value ?? '').trim();
     return trimmed.length > 0 ? trimmed : null;
   }
+
 }

@@ -96,8 +96,7 @@ export class AnimalsList {
   ];
   recentItems = computed(() => {
     const byId = new Map(this.animals().map((animal) => [animal.id, animal]));
-    return this.recentlyViewed
-      .recent()
+    return this.recentlyViewed.recent()
       .filter((item) => byId.has(item.id))
       .map((item) => ({ id: item.id, commonName: byId.get(item.id)!.commonName }));
   });
@@ -111,8 +110,7 @@ export class AnimalsList {
   });
   compareItems = computed(() => {
     const byId = new Map(this.animals().map((animal) => [animal.id, animal]));
-    return this.compare
-      .selection()
+    return this.compare.selection()
       .filter((item) => byId.has(item.id))
       .map((item) => ({ id: item.id, commonName: byId.get(item.id)!.commonName }));
   });
@@ -317,28 +315,25 @@ export class AnimalsList {
     this.animalsRequest?.unsubscribe();
     this.error.set(false);
     this.loading.set(true);
-    this.animalsRequest = this.animalService
-      .getAll(language)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (data) => {
-          if (this.admin.key() !== key || this.i18n.language() !== language) return;
-          this.loadedKey.set(key);
-          this.loadedAnimals.set(data);
-          this.loading.set(false);
-          if (!this.restoredScroll) {
-            this.restoredScroll = true;
-            afterNextRender(() => window.scrollTo(0, this.state.scrollY()), {
-              injector: this.injector,
-            });
-          }
-        },
-        error: () => {
-          if (this.admin.key() !== key || this.i18n.language() !== language) return;
-          this.error.set(true);
-          this.loading.set(false);
-        },
-      });
+    this.animalsRequest = this.animalService.getAll(language).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (data) => {
+        if (this.admin.key() !== key || this.i18n.language() !== language) return;
+        this.loadedKey.set(key);
+        this.loadedAnimals.set(data);
+        this.loading.set(false);
+        if (!this.restoredScroll) {
+          this.restoredScroll = true;
+          afterNextRender(() => window.scrollTo(0, this.state.scrollY()), {
+            injector: this.injector,
+          });
+        }
+      },
+      error: () => {
+        if (this.admin.key() !== key || this.i18n.language() !== language) return;
+        this.error.set(true);
+        this.loading.set(false);
+      },
+    });
   }
 
   onTopSearchDaysChange(value: string): void {

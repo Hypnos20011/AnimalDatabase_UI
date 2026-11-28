@@ -54,6 +54,29 @@ describe('AnimalForm number checks', () => {
     expect(form.form.valid).toBe(true);
   });
 
+  it('rejects positive values that round to zero and accepts values that round away from zero', () => {
+    const { fixture, form, create } = setup();
+    const weightMin = form.form.controls.weightMin;
+    weightMin.setValue(0.0000004);
+    form.submit();
+    fixture.detectChanges();
+
+    expect(weightMin.hasError('tooSmallToStore')).toBe(true);
+    expect(create).not.toHaveBeenCalled();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+      'Too small to store; use a smaller unit.',
+    );
+
+    weightMin.setValue(null);
+    form.form.controls.weightUnit.setValue('g');
+    form.changeUnit('weight');
+    weightMin.setValue(0.0005);
+    expect(weightMin.valid).toBe(true);
+    form.submit();
+
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ weightGramsMin: 0.001 }));
+  });
+
   it('accepts the exact lifespan limit in years and rejects a larger value', () => {
     const { form } = setup();
     form.form.controls.lifespanMax.setValue(8333.325);
@@ -283,5 +306,45 @@ describe('AnimalForm canonical edit', () => {
       weightGramsMin: 2, weightGramsMax: 5,
       lifespanMonthsMin: 18, lifespanMonthsMax: 30,
     }));
+  });
+
+  it('loads 25 months as months and rounds populated inputs to ten significant digits', () => {
+    const animal = {
+      id: 1,
+      commonName: 'Okapi',
+      isDomesticated: false,
+      lengthMmMin: 12345.67890123,
+      lengthMmMax: 25000.12345678,
+      heightMmMin: 2345.67890123,
+      heightMmMax: null,
+      weightGramsMin: 12345.67890123,
+      weightGramsMax: 20000.1234567,
+      lifespanMonthsMin: 25,
+      lifespanMonthsMax: null,
+    } as Animal;
+    TestBed.configureTestingModule({
+      imports: [AnimalForm],
+      providers: [
+        provideRouter([]),
+        { provide: AnimalService, useValue: {
+          getAll: vi.fn(() => of([])),
+          getById: vi.fn(() => of(animal)),
+          getImages: vi.fn(() => of([])),
+        } },
+      ],
+    });
+    const fixture = TestBed.createComponent(AnimalForm);
+    fixture.componentRef.setInput('id', '1');
+    fixture.detectChanges();
+    const form = fixture.componentInstance;
+
+    expect(form.form.controls.lifespanUnit.value).toBe('month');
+    expect(form.form.controls.lifespanMin.value).toBe(25);
+    expect(form.form.controls.lengthMin.value).toBe(12.3456789);
+    for (const control of Object.values(form.form.controls)) {
+      if (typeof control.value === 'number') {
+        expect(Number(control.value.toPrecision(10))).toBe(control.value);
+      }
+    }
   });
 });

@@ -79,7 +79,7 @@ export function chooseDisplayUnit(
     return largest < 10 ? 'mm' : largest < 1000 ? 'cm' : 'm';
   }
   if (kind === 'weight') return largest < 1000 ? 'g' : 'kg';
-  return largest < 24 ? 'month' : 'year';
+  return largest >= 24 && values.every((value) => Number.isInteger(value / 6)) ? 'year' : 'month';
 }
 
 export function formatMeasurementRange(
@@ -100,7 +100,7 @@ export function formatMeasurementRange(
         : unit === 'g' ? 3
           : unit === 'kg' ? 6
             : unit === 'month' ? 1
-              : 6;
+              : 1;
   const suffix = unit === 'month' ? units.month : unit === 'year' ? units.year : unit;
   return formatRange(displayMin, displayMax, suffix, decimals, language, words);
 }

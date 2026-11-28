@@ -263,6 +263,16 @@ describe('AnimalDetail translation', () => {
     expect(values).toContain('bis zu 30 Jahre');
   });
 
+  it('displays a 25-month lifespan in months', async () => {
+    const { element } = await render({
+      animal: { ...okapi, lifespanMonthsMin: 25, lifespanMonthsMax: 25 },
+    });
+    const values = Array.from(element.querySelectorAll('.facts dd')).map((dd) =>
+      dd.textContent!.trim(),
+    );
+    expect(values).toContain('25 months');
+  });
+
   it('uses the singular month and at least in German', async () => {
     localStorage.setItem('language', 'de');
     const { element } = await render({

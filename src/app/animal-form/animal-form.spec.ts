@@ -186,6 +186,27 @@ describe('AnimalForm repeated Wikipedia lookups', () => {
     }));
   });
 
+  it('clears an unchanged imported bound when comparing its rounded display value', () => {
+    const { form } = setup(
+      shoebill({
+        ...emptyMeasurements,
+        lengthMmMin: 12345.67890123,
+      }),
+      shoebill({
+        ...emptyMeasurements,
+        lengthMmMax: 5000,
+      }),
+    );
+
+    lookUp(form, 'first');
+    expect(form.form.controls.lengthMin.value).toBe(12.3456789);
+    lookUp(form, 'second');
+
+    expect(form.form.controls.lengthMin.value).toBeNull();
+    expect(form.form.controls.lengthMax.value).toBe(5);
+    expect(form.form.controls.lengthUnit.value).toBe('m');
+  });
+
   it('adds and removes the selected image row with the styled controls', () => {
     const { fixture, form } = setup();
     const element = fixture.nativeElement as HTMLElement;

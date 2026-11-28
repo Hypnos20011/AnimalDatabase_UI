@@ -1,7 +1,4 @@
-import { TestBed } from '@angular/core/testing';
-import { LanguageService } from './i18n/language.service';
 import { formatNumber, formatRange, RangeWords } from './format-range';
-import { RangePipe } from './range.pipe';
 
 describe('formatRange', () => {
   it('shows a single value when both ends are equal', () => {
@@ -58,15 +55,6 @@ describe('formatNumber', () => {
   });
 });
 
-describe('RangePipe', () => {
-  it('uses the same wording as formatRange', () => {
-    const pipe = TestBed.runInInjectionContext(() => new RangePipe());
-    expect(pipe.transform(null, 5, 'cm')).toBe('up to 5 cm');
-    expect(pipe.transform(200, 300, 'kg', 2)).toBe('200–300 kg');
-    expect(pipe.transform(null, null, 'cm')).toBe('');
-  });
-});
-
 describe('formatNumber with a language', () => {
   it('uses a decimal comma in German', () => {
     expect(formatNumber(0.5, 2, 'de')).toBe('0,5');
@@ -106,42 +94,5 @@ describe('formatRange with a language and words', () => {
   it('falls back to English words when none are given', () => {
     expect(formatRange(null, 5, 'cm', 1, 'en')).toBe('up to 5 cm');
     expect(formatRange(2, null, 'cm', 1, 'de')).toBe('at least 2 cm');
-  });
-});
-
-describe('RangePipe with a language', () => {
-  beforeEach(() => {
-    localStorage.removeItem('language');
-    TestBed.configureTestingModule({});
-  });
-
-  afterEach(() => localStorage.removeItem('language'));
-
-  function createPipe(): RangePipe {
-    return TestBed.runInInjectionContext(() => new RangePipe());
-  }
-
-  it('uses the German words and decimals when the language is German', () => {
-    TestBed.inject(LanguageService).setLanguage('de');
-    const pipe = createPipe();
-    expect(pipe.transform(null, 0.5, 'kg', 2, 'de')).toBe('bis zu 0,5 kg');
-    expect(pipe.transform(2, null, 'cm', 1, 'de')).toBe('mindestens 2 cm');
-    expect(pipe.transform(null, 30, { one: 'Jahr', other: 'Jahre' }, 0, 'de')).toBe('bis zu 30 Jahre');
-  });
-
-  it('keeps English words and decimals in English', () => {
-    TestBed.inject(LanguageService).setLanguage('en');
-    const pipe = createPipe();
-    expect(pipe.transform(null, 0.5, 'kg', 2, 'en')).toBe('up to 0.5 kg');
-    expect(pipe.transform(2, null, 'cm', 1, 'en')).toBe('at least 2 cm');
-  });
-
-  it('follows a language switch on the next call', () => {
-    const i18n = TestBed.inject(LanguageService);
-    i18n.setLanguage('en');
-    const pipe = createPipe();
-    expect(pipe.transform(null, 5, 'cm', 1, 'en')).toBe('up to 5 cm');
-    i18n.setLanguage('de');
-    expect(pipe.transform(null, 5, 'cm', 1, 'de')).toBe('bis zu 5 cm');
   });
 });

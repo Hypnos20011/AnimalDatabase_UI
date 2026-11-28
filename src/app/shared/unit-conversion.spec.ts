@@ -37,6 +37,10 @@ describe('unit conversion', () => {
     expect(chooseDisplayUnit('weight', 2, 1000)).toBe('kg');
     expect(chooseDisplayUnit('lifespan', 18, null)).toBe('month');
     expect(chooseDisplayUnit('lifespan', 24, null)).toBe('year');
+    expect(chooseDisplayUnit('lifespan', 25, null)).toBe('month');
+    expect(chooseDisplayUnit('lifespan', 24, 25)).toBe('month');
+    expect(chooseDisplayUnit('lifespan', 24, 30)).toBe('year');
+    expect(chooseDisplayUnit('lifespan', 25, 30)).toBe('month');
   });
 
   it('formats canonical ranges in readable selected units', () => {
@@ -45,6 +49,8 @@ describe('unit conversion', () => {
     expect(formatMeasurementRange(4, 4, 'length', 'en', units)).toBe('4 mm');
     expect(formatMeasurementRange(2500, 2500, 'length', 'en', units)).toBe('2.5 m');
     expect(formatMeasurementRange(18, 18, 'lifespan', 'en', units)).toBe('18 months');
+    expect(formatMeasurementRange(25, 25, 'lifespan', 'en', units)).toBe('25 months');
+    expect(formatMeasurementRange(30, 30, 'lifespan', 'en', units)).toBe('2.5 years');
     expect(formatMeasurementRange(24, 24, 'lifespan', 'en', units)).toBe('2 years');
     expect(formatMeasurementRange(1560, 1560, 'lifespan', 'en', units)).toBe('130 years');
   });

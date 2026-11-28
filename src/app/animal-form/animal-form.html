@@ -130,7 +130,7 @@
     </select>
   </div>
   @if (rangeInvalid('lengthMin', 'lengthMax') || rangeReversed('lengthMin')) {
-    <p class="field-error">Enter a valid range; the minimum must not exceed the maximum.</p>
+    <p class="field-error">{{ rangeErrorText('lengthMin', 'lengthMax') }}</p>
   }
 
   <div class="range">
@@ -156,7 +156,7 @@
     </select>
   </div>
   @if (rangeInvalid('heightMin', 'heightMax') || rangeReversed('heightMin')) {
-    <p class="field-error">Enter a valid range; the minimum must not exceed the maximum.</p>
+    <p class="field-error">{{ rangeErrorText('heightMin', 'heightMax') }}</p>
   }
 
   <div class="range">
@@ -181,7 +181,7 @@
     </select>
   </div>
   @if (rangeInvalid('weightMin', 'weightMax') || rangeReversed('weightMin')) {
-    <p class="field-error">Enter a valid range; the minimum must not exceed the maximum.</p>
+    <p class="field-error">{{ rangeErrorText('weightMin', 'weightMax') }}</p>
   }
 
   <div class="range">
@@ -206,7 +206,7 @@
     </select>
   </div>
   @if (rangeInvalid('lifespanMin', 'lifespanMax') || rangeReversed('lifespanMin')) {
-    <p class="field-error">Enter a valid range; the minimum must not exceed the maximum.</p>
+    <p class="field-error">{{ rangeErrorText('lifespanMin', 'lifespanMax') }}</p>
   }
 
   <label>

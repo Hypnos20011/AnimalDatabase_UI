@@ -390,6 +390,11 @@ describe('AnimalDetail facts', () => {
     expect(facts).not.toContain('Unknown');
   });
 
+  it('shows a 25-month lifespan in month units', async () => {
+    const monthAnimal = await setup({ ...okapi, lifespanMonthsMin: 25, lifespanMonthsMax: 25 });
+    expect(monthAnimal.element.querySelector('.facts')?.textContent).toContain('25 months');
+  });
+
   it('hides shoulder height when it is empty', async () => {
     const { element, settle } = await setup({
       ...okapi,
