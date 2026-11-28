@@ -17,7 +17,7 @@ import { AnimalService } from '../shared/animal.service';
 import { LanguageService } from '../shared/i18n/language.service';
 import { Language } from '../shared/i18n/languages';
 import { TranslationKey } from '../shared/i18n/en';
-import { formatRange, RangeUnit } from '../shared/format-range';
+import { formatMeasurementRange, MeasurementKind } from '../shared/unit-conversion';
 import { profileSnippet, splitProfile } from '../shared/profile';
 import { wikimediaSrcset } from '../shared/wikimedia-image';
 import { AdminKeyService } from '../admin/admin-key.service';
@@ -66,10 +66,13 @@ export class Compare implements OnInit {
     const animals = this.animals();
     if (animals.length !== COMPARE_MAX) return [];
     const language = this.i18n.language();
-    const years = { one: this.i18n.t('unit.year'), other: this.i18n.t('unit.years') };
+    const units = {
+      month: { one: this.i18n.t('unit.month'), other: this.i18n.t('unit.months') },
+      year: { one: this.i18n.t('unit.year'), other: this.i18n.t('unit.years') },
+    };
     const unknown = this.i18n.t('detail.unknown');
-    const range = (min: number | null, max: number | null, unit: RangeUnit, decimals: number) =>
-      formatRange(min, max, unit, decimals, language, {
+    const range = (min: number | null, max: number | null, kind: MeasurementKind) =>
+      formatMeasurementRange(min, max, kind, language, units, {
         upTo: this.i18n.t('range.upTo'),
         atLeast: this.i18n.t('range.atLeast'),
       }) || unknown;
@@ -96,22 +99,22 @@ export class Compare implements OnInit {
       {
         key: 'length',
         label: 'detail.bodyLength',
-        value: (a) => range(a.sizeLengthCmMin, a.sizeLengthCmMax, 'cm', 1),
+        value: (a) => range(a.lengthMmMin, a.lengthMmMax, 'length'),
       },
       {
         key: 'height',
         label: 'detail.shoulderHeight',
-        value: (a) => range(a.sizeHeightCmMin, a.sizeHeightCmMax, 'cm', 1),
+        value: (a) => range(a.heightMmMin, a.heightMmMax, 'height'),
       },
       {
         key: 'weight',
         label: 'detail.weight',
-        value: (a) => range(a.weightKgMin, a.weightKgMax, 'kg', 2),
+        value: (a) => range(a.weightGramsMin, a.weightGramsMax, 'weight'),
       },
       {
         key: 'lifespan',
         label: 'detail.lifespan',
-        value: (a) => range(a.lifespanYearsMin, a.lifespanYearsMax, years, 0),
+        value: (a) => range(a.lifespanMonthsMin, a.lifespanMonthsMax, 'lifespan'),
       },
       {
         key: 'iucn',

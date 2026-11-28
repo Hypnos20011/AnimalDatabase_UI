@@ -20,34 +20,44 @@ import { isRateLimited, retryAfterSeconds } from '../shared/rate-limit';
 import { LanguageService } from '../shared/i18n/language.service';
 import { apiErrorMessage } from '../shared/api-error';
 import { MissingTranslationCountService } from '../shared/missing-translation-count.service';
+import {
+  chooseDisplayUnit,
+  convertUnit,
+  fromCanonical,
+  maxInUnit,
+  MeasurementKind,
+  MeasurementUnit,
+  toCanonical,
+} from '../shared/unit-conversion';
 
-const oneDecimal: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
-  const value = control.value;
-  if (value === null || value === undefined || value === '') return null;
-  const tenths = Number(value) * 10;
-  return Math.abs(tenths - Math.round(tenths)) < 1e-6 ? null : { oneDecimal: true };
+const MEASUREMENTS: Record<
+  MeasurementKind,
+  { min: string; max: string; unit: string }
+> = {
+  length: { min: 'lengthMin', max: 'lengthMax', unit: 'lengthUnit' },
+  height: { min: 'heightMin', max: 'heightMax', unit: 'heightUnit' },
+  weight: { min: 'weightMin', max: 'weightMax', unit: 'weightUnit' },
+  lifespan: { min: 'lifespanMin', max: 'lifespanMax', unit: 'lifespanUnit' },
 };
 
-const wholeNumber: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
-  const value = control.value;
-  if (value === null || value === undefined || value === '') return null;
-  return Number.isInteger(Number(value)) ? null : { wholeNumber: true };
-};
+const rangeRules = (kind: MeasurementKind): ValidatorFn[] => [
+  Validators.min(0),
+  (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (value === null || value === undefined || value === '') return null;
+    const unit = control.parent?.get(MEASUREMENTS[kind].unit)?.value as MeasurementUnit | undefined;
+    if (unit === undefined) return null;
+    const actual = Number(value);
+    if (actual > 0 && toCanonical(actual, kind, unit) === 0) return { tooSmallToStore: true };
+    const max = maxInUnit(kind, unit);
+    return actual > max ? { max: { max, actual } } : null;
+  },
+];
 
-const MAX_SIZE_CM = 999999.9;
-const MAX_WEIGHT_KG = 9999999.99;
-const MAX_LIFESPAN_YEARS = 2147483647;
+const RANGES = Object.values(MEASUREMENTS).map(({ min, max }) => [min, max] as const);
 
-const sizeRules = [Validators.min(0), Validators.max(MAX_SIZE_CM), oneDecimal];
-const weightRules = [Validators.min(0), Validators.max(MAX_WEIGHT_KG)];
-const lifespanRules = [Validators.min(0), Validators.max(MAX_LIFESPAN_YEARS), wholeNumber];
-
-const RANGES = [
-  ['sizeLengthCmMin', 'sizeLengthCmMax'],
-  ['sizeHeightCmMin', 'sizeHeightCmMax'],
-  ['weightKgMin', 'weightKgMax'],
-  ['lifespanYearsMin', 'lifespanYearsMax'],
-] as const;
+const roundInputValue = (value: number | null): number | null =>
+  value === null ? null : Number(value.toPrecision(10));
 
 const minNotAboveMax: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
   const reversed = RANGES.filter(([min, max]) => {
@@ -115,6 +125,12 @@ export class AnimalForm {
   private savedScientificName = '';
   private importedValues = new Map<string, unknown>();
   private cancelImports = new Subject<void>();
+  private activeUnits: Record<MeasurementKind, MeasurementUnit> = {
+    length: 'cm',
+    height: 'cm',
+    weight: 'kg',
+    lifespan: 'year',
+  };
 
   form = this.fb.group(
     {
@@ -123,14 +139,18 @@ export class AnimalForm {
       family: ['', Validators.maxLength(120)],
       taxonomicClass: [''],
       isDomesticated: [false],
-      sizeLengthCmMin: [null as number | null, sizeRules],
-      sizeLengthCmMax: [null as number | null, sizeRules],
-      sizeHeightCmMin: [null as number | null, sizeRules],
-      sizeHeightCmMax: [null as number | null, sizeRules],
-      weightKgMin: [null as number | null, weightRules],
-      weightKgMax: [null as number | null, weightRules],
-      lifespanYearsMin: [null as number | null, lifespanRules],
-      lifespanYearsMax: [null as number | null, lifespanRules],
+      lengthMin: [null as number | null, rangeRules('length')],
+      lengthMax: [null as number | null, rangeRules('length')],
+      lengthUnit: ['cm' as MeasurementUnit],
+      heightMin: [null as number | null, rangeRules('height')],
+      heightMax: [null as number | null, rangeRules('height')],
+      heightUnit: ['cm' as MeasurementUnit],
+      weightMin: [null as number | null, rangeRules('weight')],
+      weightMax: [null as number | null, rangeRules('weight')],
+      weightUnit: ['kg' as MeasurementUnit],
+      lifespanMin: [null as number | null, rangeRules('lifespan')],
+      lifespanMax: [null as number | null, rangeRules('lifespan')],
+      lifespanUnit: ['year' as MeasurementUnit],
       iucnStatus: [''],
       habitat: ['', Validators.maxLength(255)],
       habitatType: ['', Validators.maxLength(30)],
@@ -200,14 +220,14 @@ export class AnimalForm {
       family: this.text(v.family),
       taxonomicClass: this.text(v.taxonomicClass),
       isDomesticated: !!v.isDomesticated,
-      sizeLengthCmMin: v.sizeLengthCmMin ?? null,
-      sizeLengthCmMax: v.sizeLengthCmMax ?? null,
-      sizeHeightCmMin: v.sizeHeightCmMin ?? null,
-      sizeHeightCmMax: v.sizeHeightCmMax ?? null,
-      weightKgMin: v.weightKgMin ?? null,
-      weightKgMax: v.weightKgMax ?? null,
-      lifespanYearsMin: v.lifespanYearsMin ?? null,
-      lifespanYearsMax: v.lifespanYearsMax ?? null,
+      lengthMmMin: this.canonical(v.lengthMin, 'length', v.lengthUnit ?? 'cm'),
+      lengthMmMax: this.canonical(v.lengthMax, 'length', v.lengthUnit ?? 'cm'),
+      heightMmMin: this.canonical(v.heightMin, 'height', v.heightUnit ?? 'cm'),
+      heightMmMax: this.canonical(v.heightMax, 'height', v.heightUnit ?? 'cm'),
+      weightGramsMin: this.canonical(v.weightMin, 'weight', v.weightUnit ?? 'kg'),
+      weightGramsMax: this.canonical(v.weightMax, 'weight', v.weightUnit ?? 'kg'),
+      lifespanMonthsMin: this.canonical(v.lifespanMin, 'lifespan', v.lifespanUnit ?? 'year'),
+      lifespanMonthsMax: this.canonical(v.lifespanMax, 'lifespan', v.lifespanUnit ?? 'year'),
       iucnStatus: this.text(v.iucnStatus),
       habitat: this.text(v.habitat),
       habitatType: this.text(v.habitatType),
@@ -224,34 +244,39 @@ export class AnimalForm {
       ? this.animalService.update(Number(id), animal)
       : this.animalService.create(animal);
     request.subscribe({
-        next: (result) => {
-          this.translationCount.refresh();
-          if (!id && result?.status === 'pending') {
-            this.cancelImports.next();
-            this.importing.set(false);
-            this.saving.set(false);
-            this.submittedPending.set(result);
-          } else {
-            this.router.navigate(id ? ['/animals', id] : ['/']);
-          }
-        },
-        error: (err) => {
-          this.error.set(
-            err instanceof HttpErrorResponse && err.status === 403
-              ? this.i18n.t('admin.accessDenied')
-              : apiErrorMessage(err, this.i18n.t('form.error.save')),
-          );
+      next: (result) => {
+        this.translationCount.refresh();
+        if (!id && result?.status === 'pending') {
+          this.cancelImports.next();
+          this.importing.set(false);
           this.saving.set(false);
-        },
-      });
+          this.submittedPending.set(result);
+        } else {
+          this.router.navigate(id ? ['/animals', id] : ['/']);
+        }
+      },
+      error: (err) => {
+        this.error.set(
+          err instanceof HttpErrorResponse && err.status === 403
+            ? this.i18n.t('admin.accessDenied')
+            : apiErrorMessage(err, this.i18n.t('form.error.save')),
+        );
+        this.saving.set(false);
+      },
+    });
   }
-
 
   addAnother(): void {
     this.cancelImports.next();
     this.imageRows.clear();
     this.imageRows.push(this.createImageRow());
     this.form.reset(this.initialFormValue);
+    this.activeUnits = {
+      length: 'cm',
+      height: 'cm',
+      weight: 'kg',
+      lifespan: 'year',
+    };
     this.originalCaptions.clear();
     this.importedValues.clear();
     this.importedImageUrl = '';
@@ -300,6 +325,31 @@ export class AnimalForm {
     return reversed.includes(minKey);
   }
 
+  rangeErrorText(...keys: string[]): string {
+    const tooSmall = keys.some((key) => {
+      const control = this.form.get(key);
+      return !!control && control.touched && control.hasError('tooSmallToStore');
+    });
+    return tooSmall
+      ? 'Too small to store; use a smaller unit.'
+      : 'Enter a valid range; the minimum must not exceed the maximum.';
+  }
+
+  changeUnit(kind: MeasurementKind): void {
+    const config = MEASUREMENTS[kind];
+    const previousUnit = this.activeUnits[kind];
+    const nextUnit = this.form.get(config.unit)?.value as MeasurementUnit;
+    if (previousUnit === nextUnit) return;
+    for (const key of [config.min, config.max]) {
+      const control = this.form.get(key);
+      const value = control?.value;
+      if (control && value !== null && value !== '') {
+        control.setValue(roundInputValue(convertUnit(Number(value), kind, previousUnit, nextUnit)));
+      }
+    }
+    this.activeUnits[kind] = nextUnit;
+  }
+
   imageInvalid(key: string): boolean {
     const control = this.form.get(key);
     return !!control && control.touched && control.invalid;
@@ -312,31 +362,31 @@ export class AnimalForm {
     this.importMessage.set('');
     this.importError.set('');
     this.importWarnings.set([]);
-    this.animalService.importFromWikipedia(url).pipe(
-      takeUntil(this.cancelImports),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe({
-      next: (data) => {
-        const filled = this.applyImport(data);
-        this.importMessage.set(
-          filled > 0
-            ? this.i18n.tPlural('form.wiki.filled', filled)
-            : this.i18n.t('form.wiki.nothing'),
-        );
-        this.importWarnings.set(data.warnings);
-        this.importing.set(false);
-      },
-      error: (err) => {
-        this.importError.set(
-          isRateLimited(err)
-            ? this.rateLimitText(err, 'form.rateLimit.lookups')
-            : typeof err.error === 'string' && err.error
-              ? err.error
-              : this.i18n.t('form.wiki.error'),
-        );
-        this.importing.set(false);
-      },
-    });
+    this.animalService
+      .importFromWikipedia(url)
+      .pipe(takeUntil(this.cancelImports), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (data) => {
+          const filled = this.applyImport(data);
+          this.importMessage.set(
+            filled > 0
+              ? this.i18n.tPlural('form.wiki.filled', filled)
+              : this.i18n.t('form.wiki.nothing'),
+          );
+          this.importWarnings.set(data.warnings);
+          this.importing.set(false);
+        },
+        error: (err) => {
+          this.importError.set(
+            isRateLimited(err)
+              ? this.rateLimitText(err, 'form.rateLimit.lookups')
+              : typeof err.error === 'string' && err.error
+                ? err.error
+                : this.i18n.t('form.wiki.error'),
+          );
+          this.importing.set(false);
+        },
+      });
   }
 
   private applyImport(data: WikipediaImport): number {
@@ -345,12 +395,6 @@ export class AnimalForm {
       'scientificName',
       'family',
       'taxonomicClass',
-      'sizeLengthCmMin',
-      'sizeLengthCmMax',
-      'weightKgMin',
-      'weightKgMax',
-      'lifespanYearsMin',
-      'lifespanYearsMax',
       'iucnStatus',
       'habitat',
       'rangeRegion',
@@ -373,6 +417,10 @@ export class AnimalForm {
         this.importedValues.delete(key);
       }
     }
+    filled += this.applyMeasurementImport('length', data.lengthMmMin ?? null, data.lengthMmMax ?? null);
+    filled += this.applyMeasurementImport('height', data.heightMmMin ?? null, data.heightMmMax ?? null);
+    filled += this.applyMeasurementImport('weight', data.weightGramsMin ?? null, data.weightGramsMax ?? null);
+    filled += this.applyMeasurementImport('lifespan', data.lifespanMonthsMin ?? null, data.lifespanMonthsMax ?? null);
     if (data.sourceUrl) this.form.controls.sourceUrl.setValue(data.sourceUrl);
     const firstRow = this.imageRows.at(0);
     const imageControl = firstRow.get('url');
@@ -410,6 +458,50 @@ export class AnimalForm {
       }
     }
     return filled;
+  }
+
+  private applyMeasurementImport(
+    kind: MeasurementKind,
+    min: number | null,
+    max: number | null,
+  ): number {
+    const config = MEASUREMENTS[kind];
+    for (const [key, value] of [[config.min, min], [config.max, max]] as const) {
+      if (value === null && this.importedValues.has(key)) {
+        const previous = this.importedValues.get(key) as number;
+        const displayedPrevious = roundInputValue(fromCanonical(previous, kind, this.activeUnits[kind]));
+        const control = this.form.get(key);
+        if (this.sameValue(control?.value, displayedPrevious)) control?.setValue(null);
+        this.importedValues.delete(key);
+      }
+    }
+    if (min === null && max === null) return 0;
+
+    const unit = chooseDisplayUnit(kind, min, max);
+    this.form.get(config.unit)?.setValue(unit);
+    this.changeUnit(kind);
+    let filled = 0;
+    for (const [key, value] of [[config.min, min], [config.max, max]] as const) {
+      if (value !== null) {
+        this.form.get(key)?.setValue(roundInputValue(fromCanonical(value, kind, unit)));
+        this.importedValues.set(key, value);
+        filled++;
+      }
+    }
+    return filled;
+  }
+
+  private setMeasurementValues(kind: MeasurementKind, min: number | null, max: number | null): void {
+    const config = MEASUREMENTS[kind];
+    const unit = chooseDisplayUnit(kind, min, max);
+    this.form.get(config.unit)?.setValue(unit);
+    this.activeUnits[kind] = unit;
+    this.form.get(config.min)?.setValue(roundInputValue(fromCanonical(min, kind, unit)));
+    this.form.get(config.max)?.setValue(roundInputValue(fromCanonical(max, kind, unit)));
+  }
+
+  private canonical(value: number | null, kind: MeasurementKind, unit: MeasurementUnit): number | null {
+    return value === null ? null : toCanonical(value, kind, unit);
   }
 
   private createImageRow(): FormGroup {
@@ -461,14 +553,6 @@ export class AnimalForm {
           family: animal.family ?? '',
           taxonomicClass: animal.taxonomicClass ?? '',
           isDomesticated: animal.isDomesticated,
-          sizeLengthCmMin: animal.sizeLengthCmMin,
-          sizeLengthCmMax: animal.sizeLengthCmMax,
-          sizeHeightCmMin: animal.sizeHeightCmMin,
-          sizeHeightCmMax: animal.sizeHeightCmMax,
-          weightKgMin: animal.weightKgMin,
-          weightKgMax: animal.weightKgMax,
-          lifespanYearsMin: animal.lifespanYearsMin,
-          lifespanYearsMax: animal.lifespanYearsMax,
           iucnStatus: animal.iucnStatus ?? '',
           habitat: animal.habitat ?? '',
           habitatType: animal.habitatType ?? '',
@@ -476,6 +560,10 @@ export class AnimalForm {
           profile: animal.profile ?? '',
           sourceUrl: animal.sourceUrl ?? '',
         });
+        this.setMeasurementValues('length', animal.lengthMmMin, animal.lengthMmMax);
+        this.setMeasurementValues('height', animal.heightMmMin, animal.heightMmMax);
+        this.setMeasurementValues('weight', animal.weightGramsMin, animal.weightGramsMax);
+        this.setMeasurementValues('lifespan', animal.lifespanMonthsMin, animal.lifespanMonthsMax);
         this.originalCaptions.clear();
         this.imageRows.clear();
         for (const image of images) {

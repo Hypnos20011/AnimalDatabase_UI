@@ -86,14 +86,19 @@ label.checkbox input {
 
 .range {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   gap: 0.35rem 0.5rem;
+  align-items: end;
 }
 
 .range span {
   grid-column: 1 / -1;
   font-size: 0.9rem;
   font-weight: 600;
+}
+
+.range select {
+  min-width: 4.5rem;
 }
 
 .range input {
@@ -227,16 +232,20 @@ form > .field-error {
   flex-basis: 100%;
 }
 
-.import-warnings {
-  flex-basis: 100%;
-  margin: 0;
-  padding: 0.6rem 0.8rem 0.6rem 1.8rem;
+.import-warnings,
+.duplicate-warning {
   border: 1px solid var(--color-warning-border);
   border-left-width: 3px;
   border-radius: var(--radius-sm);
   background: var(--color-warning-soft);
   color: var(--color-warning-text);
   font-size: 0.9rem;
+}
+
+.import-warnings {
+  flex-basis: 100%;
+  margin: 0;
+  padding: 0.6rem 0.8rem 0.6rem 1.8rem;
 }
 
 .import-warnings li + li {
@@ -246,12 +255,6 @@ form > .field-error {
 .duplicate-warning {
   margin-top: -0.5rem;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--color-warning-border);
-  border-left-width: 3px;
-  border-radius: var(--radius-sm);
-  background: var(--color-warning-soft);
-  color: var(--color-warning-text);
-  font-size: 0.9rem;
 }
 
 .duplicate-warning a {

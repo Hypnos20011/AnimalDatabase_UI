@@ -19,14 +19,14 @@ function animal(id: number, commonName: string, extra: Partial<Animal> = {}): An
     family: null,
     taxonomicClass: 'mammal',
     isDomesticated: false,
-    sizeLengthCmMin: null,
-    sizeLengthCmMax: null,
-    sizeHeightCmMin: null,
-    sizeHeightCmMax: null,
-    weightKgMin: null,
-    weightKgMax: null,
-    lifespanYearsMin: null,
-    lifespanYearsMax: null,
+    lengthMmMin: null,
+    lengthMmMax: null,
+    heightMmMin: null,
+    heightMmMax: null,
+    weightGramsMin: null,
+    weightGramsMax: null,
+    lifespanMonthsMin: null,
+    lifespanMonthsMax: null,
     iucnStatus: null,
     habitat: null,
     habitatType: null,
@@ -50,12 +50,12 @@ const okapi = animal(1, 'Okapi', {
   habitatType: 'forest',
   habitat: 'Rainforest',
   rangeRegion: 'DR Congo',
-  sizeLengthCmMin: 190,
-  sizeLengthCmMax: 250,
-  weightKgMin: 200,
-  weightKgMax: 350,
-  lifespanYearsMin: 20,
-  lifespanYearsMax: 30,
+  lengthMmMin: 1900,
+  lengthMmMax: 2500,
+  weightGramsMin: 200000,
+  weightGramsMax: 350000,
+  lifespanMonthsMin: 240,
+  lifespanMonthsMax: 360,
   iucnStatus: 'endangered',
   profile: 'A forest giraffe. Fun fact: It cleans its ears with its tongue.',
 });
@@ -65,7 +65,7 @@ const axolotl = animal(2, 'Axolotl', {
   taxonomicClass: 'amphibian',
   habitatType: 'freshwater',
   rangeRegion: 'Mexico',
-  lifespanYearsMax: 15,
+  lifespanMonthsMax: 180,
   iucnStatus: 'critically endangered',
   isDomesticated: true,
   profile: 'A salamander that keeps its larval features.',
@@ -156,7 +156,7 @@ describe('Compare', () => {
     expect(row('habitatType')).toEqual(['Forest', 'Freshwater']);
     expect(row('habitat')).toEqual(['Rainforest', 'Unknown']);
     expect(row('range')).toEqual(['DR Congo', 'Mexico']);
-    expect(row('length')).toEqual(['190–250 cm', 'Unknown']);
+    expect(row('length')).toEqual(['1.9–2.5 m', 'Unknown']);
     expect(row('weight')).toEqual(['200–350 kg', 'Unknown']);
     expect(row('lifespan')).toEqual(['20–30 years', 'up to 15 years']);
     expect(row('iucn')).toEqual(['Endangered', 'Critically endangered']);
@@ -192,6 +192,34 @@ describe('Compare', () => {
 
     expect(element.querySelector('tr[data-row="class"]')!.classList).toContain('is-same');
     expect(element.querySelector('tr[data-row="habitat"]')!.classList).not.toContain('is-same');
+  });
+
+  it('formats canonical measurements and updates localized ranges', async () => {
+    seed({ id: 1, commonName: 'Okapi' }, { id: 2, commonName: 'Axolotl' });
+    const small = animal(1, 'Okapi', {
+      lengthMmMin: 1.25,
+      lengthMmMax: 2.5,
+      heightMmMin: null,
+      heightMmMax: 25,
+      weightGramsMin: 0.5,
+      weightGramsMax: null,
+      lifespanMonthsMin: 1,
+      lifespanMonthsMax: 1,
+    });
+    const getById = vi.fn((id: number) => of(id === 1 ? small : axolotl));
+    const { row, refresh } = await setup('/compare', getById);
+
+    expect(row('length')).toEqual(['1.25–2.5 mm', 'Unknown']);
+    expect(row('height')).toEqual(['up to 2.5 cm', 'Unknown']);
+    expect(row('weight')).toEqual(['at least 0.5 g', 'Unknown']);
+    expect(row('lifespan')).toEqual(['1 month', 'up to 15 years']);
+
+    TestBed.inject(LanguageService).setLanguage('fr');
+    await refresh();
+    expect(row('length')[0]).toBe('1,25–2,5 mm');
+    expect(row('height')[0]).toBe('jusqu’à 2,5 cm');
+    expect(row('weight')[0]).toBe('au moins 0,5 g');
+    expect(row('lifespan')).toEqual(['1 mois', 'jusqu’à 15 ans']);
   });
 
   it('swaps the sides without loading again', async () => {

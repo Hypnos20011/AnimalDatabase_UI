@@ -14,12 +14,14 @@ function shoebill(overrides: Partial<WikipediaImport> = {}): WikipediaImport {
     scientificName: 'Balaeniceps rex',
     family: 'Balaenicipitidae',
     taxonomicClass: 'bird',
-    sizeLengthCmMin: 100,
-    sizeLengthCmMax: 140,
-    weightKgMin: 4,
-    weightKgMax: 7,
-    lifespanYearsMin: null,
-    lifespanYearsMax: null,
+    lengthMmMin: 1000,
+    lengthMmMax: 1400,
+    heightMmMin: null,
+    heightMmMax: null,
+    weightGramsMin: 4000,
+    weightGramsMax: 7000,
+    lifespanMonthsMin: null,
+    lifespanMonthsMax: null,
     iucnStatus: 'vulnerable',
     habitat: 'Freshwater swamps',
     rangeRegion: 'Central tropical Africa',
@@ -32,6 +34,17 @@ function shoebill(overrides: Partial<WikipediaImport> = {}): WikipediaImport {
     ...overrides,
   };
 }
+
+const emptyMeasurements = {
+  lengthMmMin: null,
+  lengthMmMax: null,
+  heightMmMin: null,
+  heightMmMax: null,
+  weightGramsMin: null,
+  weightGramsMax: null,
+  lifespanMonthsMin: null,
+  lifespanMonthsMax: null,
+};
 
 describe('AnimalForm Wikipedia lookup', () => {
   function setup(data: WikipediaImport) {
@@ -60,6 +73,28 @@ describe('AnimalForm Wikipedia lookup', () => {
     expect(form.form.controls.habitat.value).toBe('Freshwater swamps');
     expect(form.form.controls.rangeRegion.value).toBe('Central tropical Africa');
     expect(form.importMessage()).toContain('Filled in 15 fields');
+  });
+
+  it('fills canonical measurements including height in appropriate display units', () => {
+    const form = setup(shoebill({
+      lengthMmMin: 1000,
+      lengthMmMax: 1400,
+      heightMmMin: 500,
+      heightMmMax: 800,
+      weightGramsMin: 2,
+      weightGramsMax: 5,
+      lifespanMonthsMin: 6,
+      lifespanMonthsMax: 18,
+    }));
+    form.wikiUrl.set('Shoebill');
+    form.importFromWikipedia();
+    expect(form.form.getRawValue()).toEqual(expect.objectContaining({
+      lengthMin: 1, lengthMax: 1.4, lengthUnit: 'm',
+      heightMin: 50, heightMax: 80, heightUnit: 'cm',
+      weightMin: 2, weightMax: 5, weightUnit: 'g',
+      lifespanMin: 6, lifespanMax: 18, lifespanUnit: 'month',
+    }));
+    expect(form.importMessage()).toContain('Filled in 19 fields');
   });
   it('fills image credit fields from the lookup', () => {
     const form = setup(shoebill());
@@ -93,6 +128,7 @@ describe('AnimalForm repeated Wikipedia lookups', () => {
 
   function setup(...results: WikipediaImport[]) {
     const lookup = vi.fn<typeof AnimalService.prototype.importFromWikipedia>();
+    const create = vi.fn(() => of({}));
     for (const result of results) lookup.mockReturnValueOnce(of(result));
     TestBed.configureTestingModule({
       imports: [AnimalForm],
@@ -100,19 +136,76 @@ describe('AnimalForm repeated Wikipedia lookups', () => {
         provideRouter([]),
         {
           provide: AnimalService,
-          useValue: { getAll: vi.fn(() => of([])), importFromWikipedia: lookup },
+          useValue: { getAll: vi.fn(() => of([])), importFromWikipedia: lookup, create },
         },
       ],
     });
     const fixture = TestBed.createComponent(AnimalForm);
     fixture.detectChanges();
-    return { fixture, form: fixture.componentInstance };
+    return { fixture, form: fixture.componentInstance, create };
   }
 
   function lookUp(form: AnimalForm, query: string) {
     form.wikiUrl.set(query);
     form.importFromWikipedia();
   }
+
+  it('preserves manually edited bounds when a partial lookup selects different units', () => {
+    const { form, create } = setup(
+      shoebill({
+        lengthMmMin: 1000, lengthMmMax: null,
+        heightMmMin: 1000, heightMmMax: null,
+        weightGramsMin: 1000, weightGramsMax: null,
+        lifespanMonthsMin: 24, lifespanMonthsMax: null,
+      }),
+      shoebill({
+        lengthMmMin: null, lengthMmMax: 500,
+        heightMmMin: null, heightMmMax: 500,
+        weightGramsMin: null, weightGramsMax: 500,
+        lifespanMonthsMin: null, lifespanMonthsMax: 18,
+      }),
+    );
+    lookUp(form, 'first');
+    expect(form.form.getRawValue()).toEqual(expect.objectContaining({
+      lengthUnit: 'm', heightUnit: 'm', weightUnit: 'kg', lifespanUnit: 'year',
+    }));
+    form.form.patchValue({ lengthMin: 0.2, heightMin: 0.3, weightMin: 0.2, lifespanMin: 1 });
+    lookUp(form, 'second');
+    expect(form.form.getRawValue()).toEqual(expect.objectContaining({
+      lengthMin: 20, lengthMax: 50, lengthUnit: 'cm',
+      heightMin: 30, heightMax: 50, heightUnit: 'cm',
+      weightMin: 200, weightMax: 500, weightUnit: 'g',
+      lifespanMin: 12, lifespanMax: 18, lifespanUnit: 'month',
+    }));
+    form.submit();
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({
+      lengthMmMin: 200, lengthMmMax: 500,
+      heightMmMin: 300, heightMmMax: 500,
+      weightGramsMin: 200, weightGramsMax: 500,
+      lifespanMonthsMin: 12, lifespanMonthsMax: 18,
+    }));
+  });
+
+  it('clears an unchanged imported bound when comparing its rounded display value', () => {
+    const { form } = setup(
+      shoebill({
+        ...emptyMeasurements,
+        lengthMmMin: 12345.67890123,
+      }),
+      shoebill({
+        ...emptyMeasurements,
+        lengthMmMax: 5000,
+      }),
+    );
+
+    lookUp(form, 'first');
+    expect(form.form.controls.lengthMin.value).toBe(12.3456789);
+    lookUp(form, 'second');
+
+    expect(form.form.controls.lengthMin.value).toBeNull();
+    expect(form.form.controls.lengthMax.value).toBe(5);
+    expect(form.form.controls.lengthUnit.value).toBe('m');
+  });
 
   it('adds and removes the selected image row with the styled controls', () => {
     const { fixture, form } = setup();
@@ -190,35 +283,35 @@ describe('AnimalForm repeated Wikipedia lookups', () => {
     const { form } = setup(
       shoebill({
         commonName: 'Cat',
-        lifespanYearsMin: 12,
-        lifespanYearsMax: 15,
+        lifespanMonthsMin: 144,
+        lifespanMonthsMax: 180,
         rangeRegion: 'Much of the world',
       }),
       shoebill({
         commonName: 'Blue-ringed octopus',
-        lifespanYearsMin: null,
-        lifespanYearsMax: null,
+        lifespanMonthsMin: null,
+        lifespanMonthsMax: null,
         rangeRegion: null,
       }),
     );
     lookUp(form, 'cat');
     lookUp(form, 'blue-ringed octopus');
-    expect(form.form.controls.lifespanYearsMin.value).toBeNull();
-    expect(form.form.controls.lifespanYearsMax.value).toBeNull();
+    expect(form.form.controls.lifespanMin.value).toBeNull();
+    expect(form.form.controls.lifespanMax.value).toBeNull();
     expect(form.form.controls.rangeRegion.value).toBe('');
   });
 
   it('keeps a value the user changed after the earlier lookup', () => {
     const { form } = setup(
-      shoebill({ rangeRegion: 'Much of the world', lifespanYearsMax: 15 }),
-      shoebill({ rangeRegion: null, lifespanYearsMax: null }),
+      shoebill({ rangeRegion: 'Much of the world', lifespanMonthsMax: 180 }),
+      shoebill({ rangeRegion: null, lifespanMonthsMax: null }),
     );
     lookUp(form, 'cat');
     form.form.controls.rangeRegion.setValue('Indo-Pacific');
-    form.form.controls.lifespanYearsMax.setValue(2);
+    form.form.controls.lifespanMax.setValue(2);
     lookUp(form, 'blue-ringed octopus');
     expect(form.form.controls.rangeRegion.value).toBe('Indo-Pacific');
-    expect(form.form.controls.lifespanYearsMax.value).toBe(2);
+    expect(form.form.controls.lifespanMax.value).toBe(2);
   });
 });
 
@@ -283,6 +376,7 @@ describe('AnimalForm lookup rate limit', () => {
 
 describe('AnimalForm lookup', () => {
   const boxerCrab = {
+    ...emptyMeasurements,
     id: 1,
     commonName: 'Boxer Crab',
     scientificName: 'Lybia tessellata',
@@ -406,7 +500,7 @@ describe('AnimalForm source warnings', () => {
 });
 
 describe('AnimalForm domesticated animals', () => {
-  const dog = { id: 2, commonName: 'Dog', isDomesticated: true, iucnStatus: null } as Animal;
+  const dog = { ...emptyMeasurements, id: 2, commonName: 'Dog', isDomesticated: true, iucnStatus: null } as Animal;
 
   function setup(id?: string) {
     const create = vi.fn(() => of(dog));
@@ -470,6 +564,7 @@ describe('AnimalForm domesticated animals', () => {
 
 describe('AnimalForm habitat type', () => {
   const okapi = {
+    ...emptyMeasurements,
     id: 3,
     commonName: 'Okapi',
     isDomesticated: false,
@@ -550,7 +645,7 @@ describe('AnimalForm habitat type', () => {
 
 describe('AnimalForm image previews', () => {
   const imageUrl = 'https://upload.wikimedia.org/wikipedia/commons/okapi.jpg';
-  const animal = { id: 1, commonName: 'Okapi', isDomesticated: false } as Animal;
+  const animal = { ...emptyMeasurements, id: 1, commonName: 'Okapi', isDomesticated: false } as Animal;
 
   function setup() {
     TestBed.configureTestingModule({

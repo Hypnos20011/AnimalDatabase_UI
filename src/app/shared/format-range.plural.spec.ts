@@ -1,6 +1,4 @@
-import { TestBed } from '@angular/core/testing';
 import { YEARS, formatRange } from './format-range';
-import { RangePipe } from './range.pipe';
 
 describe('formatRange with word units', () => {
   it('uses the singular for a single value of one', () => {
@@ -30,11 +28,5 @@ describe('formatRange with word units', () => {
     expect(formatRange(1, 1, 'cm')).toBe('1 cm');
     expect(formatRange(null, 1, 'kg', 2)).toBe('up to 1 kg');
     expect(formatRange(1, null, 'cm')).toBe('at least 1 cm');
-  });
-
-  it('works through the pipe', () => {
-    const pipe = TestBed.runInInjectionContext(() => new RangePipe());
-    expect(pipe.transform(1, 1, YEARS, 0)).toBe('1 year');
-    expect(pipe.transform(1, 3, YEARS, 0)).toBe('1–3 years');
   });
 });

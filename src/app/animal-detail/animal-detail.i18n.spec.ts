@@ -18,14 +18,14 @@ const okapi = {
   family: 'Giraffidae',
   taxonomicClass: 'mammal',
   isDomesticated: false,
-  sizeLengthCmMin: 180,
-  sizeLengthCmMax: 250,
-  sizeHeightCmMin: 140,
-  sizeHeightCmMax: 170,
-  weightKgMin: 200,
-  weightKgMax: 350,
-  lifespanYearsMin: 20,
-  lifespanYearsMax: 30,
+  lengthMmMin: 1800,
+  lengthMmMax: 2500,
+  heightMmMin: 1400,
+  heightMmMax: 1700,
+  weightGramsMin: 200000,
+  weightGramsMax: 350000,
+  lifespanMonthsMin: 240,
+  lifespanMonthsMax: 360,
   iucnStatus: 'endangered',
   habitat: 'Dense rainforest',
   habitatType: 'forest',
@@ -45,7 +45,14 @@ const pictures = [
     attribution: 'Foto: Beispiel',
     sourcePageUrl: 'https://commons.wikimedia.org/wiki/File:Example.jpg',
   },
-  { id: 2, animalId: 2, url: 'https://example.org/b.jpg', caption: null, attribution: null, sourcePageUrl: null },
+  {
+    id: 2,
+    animalId: 2,
+    url: 'https://example.org/b.jpg',
+    caption: null,
+    attribution: null,
+    sourcePageUrl: null,
+  },
 ] as unknown as AnimalImage[];
 
 describe('AnimalDetail translation', () => {
@@ -62,9 +69,7 @@ describe('AnimalDetail translation', () => {
     localStorage.clear();
   });
 
-  async function render(
-    options: { animal?: Animal; images?: AnimalImage[]; fail?: boolean } = {},
-  ) {
+  async function render(options: { animal?: Animal; images?: AnimalImage[]; fail?: boolean } = {}) {
     const service = {
       getById: vi.fn(() =>
         options.fail ? throwError(() => new Error('not found')) : of(options.animal ?? okapi),
@@ -77,7 +82,10 @@ describe('AnimalDetail translation', () => {
       providers: [
         provideRouter([]),
         { provide: AnimalService, useValue: service },
-        { provide: AdminKeyService, useValue: { key: signal(null), unlocked: signal(false), role: signal('none') } },
+        {
+          provide: AdminKeyService,
+          useValue: { key: signal(null), unlocked: signal(false), role: signal('none') },
+        },
       ],
     });
     const fixture = TestBed.createComponent(AnimalDetail);
@@ -87,7 +95,8 @@ describe('AnimalDetail translation', () => {
     fixture.detectChanges();
     const element = fixture.nativeElement as HTMLElement;
     const text = (selector: string) => element.querySelector(selector)?.textContent?.trim() ?? '';
-    const labels = () => Array.from(element.querySelectorAll('dt')).map((dt) => dt.textContent!.trim());
+    const labels = () =>
+      Array.from(element.querySelectorAll('dt')).map((dt) => dt.textContent!.trim());
     const openDetails = () => {
       element.querySelector<HTMLButtonElement>('.more')!.click();
       fixture.detectChanges();
@@ -97,7 +106,14 @@ describe('AnimalDetail translation', () => {
 
   it('shows the English labels by default', async () => {
     const { labels, text } = await render();
-    expect(labels()).toEqual(['IUCN status', 'Weight', 'Lifespan', 'Habitat type', 'Habitat', 'Range']);
+    expect(labels()).toEqual([
+      'IUCN status',
+      'Weight',
+      'Lifespan',
+      'Habitat type',
+      'Habitat',
+      'Range',
+    ]);
     expect(text('.more')).toBe('More details');
     expect(text('.back')).toBe('Back to list');
   });
@@ -105,7 +121,14 @@ describe('AnimalDetail translation', () => {
   it('shows the German labels when German is stored', async () => {
     localStorage.setItem('language', 'de');
     const { labels, text } = await render();
-    expect(labels()).toEqual(['IUCN-Status', 'Gewicht', 'Lebensdauer', 'Lebensraumtyp', 'Lebensraum', 'Verbreitung']);
+    expect(labels()).toEqual([
+      'IUCN-Status',
+      'Gewicht',
+      'Lebensdauer',
+      'Lebensraumtyp',
+      'Lebensraum',
+      'Verbreitung',
+    ]);
     expect(text('.more')).toBe('Mehr Details');
     expect(text('.back')).toBe('Zur\u00fcck zur Liste');
   });
@@ -127,24 +150,32 @@ describe('AnimalDetail translation', () => {
         'Zuletzt aktualisiert',
       ]),
     );
-    const values = Array.from(element.querySelectorAll('.extra dd')).map((dd) => dd.textContent!.trim());
+    const values = Array.from(element.querySelectorAll('.extra dd')).map((dd) =>
+      dd.textContent!.trim(),
+    );
     expect(values).toContain('Wildtier');
   });
 
   it('translates the domesticated type', async () => {
     localStorage.setItem('language', 'de');
-    const { element, openDetails } = await render({ animal: { ...okapi, isDomesticated: true } as Animal });
+    const { element, openDetails } = await render({
+      animal: { ...okapi, isDomesticated: true } as Animal,
+    });
     openDetails();
-    const values = Array.from(element.querySelectorAll('.extra dd')).map((dd) => dd.textContent!.trim());
+    const values = Array.from(element.querySelectorAll('.extra dd')).map((dd) =>
+      dd.textContent!.trim(),
+    );
     expect(values).toContain('Haustier');
   });
 
   it('translates the unknown lifespan', async () => {
     localStorage.setItem('language', 'de');
     const { element } = await render({
-      animal: { ...okapi, lifespanYearsMin: null, lifespanYearsMax: null } as unknown as Animal,
+      animal: { ...okapi, lifespanMonthsMin: null, lifespanMonthsMax: null },
     });
-    const values = Array.from(element.querySelectorAll('.facts dd')).map((dd) => dd.textContent!.trim());
+    const values = Array.from(element.querySelectorAll('.facts dd')).map((dd) =>
+      dd.textContent!.trim(),
+    );
     expect(values).toContain('Unbekannt');
   });
 
@@ -186,7 +217,9 @@ describe('AnimalDetail translation', () => {
     expect(element.querySelector('.status')!.getAttribute('data-status')).toBe('endangered');
     expect(text('.habitat-type')).toBe('Wald');
     openDetails();
-    const values = Array.from(element.querySelectorAll('.extra dd')).map((dd) => dd.textContent!.trim());
+    const values = Array.from(element.querySelectorAll('.extra dd')).map((dd) =>
+      dd.textContent!.trim(),
+    );
     expect(values).toContain('S\u00e4ugetier');
   });
 
@@ -195,7 +228,9 @@ describe('AnimalDetail translation', () => {
     expect(text('.status')).toBe('Endangered');
     expect(text('.habitat-type')).toBe('Forest');
     openDetails();
-    const values = Array.from(element.querySelectorAll('.extra dd')).map((dd) => dd.textContent!.trim());
+    const values = Array.from(element.querySelectorAll('.extra dd')).map((dd) =>
+      dd.textContent!.trim(),
+    );
     expect(values).toContain('Mammal');
   });
 
@@ -213,32 +248,126 @@ describe('AnimalDetail translation', () => {
   it('translates the weight and lifespan ranges', async () => {
     localStorage.setItem('language', 'de');
     const { element } = await render({
-      animal: { ...okapi, weightKgMin: null, weightKgMax: 0.5, lifespanYearsMin: null, lifespanYearsMax: 30 } as unknown as Animal,
+      animal: {
+        ...okapi,
+        weightGramsMin: null,
+        weightGramsMax: 1500,
+        lifespanMonthsMin: null,
+        lifespanMonthsMax: 360,
+      },
     });
-    const values = Array.from(element.querySelectorAll('.facts dd')).map((dd) => dd.textContent!.trim());
-    expect(values).toContain('bis zu 0,5 kg');
+    const values = Array.from(element.querySelectorAll('.facts dd')).map((dd) =>
+      dd.textContent!.trim(),
+    );
+    expect(values).toContain('bis zu 1,5 kg');
     expect(values).toContain('bis zu 30 Jahre');
   });
 
-  it('uses the singular year and at least in German', async () => {
+  it('displays a 25-month lifespan in months', async () => {
+    const { element } = await render({
+      animal: { ...okapi, lifespanMonthsMin: 25, lifespanMonthsMax: 25 },
+    });
+    const values = Array.from(element.querySelectorAll('.facts dd')).map((dd) =>
+      dd.textContent!.trim(),
+    );
+    expect(values).toContain('25 months');
+  });
+
+  it('uses the singular month and at least in German', async () => {
     localStorage.setItem('language', 'de');
     const { element } = await render({
-      animal: { ...okapi, weightKgMin: 2, weightKgMax: null, lifespanYearsMin: 1, lifespanYearsMax: 1 } as unknown as Animal,
+      animal: {
+        ...okapi,
+        weightGramsMin: 2000,
+        weightGramsMax: null,
+        lifespanMonthsMin: 1,
+        lifespanMonthsMax: 1,
+      },
     });
-    const values = Array.from(element.querySelectorAll('.facts dd')).map((dd) => dd.textContent!.trim());
+    const values = Array.from(element.querySelectorAll('.facts dd')).map((dd) =>
+      dd.textContent!.trim(),
+    );
     expect(values).toContain('mindestens 2 kg');
-    expect(values).toContain('1 Jahr');
+    expect(values).toContain('1 Monat');
   });
 
   it('uses German decimals in the size ranges', async () => {
     localStorage.setItem('language', 'de');
     const { element, openDetails } = await render({
-      animal: { ...okapi, sizeLengthCmMin: 0.5, sizeLengthCmMax: 1.5 } as Animal,
+      animal: { ...okapi, lengthMmMin: 5, lengthMmMax: 15 },
     });
     openDetails();
-    const values = Array.from(element.querySelectorAll('.extra dd')).map((dd) => dd.textContent!.trim());
+    const values = Array.from(element.querySelectorAll('.extra dd')).map((dd) =>
+      dd.textContent!.trim(),
+    );
     expect(values).toContain('0,5\u20131,5 cm');
-    expect(values).toContain('140\u2013170 cm');
+    expect(values).toContain('1,4\u20131,7 m');
+  });
+
+  it('formats small canonical measurements and translates month ranges', async () => {
+    const { fixture, element, openDetails } = await render({
+      animal: {
+        ...okapi,
+        lengthMmMin: 1.25,
+        lengthMmMax: 2.5,
+        heightMmMin: null,
+        heightMmMax: 25,
+        weightGramsMin: 0.5,
+        weightGramsMax: 1.25,
+        lifespanMonthsMin: null,
+        lifespanMonthsMax: 1,
+      },
+    });
+    openDetails();
+    const values = () =>
+      Array.from(element.querySelectorAll('.facts dd')).map((dd) => dd.textContent!.trim());
+    expect(values()).toEqual(
+      expect.arrayContaining(['1.25–2.5 mm', 'up to 2.5 cm', '0.5–1.25 g', 'up to 1 month']),
+    );
+
+    TestBed.inject(LanguageService).setLanguage('fr');
+    fixture.detectChanges();
+    expect(values()).toEqual(
+      expect.arrayContaining(['1,25–2,5 mm', 'jusqu’à 2,5 cm', '0,5–1,25 g', 'jusqu’à 1 mois']),
+    );
+  });
+
+  it('displays zero and fractional years without rounding them away', async () => {
+    localStorage.setItem('language', 'de');
+    const { element } = await render({
+      animal: {
+        ...okapi,
+        weightGramsMin: 0,
+        weightGramsMax: 0,
+        lifespanMonthsMin: 30,
+        lifespanMonthsMax: 30,
+      },
+    });
+    const values = Array.from(element.querySelectorAll('.facts dd')).map((dd) => dd.textContent!.trim());
+    expect(values).toContain('0 g');
+    expect(values).toContain('2,5 Jahre');
+  });
+
+  it('hides missing optional measurements', async () => {
+    const { element, openDetails } = await render({
+      animal: {
+        ...okapi,
+        lengthMmMin: null,
+        lengthMmMax: null,
+        heightMmMin: null,
+        heightMmMax: null,
+        weightGramsMin: null,
+        weightGramsMax: null,
+        lifespanMonthsMin: null,
+        lifespanMonthsMax: null,
+      },
+    });
+    openDetails();
+    const labels = Array.from(element.querySelectorAll('dt')).map((dt) => dt.textContent!.trim());
+    expect(labels).not.toContain('Weight');
+    expect(labels).not.toContain('Body length');
+    expect(labels).not.toContain('Shoulder height');
+    expect(element.querySelector('.facts')!.textContent).toContain('Unknown');
   });
 
   it('puts the label before the value in every fact', async () => {
@@ -264,14 +393,15 @@ describe('AnimalDetail translation', () => {
 
   it('updates the ranges when the language is switched', async () => {
     const { fixture, element } = await render({
-      animal: { ...okapi, weightKgMin: null, weightKgMax: 0.5 } as unknown as Animal,
+      animal: { ...okapi, weightGramsMin: null, weightGramsMax: 1500 },
     });
-    const values = () => Array.from(element.querySelectorAll('.facts dd')).map((dd) => dd.textContent!.trim());
-    expect(values()).toContain('up to 0.5 kg');
+    const values = () =>
+      Array.from(element.querySelectorAll('.facts dd')).map((dd) => dd.textContent!.trim());
+    expect(values()).toContain('up to 1.5 kg');
     expect(values()).toContain('20\u201330 years');
     TestBed.inject(LanguageService).setLanguage('de');
     fixture.detectChanges();
-    expect(values()).toContain('bis zu 0,5 kg');
+    expect(values()).toContain('bis zu 1,5 kg');
     expect(values()).toContain('20\u201330 Jahre');
   });
 });
